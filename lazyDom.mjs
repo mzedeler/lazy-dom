@@ -8,10 +8,13 @@ class Text {}
 
 class Element {
   nodeType = ELEMENT_NODE
+  tagName = null
   ownerDocument = null
+
   get outerHTML() {
     return ''
   }
+
   matches() {
     return false
   }
@@ -38,6 +41,7 @@ class Document extends Element {
   createElement(localName) {
     const element = new Element()
     element.ownerDocument = this
+    element.tagName = localName
     return element
   }
   createTextNode(data) {
@@ -45,8 +49,17 @@ class Document extends Element {
   }
 }
 
+class Window {}
+
+class HTMLIFrameElement {}
+
 const lazyDom = () => {
-  global.document = new Document()
+  const document = new Document()
+  const window = new Window()
+  const instances = { document, window }
+  const classes = { HTMLIFrameElement }
+  Object.assign(global, instances, classes)
+  Object.assign(window, global)
 }
 
 export default lazyDom

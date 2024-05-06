@@ -37,7 +37,27 @@ describe('main', () => {
     div.appendChild(textNode)
   })
 
+  describe('globals', () => {
+    describe('window', () => {
+      it('is defined', () => {
+        expect(global).to.have.property('window')
+      })
+    })
+
+    describe('HTMLIFrameElement', () => {
+      it('is defined', () => {
+        expect(global).to.have.property('HTMLIFrameElement')
+      })
+    })
+  })
+
   describe('Element', () => {
+    it('has tagName', () => {
+      const element = document.createElement('div')
+
+      expect(element).to.have.property('tagName', 'div')
+    })
+
     it('has nodeType set to ELEMENT_NODE (1)', () => {
       const element = document.createElement('div')
 
