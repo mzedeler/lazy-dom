@@ -24,4 +24,17 @@ describe('react', () => {
     const root = createRoot(div)
     root.render(createElement('h1', {}, 'Hello' ))
   })
+
+  it('supports onClick() with Reacts synthetic events', () => {
+    let clicked = false
+    const onClick = () => { clicked = true }
+
+    const div = document.createElement('div')
+    document.appendChild(div)
+
+    const root = createRoot(div)
+    root.render(createElement('div', { onClick }, 'Hello' ))
+
+    div.click()
+  })
 })

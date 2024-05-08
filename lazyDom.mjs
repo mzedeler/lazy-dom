@@ -42,7 +42,13 @@ class Document extends Element {
     const element = new Element()
     element.ownerDocument = this
     element.tagName = localName
-    return element
+    const revocable = Proxy.revocable(element, {
+      get(target, property) {
+        return Reflect.get(target, property)
+      }
+    })
+
+    return revocable.proxy
   }
   createTextNode(data) {
     return new Text()
