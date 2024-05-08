@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import { act } from 'react-dom/test-utils'
 import { createElement } from 'react'
 import { expect } from 'chai'
 import lazyDom from './lazyDom.mjs'
@@ -43,9 +44,7 @@ describe('react', () => {
     await new Promise(r => setTimeout(r, 100))
     const [span] = div.childNodes
 
-    span.click()
-
-    await new Promise(r => setTimeout(r, 100))
+    act(() => span.click())
 
     expect(clicked).to.be.true
   })
