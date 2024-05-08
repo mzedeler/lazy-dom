@@ -5,8 +5,8 @@ import lazyDom from './lazyDom.mjs'
 
 describe('react', () => {
   beforeEach(lazyDom)
+
   it('supports createRoot()', () => {
-    lazyDom()
     const div = document.createElement('div')
     document.appendChild(div)
 
@@ -14,30 +14,27 @@ describe('react', () => {
   })
 
   it('supports root.render()', () => {
-    lazyDom()
     const div = document.createElement('div')
     document.appendChild(div)
-
     const root = createRoot(div)
+
     root.render()
   })
 
   it('supports React.createElement()', () => {
-    lazyDom()
     const div = document.createElement('div')
     document.appendChild(div)
-
     const root = createRoot(div)
+
     root.render(createElement('h1', {}, 'Hello' ))
   })
 
   it('supports onClick() with Reacts synthetic events', async () => {
-    lazyDom()
-    let clicked = false
-    const onClick = () => { clicked = true }
     const div = document.createElement('div')
     document.appendChild(div)
     const root = createRoot(div)
+    let clicked = false
+    const onClick = () => { clicked = true }
     act(() => root.render(createElement('span', { onClick }, 'Hello' )))
     const [span] = div.childNodes
 
