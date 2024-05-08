@@ -1,8 +1,11 @@
 import { createRoot } from 'react-dom/client'
 import { createElement } from 'react'
+import { expect } from 'chai'
+import lazyDom from './lazyDom.mjs'
 
 describe('react', () => {
   it('supports createRoot()', () => {
+    lazyDom()
     const div = document.createElement('div')
     document.appendChild(div)
 
@@ -10,6 +13,7 @@ describe('react', () => {
   })
 
   it('supports root.render()', () => {
+    lazyDom()
     const div = document.createElement('div')
     document.appendChild(div)
 
@@ -18,6 +22,7 @@ describe('react', () => {
   })
 
   it('supports React.createElement()', () => {
+    lazyDom()
     const div = document.createElement('div')
     document.appendChild(div)
 
@@ -25,7 +30,8 @@ describe('react', () => {
     root.render(createElement('h1', {}, 'Hello' ))
   })
 
-  it('supports onClick() with Reacts synthetic events', () => {
+  it.only('supports onClick() with Reacts synthetic events', async () => {
+    lazyDom()
     let clicked = false
     const onClick = () => { clicked = true }
 
@@ -33,8 +39,14 @@ describe('react', () => {
     document.appendChild(div)
 
     const root = createRoot(div)
-    root.render(createElement('div', { onClick }, 'Hello' ))
+    root.render(createElement('span', { onClick }, 'Hello' ))
+    await new Promise(r => setTimeout(r, 100))
+    const [span] = div.childNodes
 
-    div.click()
+    span.click()
+
+    await new Promise(r => setTimeout(r, 100))
+
+    expect(clicked).to.be.true
   })
 })
