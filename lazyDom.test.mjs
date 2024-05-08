@@ -44,9 +44,9 @@ describe('main', () => {
       })
     })
 
-    describe('HTMLIFrameElement', () => {
+    describe('window.HTMLIFrameElement', () => {
       it('is defined', () => {
-        expect(global).to.have.property('HTMLIFrameElement')
+        expect(window).to.have.property('HTMLIFrameElement')
       })
     })
   })

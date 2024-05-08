@@ -4,6 +4,7 @@ import { expect } from 'chai'
 import lazyDom from './lazyDom.mjs'
 
 describe('react', () => {
+  beforeEach(lazyDom)
   it('supports createRoot()', () => {
     lazyDom()
     const div = document.createElement('div')
@@ -30,14 +31,12 @@ describe('react', () => {
     root.render(createElement('h1', {}, 'Hello' ))
   })
 
-  it.only('supports onClick() with Reacts synthetic events', async () => {
+  it('supports onClick() with Reacts synthetic events', async () => {
     lazyDom()
     let clicked = false
     const onClick = () => { clicked = true }
-
     const div = document.createElement('div')
     document.appendChild(div)
-
     const root = createRoot(div)
     act(() => root.render(createElement('span', { onClick }, 'Hello' )))
     const [span] = div.childNodes
