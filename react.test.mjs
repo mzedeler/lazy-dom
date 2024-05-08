@@ -39,8 +39,7 @@ describe('react', () => {
     document.appendChild(div)
 
     const root = createRoot(div)
-    root.render(createElement('span', { onClick }, 'Hello' ))
-    await new Promise(r => setTimeout(r, 100))
+    act(() => root.render(createElement('span', { onClick }, 'Hello' )))
     const [span] = div.childNodes
 
     act(() => span.click())
