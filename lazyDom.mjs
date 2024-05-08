@@ -130,11 +130,7 @@ class Window {
 
 class HTMLIFrameElement {}
 
-class Navigator {
-  // get clipboard() {
-  //   return {}
-  // }
-}
+class Navigator {}
 
 const lazyDom = () => {
   const window = new Window()

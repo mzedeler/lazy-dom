@@ -1,6 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import { act } from 'react-dom/test-utils'
-import { createElement } from 'react'
+import { act, createElement } from 'react'
 import { expect } from 'chai'
 import lazyDom from './lazyDom.mjs'
 
