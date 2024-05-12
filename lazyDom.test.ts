@@ -1,6 +1,6 @@
 
 import { expect } from 'chai'
-import lazyDom from './lazyDom.mjs'
+import lazyDom from './lazyDom.js'
 
 describe('main', () => {
   it.only('initializes correctly', () => {
