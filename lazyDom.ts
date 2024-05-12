@@ -1,6 +1,6 @@
-import { addObject } from './src/commands/addObject.mjs'
-import { setValue } from './src/commands/setValue.mjs'
-import { reducer } from './src/reducer.mjs'
+import { addObject } from './src/commands/addObject'
+import { setValue } from './src/commands/setValue'
+import { reducer } from './src/reducer'
 
 const ELEMENT_NODE =  1
 const TEXT_NODE = 3
@@ -72,7 +72,8 @@ class Element {
   }
 
   addEventListener(type, listener) {
-    const eventTarget = getValue(this, 'eventListeners')
+    const eventTarget = getValue(this, 'eventTarget')
+    eventTarget.addEventListener()
     if (type === 'click') {
       this.#listeners.push(listener)
     }

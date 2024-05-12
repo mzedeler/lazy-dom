@@ -1,0 +1,4 @@
+{
+  "exec": "pnpm test",
+  "watch": ["**/*.ts", "package.json", "pnpm-lock.yaml"]
+}
