@@ -1,3 +1,5 @@
+import { reducer } from './src/reducer.mjs'
+
 const ELEMENT_NODE =  1
 const TEXT_NODE = 3
 const COMMENT_NODE = 8
@@ -83,6 +85,11 @@ class Element {
     event.target = this
     this.dispatchEvent(event)
   }
+}
+
+let state = reducer()
+const dispatch = command => {
+  state = reducer(command)
 }
 
 const USE_PROXY = false

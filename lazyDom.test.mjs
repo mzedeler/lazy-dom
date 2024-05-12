@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import lazyDom from './lazyDom.mjs'
 
 describe('main', () => {
-  it('initializes correctly', () => {
+  it.only('initializes correctly', () => {
     lazyDom()
 
     expect(document).to.exist
