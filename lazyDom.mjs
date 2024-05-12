@@ -1,3 +1,5 @@
+import { addObject } from './src/commands/addObject.mjs'
+import { setValue } from './src/commands/setValue.mjs'
 import { reducer } from './src/reducer.mjs'
 
 const ELEMENT_NODE =  1
@@ -5,6 +7,13 @@ const TEXT_NODE = 3
 const COMMENT_NODE = 8
 const DOCUMENT_NODE = 9
 const DOCUMENT_FRAGMENT_NODE = 11
+
+let state = reducer()
+const dispatch = command => {
+  state = reducer(command)
+}
+
+const getValue = (object, property) => state.values.get(object)?.[property]
 
 class Text {}
 
@@ -14,7 +23,11 @@ class Event {
 class UIEvent extends Event {}
 class MouseEvent extends UIEvent {}
 class PointerEvent extends MouseEvent {}
-class EventTarget {}
+class EventTarget {
+  constructor() {
+    dispatch(addObject(this))
+  }
+}
 
 class Element {
   nodeType = ELEMENT_NODE
@@ -23,6 +36,11 @@ class Element {
 
   #children = []
   #listeners = []
+
+  constructor() {
+    dispatch(addObject(this))
+    dispatch(setValue, 'eventTarget', new EventTarget())
+  }
 
   get outerHTML() {
     return ''
@@ -54,6 +72,7 @@ class Element {
   }
 
   addEventListener(type, listener) {
+    const eventTarget = getValue(this, 'eventListeners')
     if (type === 'click') {
       this.#listeners.push(listener)
     }
@@ -87,11 +106,6 @@ class Element {
   }
 }
 
-let state = reducer()
-const dispatch = command => {
-  state = reducer(command)
-}
-
 const USE_PROXY = false
 
 class Document extends Element {
@@ -107,23 +121,13 @@ class Document extends Element {
 
   createElement(localName) {
     const element = new Element()
+    dispatch(setValue(element, 'ownerDocument', this))
+    dispatch(setValue(element, 'tagName', localName))
     element.ownerDocument = this
     element.tagName = localName
-    element.__tagName = localName
-    if (USE_PROXY) {
-      const revocable = Proxy.revocable(element, {
-        set(target, property, value) {
-          console.log('Set: ', target, property, value)
-          return Reflect.get(target, property, value)
-        },
-        get(target, property) {
-          console.log('Get: ', target, property)
-          return Reflect.get(target, property)
-        }
-      })
-      }
     return element
   }
+
   createTextNode(data) {
     return new Text()
   }
