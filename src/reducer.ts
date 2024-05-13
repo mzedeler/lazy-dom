@@ -8,19 +8,7 @@ const initialState: State = {
   values: new WeakMap()
 }
 
-type AddCommand = {
-  type: 'addObject',
-  object: Object
-}
-
-type SetCommand = {
-  type: 'setValue'
-  object: Object,
-  property: string
-  value: unknown
-}
-
-type Command = AddCommand | SetCommand
+import type { Command } from './Command'
 
 export const reducer = (state: State = initialState, command?: Command) => {
   switch (command?.type) {
@@ -31,6 +19,9 @@ export const reducer = (state: State = initialState, command?: Command) => {
       const values = state.values.get(command.object) || {}
       values[command.property] = command.value
       state.values.set(command.object, values)
+      return state
+    case 'pushValue':
+      (command.object as Array<any>).push(command.value)
       return state
   }
 

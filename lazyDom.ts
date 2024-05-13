@@ -1,3 +1,4 @@
+import { Command } from './src/Command'
 import { addObject } from './src/commands/addObject'
 import { setValue } from './src/commands/setValue'
 import { reducer } from './src/reducer'
@@ -9,17 +10,20 @@ const DOCUMENT_NODE = 9
 const DOCUMENT_FRAGMENT_NODE = 11
 
 let state = reducer()
-const dispatch = command => {
-  state = reducer(command)
+const dispatch = (command: Command) => {
+  state = reducer(state, command)
 }
 
-const getValue = (object, property) => state.values.get(object)?.[property]
+const getValue = (object: Object, property: string) => state.values.get(object)?.[property]
 
-class Text {}
+class Node {}
+
+class Text extends Node {}
 
 class Event {
   target = undefined
 }
+
 class UIEvent extends Event {}
 class MouseEvent extends UIEvent {}
 class PointerEvent extends MouseEvent {}
@@ -29,17 +33,19 @@ class EventTarget {
   }
 }
 
-class Element {
-  nodeType = ELEMENT_NODE
-  tagName = null
-  ownerDocument = null
+type Listener = (event: Event) => any
+type Listeners =  Record<string, Listener[]>
 
-  #children = []
-  #listeners = []
+interface EventTarget {
+  addEventListener: (type: string, listener: Listener) => void
+}
 
+class Element extends Node implements EventTarget {
   constructor() {
-    dispatch(addObject(this))
-    dispatch(setValue, 'eventTarget', new EventTarget())
+    super()
+    dispatch({ 'type': 'addObject', object: this })
+    dispatch({ 'type': 'setValue', object: this, property: '#listeners', value: {} })
+    dispatch({ 'type': 'setValue', object: this, property: 'nodeType', value: ELEMENT_NODE })
   }
 
   get outerHTML() {
@@ -51,46 +57,51 @@ class Element {
   }
 
   get childNodes() {
-    return this.#children
-  }
-
-  querySelector(x) {
-    return new Element()
-  }
-
-  querySelectorAll(x) {
     return []
   }
 
-  appendChild(node) {
+  querySelector(query: string) {
+    return new Element()
+  }
+
+  querySelectorAll(query: string) {
+    return []
+  }
+
+  appendChild(node: Node) {
     // https://dom.spec.whatwg.org/#concept-node-append
-    console.log(this.tagName, '.appendChild(', node.tagName, ')')
-    node.parent = this
-    node.ownerDocument = this instanceof Document ? this : this.ownerDocument
-    this.#children.push(node)
+    dispatch({ 'type': 'setValue', object: node, property: 'parent', value: this })
+
+    const ownerDocument = getValue(this, 'ownerDocument') ?? this
+    dispatch({ 'type': 'setValue', object: node, property: 'ownerDocument', value: ownerDocument })
+
+    const children = getValue(this, 'children') as Array<any>
+    dispatch({ 'type': 'pushValue', object: children, value: node })
+
     return node
   }
 
-  addEventListener(type, listener) {
-    const eventTarget = getValue(this, 'eventTarget')
-    eventTarget.addEventListener()
-    if (type === 'click') {
-      this.#listeners.push(listener)
+  addEventListener: EventTarget['addEventListener'] = (type, listener) => {
+    const listeners = getValue(this, '#listeners') as Listeners
+    let queue = getValue(listeners, type) as Listener[]
+    if (!queue) {
+      dispatch({ 'type': 'addObject', object: queue, })
     }
+    dispatch({ 'type': 'pushValue', object: queue, 'value': listener })
 
     return
   }
 
-  dispatchEvent(event) {
-    if (this.#listeners.length) {
-      console.log(this.tagName, ': click dispatched')
-      this.#listeners.forEach(listener => listener(event))
-    } else {
-      console.log(this.tagName, ': click bubbling')
-      if (this.parent) {
-        this.parent.dispatchEvent(event)
-      }
-    }
+  dispatchEvent(event: Event) {
+    // if (this.#listeners.length) {
+    //   console.log(this.tagName, ': click dispatched')
+    //   this.#listeners.forEach(listener => listener(event))
+    // } else {
+    //   console.log(this.tagName, ': click bubbling')
+    //   if (this.parent) {
+    //     this.parent.dispatchEvent(event)
+    //   }
+    // }
     return
   }
 
@@ -102,7 +113,7 @@ class Element {
     //  4. Fire a synthetic pointer event named "click" at this element, with the not trusted flag set
     //  5. Unset this elements click in progress flag
     const event = new PointerEvent()
-    event.target = this
+    // event.target = this
     this.dispatchEvent(event)
   }
 }
@@ -110,27 +121,34 @@ class Element {
 const USE_PROXY = false
 
 class Document extends Element {
-  body = new Element()
-  defaultView = undefined
+  get body(): Element {
+    return getValue(this, 'body') as Element
+  }
 
   constructor() {
     super()
-    this.nodeType = DOCUMENT_NODE
-    this.body.tagName = 'body'
-    this.body.ownerDocument = this
+    dispatch({ type: 'addObject', object: this })
+    dispatch({ type: 'setValue', object: this, property: 'nodeType', value: DOCUMENT_NODE })
+
+    const body = new Element()
+    dispatch({ type: 'addObject', object: body })
+    dispatch({ type: 'setValue', object: body, property: 'tagName', value: 'body' })
+    dispatch({ type: 'setValue', object: body, property: 'ownerDocument', value: this })
   }
 
-  createElement(localName) {
+  createElement(localName: string) {
     const element = new Element()
-    dispatch(setValue(element, 'ownerDocument', this))
-    dispatch(setValue(element, 'tagName', localName))
-    element.ownerDocument = this
-    element.tagName = localName
+    dispatch({ type: 'addObject', object: element })
+    dispatch({ type: 'setValue', object: element, property: 'ownerDocument', value: this })
+    dispatch({ type: 'setValue', object: element, property: 'tagName', value: localName })
     return element
   }
 
-  createTextNode(data) {
-    return new Text()
+  createTextNode(data: string) {
+    const textNode = new Text()
+    dispatch({ type: 'addObject', object: textNode })
+    dispatch({ type: 'setValue', object: textNode, property: 'ownerDocument', value: this })
+    dispatch({ type: 'setValue', object: textNode, property: 'data', value: data })
   }
 }
 
@@ -147,7 +165,7 @@ class Navigator {}
 const lazyDom = () => {
   const window = new Window()
   const document = new Document()
-  document.defaultView = window
+  // document.defaultView = window
   const navigator = new Navigator()
   const instances = { document, window, navigator }
   const classes = { HTMLIFrameElement, EventTarget }

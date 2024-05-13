@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import { act, createElement } from 'react'
 import { expect } from 'chai'
-import lazyDom from './lazyDom.mjs'
+import lazyDom from './lazyDom'
 
 describe('react', () => {
   beforeEach(lazyDom)
@@ -18,7 +18,7 @@ describe('react', () => {
     document.appendChild(div)
     const root = createRoot(div)
 
-    root.render()
+    root.render([])
   })
 
   it('supports React.createElement()', () => {
@@ -38,6 +38,7 @@ describe('react', () => {
     act(() => root.render(createElement('span', { onClick }, 'Hello' )))
     const [span] = div.childNodes
 
+    // @ts-expect-error click is on span
     act(() => span.click())
 
     expect(clicked).to.be.true
