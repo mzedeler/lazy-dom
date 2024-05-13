@@ -11,6 +11,7 @@ const initialState: State = {
 import type { Command } from './Command'
 
 export const reducer = (state: State = initialState, command?: Command) => {
+  console.log(command)
   switch (command?.type) {
     case 'addObject':
       state.objects.push(command.object)

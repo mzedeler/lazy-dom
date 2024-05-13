@@ -48,6 +48,18 @@ class Element extends Node implements EventTarget {
     dispatch({ 'type': 'setValue', object: this, property: 'nodeType', value: ELEMENT_NODE })
   }
 
+  get ownerDocument(): string {
+    return getValue(this, 'ownerDocument') as string
+  }
+
+  get tagName(): string {
+    return getValue(this, 'tagName') as string
+  }
+
+  get nodeType(): string {
+    return getValue(this, 'nodeType') as string
+  }
+
   get outerHTML() {
     return ''
   }
@@ -75,7 +87,11 @@ class Element extends Node implements EventTarget {
     const ownerDocument = getValue(this, 'ownerDocument') ?? this
     dispatch({ 'type': 'setValue', object: node, property: 'ownerDocument', value: ownerDocument })
 
-    const children = getValue(this, 'children') as Array<any>
+    let children = getValue(this, 'children') as Array<any>
+    if (!children) {
+      children = []
+      dispatch({ type: 'setValue', object: this, property: 'children', value: children })
+    }
     dispatch({ 'type': 'pushValue', object: children, value: node })
 
     return node
@@ -122,6 +138,7 @@ const USE_PROXY = false
 
 class Document extends Element {
   get body(): Element {
+    console.log('get body: ', getValue(this, 'body'))
     return getValue(this, 'body') as Element
   }
 
@@ -134,6 +151,8 @@ class Document extends Element {
     dispatch({ type: 'addObject', object: body })
     dispatch({ type: 'setValue', object: body, property: 'tagName', value: 'body' })
     dispatch({ type: 'setValue', object: body, property: 'ownerDocument', value: this })
+
+    dispatch({ type: 'setValue', object: this, property: 'body', value: body })
   }
 
   createElement(localName: string) {
@@ -149,6 +168,7 @@ class Document extends Element {
     dispatch({ type: 'addObject', object: textNode })
     dispatch({ type: 'setValue', object: textNode, property: 'ownerDocument', value: this })
     dispatch({ type: 'setValue', object: textNode, property: 'data', value: data })
+    return textNode
   }
 }
 

@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import lazyDom from './lazyDom.js'
 
 describe('main', () => {
-  it.only('initializes correctly', () => {
+  it('initializes correctly', () => {
     lazyDom()
 
     expect(document).to.exist
@@ -52,6 +52,8 @@ describe('main', () => {
   })
 
   describe('Element', () => {
+    beforeEach(lazyDom)
+
     it('has tagName', () => {
       const element = document.createElement('div')
 
