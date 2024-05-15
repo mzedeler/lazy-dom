@@ -34,6 +34,10 @@ class Node {
   get parent(): Node {
     return this.store.parent()
   }
+
+  get parentNode(): Node {
+    return this.store.parent()
+  }
 }
 
 type Future<T> = () => T
@@ -123,9 +127,9 @@ class Element extends Node implements EventTarget {
 
   appendChild(node: Node) {
     const previousChildNodes = this.store.childNodes()
+    node.store.parent = () => this
     this.store.childNodes = () => {
       previousChildNodes.push(node)
-      node.store.parent = () => this
 
       return previousChildNodes
     }
