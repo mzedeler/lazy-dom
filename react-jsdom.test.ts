@@ -36,7 +36,7 @@ describe('react with JSDOM', () => {
     act(() => root.render([]))
   })
 
-  it.only('supports React.createElement()', () => {
+  it('supports React.createElement()', () => {
     const div = document.createElement('div')
     document.body.appendChild(div)
     const root = createRoot(div)
