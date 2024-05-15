@@ -1,13 +1,25 @@
 import { createRoot } from 'react-dom/client'
 import { act, createElement } from 'react'
 import { expect } from 'chai'
-import lazyDom from './lazyDom'
+import { JSDOM } from 'jsdom'
 
 // @ts-expect-error
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-describe('react with lazyDom', () => {
-  beforeEach(lazyDom)
+describe('react with JSDOM', () => {
+  beforeEach(() => {
+    const dom = new JSDOM(``, {
+      url: "https://example.org/",
+      referrer: "https://example.com/",
+      contentType: "text/html",
+      includeNodeLocations: true,
+      storageQuota: 10000000
+    })
+
+    // @ts-expect-error
+    global.window = dom.window
+    global.document = dom.window.document
+  })
 
   it('supports createRoot()', () => {
     const div = document.createElement('div')
