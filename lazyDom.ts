@@ -1,3 +1,5 @@
+// Hierarchy: https://stackoverflow.com/questions/55924114/where-can-i-find-a-complete-description-of-javascript-dom-class-hierarchy
+
 enum NodeTypes {
   ELEMENT_NODE =  1,
   TEXT_NODE = 3,

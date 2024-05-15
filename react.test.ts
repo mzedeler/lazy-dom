@@ -32,13 +32,17 @@ describe('react', () => {
     act(() => root.render(createElement('h1', {}, 'Hello' )))
   })
 
-  it('supports onClick() with Reacts synthetic events', async () => {
+  it.only('supports onClick() with Reacts synthetic events', async () => {
     const div = document.createElement('div')
     document.appendChild(div)
     const root = createRoot(div)
     let clicked = false
     const onClick = () => { clicked = true }
-    act(() => root.render(createElement('span', { onClick }, 'Hello' )))
+    const children: ReturnType<typeof createElement>[] = []
+    for (let i = 0; i < 100000; i++) {
+      children.push(createElement('span', {}, 'child: ' + i))
+    }
+    act(() => root.render(createElement('span', { onClick, children }, 'Hello' )))
     const [span] = div.childNodes
 
     // @ts-expect-error click is on span
