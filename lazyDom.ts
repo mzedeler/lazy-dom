@@ -8,10 +8,13 @@ enum NodeTypes {
 
 class NodeStore {
   nodeType: Future<NodeTypes> = () => {
-    throw valueNotSetError()
+    throw valueNotSetError('nodeType')
   }
   ownerDocument: Future<Document> = () => {
-    throw valueNotSetError()
+    throw valueNotSetError('ownerDocument')
+  }
+  parent: Future<Node> = () => {
+    throw valueNotSetError('parent')
   }
 }
 
@@ -25,15 +28,19 @@ class Node {
   get ownerDocument(): Document {
     return this.store.ownerDocument()
   }
+
+  get parent(): Node {
+    return this.store.parent()
+  }
 }
 
 type Future<T> = () => T
 
-const valueNotSetError = () => new Error('value not set')
+const valueNotSetError = (property?: string) => new Error('value not set: ' + (property || ''))
 
 class TextStore extends NodeStore {
   data: Future<string> = () => {
-    throw valueNotSetError()
+    throw valueNotSetError('data')
   }
 }
 
@@ -41,8 +48,27 @@ class Text extends Node {
   store = new TextStore()
 }
 
+type EventType = 'click'
+
+class EventStore {
+  type: Future<EventType> = () => {
+    throw valueNotSetError('type')
+  }
+  target: Future<Node> = () => {
+    throw valueNotSetError('target')
+  }
+}
+
 class Event {
-  target = undefined
+  store = new EventStore()
+
+  get target(): Node {
+    return this.store.target()
+  }
+
+  get type(): EventType {
+    return this.store.type()
+  }
 }
 
 class UIEvent extends Event {}
@@ -55,15 +81,19 @@ type Listeners =  Record<string, Listener[]>
 
 interface EventTarget {
   addEventListener: (type: string, listener: Listener) => void
+  dispatchEvent: (event: Event) => void
 }
 
 class ElementStore extends NodeStore {
   eventListeners: Future<Listeners> = () => ({})
   tagName: Future<string> = () => {
-    throw valueNotSetError()
+    throw valueNotSetError('tagName')
   }
-  childNodes: Future<Array<typeof Node>> = () => []
+  childNodes: Future<Array<Node>> = () => []
 }
+
+const isEventTarget = (node: unknown): node is EventTarget =>
+  Boolean((node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
 
 class Element extends Node implements EventTarget {
   store = new ElementStore()
@@ -89,10 +119,11 @@ class Element extends Node implements EventTarget {
     return this.store.childNodes()
   }
 
-  appendChild(node: typeof Node) {
+  appendChild(node: Node) {
     const previousChildNodes = this.store.childNodes()
     this.store.childNodes = () => {
       previousChildNodes.push(node)
+      node.store.parent = () => this
 
       return previousChildNodes
     }
@@ -113,12 +144,24 @@ class Element extends Node implements EventTarget {
   }
 
   dispatchEvent(event: Event) {
-    return
+    const listeners = this.store.eventListeners()
+    const queue = listeners[event.type]
+    if (queue && queue.length) {
+      console.log('dispatch', this.store.tagName())
+      queue.forEach(listener => listener(event))
+    } else {
+      console.log('parent')
+      const parent = this.store.parent()
+      if (isEventTarget(parent)) {
+        parent.dispatchEvent(event)
+      }
+    }
   }
 
   click() {
     const event = new PointerEvent()
-    // event.target = this
+    event.store.type = () => 'click'
+    event.store.target = () => this
     this.dispatchEvent(event)
   }
 
@@ -137,7 +180,7 @@ class Element extends Node implements EventTarget {
 
 class DocumentStore extends ElementStore {
   body: Future<Element> = () => {
-    throw valueNotSetError()
+    throw valueNotSetError('body')
   }
 }
 

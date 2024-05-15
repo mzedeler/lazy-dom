@@ -2,7 +2,7 @@
 import { expect } from 'chai'
 import lazyDom from './lazyDom.js'
 
-describe.only('main', () => {
+describe('main', () => {
   it('initializes correctly', () => {
     lazyDom()
 
