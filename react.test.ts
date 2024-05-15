@@ -3,6 +3,9 @@ import { act, createElement } from 'react'
 import { expect } from 'chai'
 import lazyDom from './lazyDom'
 
+// @ts-expect-error
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
+
 describe('react', () => {
   beforeEach(lazyDom)
 
@@ -18,7 +21,7 @@ describe('react', () => {
     document.appendChild(div)
     const root = createRoot(div)
 
-    root.render([])
+    act(() => root.render([]))
   })
 
   it('supports React.createElement()', () => {
@@ -26,7 +29,7 @@ describe('react', () => {
     document.appendChild(div)
     const root = createRoot(div)
 
-    root.render(createElement('h1', {}, 'Hello' ))
+    act(() => root.render(createElement('h1', {}, 'Hello' )))
   })
 
   it('supports onClick() with Reacts synthetic events', async () => {

@@ -147,10 +147,8 @@ class Element extends Node implements EventTarget {
     const listeners = this.store.eventListeners()
     const queue = listeners[event.type]
     if (queue && queue.length) {
-      console.log('dispatch', this.store.tagName())
       queue.forEach(listener => listener(event))
     } else {
-      console.log('parent')
       const parent = this.store.parent()
       if (isEventTarget(parent)) {
         parent.dispatchEvent(event)
