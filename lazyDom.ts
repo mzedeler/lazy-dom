@@ -1,24 +1,45 @@
-import { Command } from './src/Command'
-import { addObject } from './src/commands/addObject'
-import { setValue } from './src/commands/setValue'
-import { reducer } from './src/reducer'
-
-const ELEMENT_NODE =  1
-const TEXT_NODE = 3
-const COMMENT_NODE = 8
-const DOCUMENT_NODE = 9
-const DOCUMENT_FRAGMENT_NODE = 11
-
-let state = reducer()
-const dispatch = (command: Command) => {
-  state = reducer(state, command)
+enum NodeTypes {
+  ELEMENT_NODE =  1,
+  TEXT_NODE = 3,
+  COMMENT_NODE = 8,
+  DOCUMENT_NODE = 9,
+  DOCUMENT_FRAGMENT_NODE = 11
 }
 
-const getValue = (object: Object, property: string) => state.values.get(object)?.[property]
+class NodeStore {
+  nodeType: Future<NodeTypes> = () => {
+    throw valueNotSetError()
+  }
+  ownerDocument: Future<Document> = () => {
+    throw valueNotSetError()
+  }
+}
 
-class Node {}
+class Node {
+  store = new NodeStore()
 
-class Text extends Node {}
+  get nodeType(): NodeTypes {
+    return this.store.nodeType()
+  }
+
+  get ownerDocument(): Document {
+    return this.store.ownerDocument()
+  }
+}
+
+type Future<T> = () => T
+
+const valueNotSetError = () => new Error('value not set')
+
+class TextStore extends NodeStore {
+  data: Future<string> = () => {
+    throw valueNotSetError()
+  }
+}
+
+class Text extends Node {
+  store = new TextStore()
+}
 
 class Event {
   target = undefined
@@ -27,11 +48,7 @@ class Event {
 class UIEvent extends Event {}
 class MouseEvent extends UIEvent {}
 class PointerEvent extends MouseEvent {}
-class EventTarget {
-  constructor() {
-    dispatch(addObject(this))
-  }
-}
+class EventTarget {}
 
 type Listener = (event: Event) => any
 type Listeners =  Record<string, Listener[]>
@@ -40,36 +57,73 @@ interface EventTarget {
   addEventListener: (type: string, listener: Listener) => void
 }
 
+class ElementStore extends NodeStore {
+  eventListeners: Future<Listeners> = () => ({})
+  tagName: Future<string> = () => {
+    throw valueNotSetError()
+  }
+  childNodes: Future<Array<typeof Node>> = () => []
+}
+
 class Element extends Node implements EventTarget {
+  store = new ElementStore()
+
   constructor() {
     super()
-    dispatch({ 'type': 'addObject', object: this })
-    dispatch({ 'type': 'setValue', object: this, property: '#listeners', value: {} })
-    dispatch({ 'type': 'setValue', object: this, property: 'nodeType', value: ELEMENT_NODE })
+    this.store.nodeType = () => NodeTypes.ELEMENT_NODE
   }
 
-  get ownerDocument(): string {
-    return getValue(this, 'ownerDocument') as string
+  get ownerDocument() {
+    return this.store.ownerDocument()
   }
 
-  get tagName(): string {
-    return getValue(this, 'tagName') as string
-  }
-
-  get nodeType(): string {
-    return getValue(this, 'nodeType') as string
+  get tagName() {
+    return this.store.tagName()
   }
 
   get outerHTML() {
     return ''
   }
 
-  matches() {
-    return false
+  get childNodes() {
+    return this.store.childNodes()
   }
 
-  get childNodes() {
-    return []
+  appendChild(node: typeof Node) {
+    const previousChildNodes = this.store.childNodes()
+    this.store.childNodes = () => {
+      previousChildNodes.push(node)
+
+      return previousChildNodes
+    }
+  }
+
+  addEventListener: EventTarget['addEventListener'] = (type, listener) => {
+    const previousEventListeners = this.store.eventListeners()
+    this.store.eventListeners = () => {
+      let queue = previousEventListeners[type]
+      if (!queue) {
+        queue = []
+      }
+      queue.push(listener)
+      previousEventListeners[type] = queue
+
+      return previousEventListeners
+    }
+  }
+
+  dispatchEvent(event: Event) {
+    return
+  }
+
+  click() {
+    const event = new PointerEvent()
+    // event.target = this
+    this.dispatchEvent(event)
+  }
+
+  matches() {
+    return false
   }
 
   querySelector(query: string) {
@@ -79,95 +133,57 @@ class Element extends Node implements EventTarget {
   querySelectorAll(query: string) {
     return []
   }
+}
 
-  appendChild(node: Node) {
-    // https://dom.spec.whatwg.org/#concept-node-append
-    dispatch({ 'type': 'setValue', object: node, property: 'parent', value: this })
-
-    const ownerDocument = getValue(this, 'ownerDocument') ?? this
-    dispatch({ 'type': 'setValue', object: node, property: 'ownerDocument', value: ownerDocument })
-
-    let children = getValue(this, 'children') as Array<any>
-    if (!children) {
-      children = []
-      dispatch({ type: 'setValue', object: this, property: 'children', value: children })
-    }
-    dispatch({ 'type': 'pushValue', object: children, value: node })
-
-    return node
-  }
-
-  addEventListener: EventTarget['addEventListener'] = (type, listener) => {
-    const listeners = getValue(this, '#listeners') as Listeners
-    let queue = getValue(listeners, type) as Listener[]
-    if (!queue) {
-      dispatch({ 'type': 'addObject', object: queue, })
-    }
-    dispatch({ 'type': 'pushValue', object: queue, 'value': listener })
-
-    return
-  }
-
-  dispatchEvent(event: Event) {
-    // if (this.#listeners.length) {
-    //   console.log(this.tagName, ': click dispatched')
-    //   this.#listeners.forEach(listener => listener(event))
-    // } else {
-    //   console.log(this.tagName, ': click bubbling')
-    //   if (this.parent) {
-    //     this.parent.dispatchEvent(event)
-    //   }
-    // }
-    return
-  }
-
-  click() {
-    // https://html.spec.whatwg.org/multipage/interaction.html#dom-click-dev
-    //  1. If this element is a form control that is disabled, return
-    //  2. If this elements click in progress flag is set, return
-    //  3. Set this elements click in progress flag
-    //  4. Fire a synthetic pointer event named "click" at this element, with the not trusted flag set
-    //  5. Unset this elements click in progress flag
-    const event = new PointerEvent()
-    // event.target = this
-    this.dispatchEvent(event)
+class DocumentStore extends ElementStore {
+  body: Future<Element> = () => {
+    throw valueNotSetError()
   }
 }
 
-const USE_PROXY = false
+class BodyStore extends ElementStore {
+
+}
+
+class Body extends Element {
+  store = new BodyStore()
+
+  constructor() {
+    super()
+
+    this.store.tagName = () => 'body'
+  }
+}
 
 class Document extends Element {
+  store = new DocumentStore()
+
   get body(): Element {
-    console.log('get body: ', getValue(this, 'body'))
-    return getValue(this, 'body') as Element
+    return this.store.body()
   }
 
   constructor() {
     super()
-    dispatch({ type: 'addObject', object: this })
-    dispatch({ type: 'setValue', object: this, property: 'nodeType', value: DOCUMENT_NODE })
-
-    const body = new Element()
-    dispatch({ type: 'addObject', object: body })
-    dispatch({ type: 'setValue', object: body, property: 'tagName', value: 'body' })
-    dispatch({ type: 'setValue', object: body, property: 'ownerDocument', value: this })
-
-    dispatch({ type: 'setValue', object: this, property: 'body', value: body })
+    this.store.nodeType = () => NodeTypes.DOCUMENT_NODE
+    this.store.body = () => {
+      const body = new Body()
+      body.store.ownerDocument = () => this
+      return body
+    }
   }
 
-  createElement(localName: string) {
+  createElement(localName: string): Element {
     const element = new Element()
-    dispatch({ type: 'addObject', object: element })
-    dispatch({ type: 'setValue', object: element, property: 'ownerDocument', value: this })
-    dispatch({ type: 'setValue', object: element, property: 'tagName', value: localName })
+    element.store.tagName = () => localName
+    element.store.ownerDocument = () => this
     return element
   }
 
-  createTextNode(data: string) {
+  createTextNode(data: string): Text {
     const textNode = new Text()
-    dispatch({ type: 'addObject', object: textNode })
-    dispatch({ type: 'setValue', object: textNode, property: 'ownerDocument', value: this })
-    dispatch({ type: 'setValue', object: textNode, property: 'data', value: data })
+    textNode.store.ownerDocument = () => this
+    textNode.store.data = () => data
+
     return textNode
   }
 }
