@@ -7,7 +7,7 @@ import lazyDom from './lazyDom'
 // @ts-expect-error
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-const bench = new Bench({ time: 1000 })
+const bench = new Bench({ time: 100 })
 
 const lazyDomOptions = { beforeAll: lazyDom }
 const JSDOMOptions = { beforeAll: () => {

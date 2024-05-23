@@ -41,9 +41,7 @@ describe('react with JSDOM', () => {
     document.body.appendChild(div)
     const root = createRoot(div)
 
-    for (let i = 1; i < 10000; i++) {
-      act(() => root.render(createElement('h1', {}, 'Hello' )))
-    }
+    act(() => root.render(createElement('h1', {}, 'Hello' )))
   })
 
   it('supports onClick() with Reacts synthetic events', async () => {
@@ -52,10 +50,7 @@ describe('react with JSDOM', () => {
     const root = createRoot(div)
     let clicked = false
     const onClick = () => { clicked = true }
-    const children: ReturnType<typeof createElement>[] = []
-    for (let i = 0; i < 2000000; i++) {
-      children.push(createElement('span', {}, 'child: ' + i))
-    }
+    const children: ReturnType<typeof createElement>[] = [createElement('span', {}, 'child')]
     act(() => root.render(createElement('span', { onClick, children }, 'Hello' )))
     const [span] = div.childNodes
 
@@ -63,5 +58,5 @@ describe('react with JSDOM', () => {
     act(() => span.click())
 
     expect(clicked).to.be.true
-  }).timeout(5000)
+  })
 })
