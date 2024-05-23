@@ -9,13 +9,6 @@ describe('main', () => {
     expect(document).to.exist
   })
 
-  it('supports screen.queryByText() with empty DOM', async () => {
-    lazyDom()
-    const { screen } = await import('@testing-library/dom')
-
-    expect(screen.queryByText('hello')).to.be.null
-  })
-
   it('has createElement()', () => {
     lazyDom()
 

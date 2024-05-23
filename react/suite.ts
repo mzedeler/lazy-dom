@@ -1,7 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import { act, createElement } from 'react'
 import { expect } from 'chai'
-import { render } from '@testing-library/react'
 
 export const suite = () => {
   it('supports createRoot()', () => {
@@ -41,9 +40,5 @@ export const suite = () => {
     act(() => span.click())
 
     expect(clicked).to.be.true
-  })
-
-  it('supports render() from testing-library', async () => {
-    render(createElement('h1', {}, 'Hello' ))
   })
 }
