@@ -1,14 +1,9 @@
 import { createRoot } from 'react-dom/client'
 import { act, createElement } from 'react'
 import { expect } from 'chai'
-import lazyDom from './lazyDom'
+import { render } from '@testing-library/react'
 
-// @ts-expect-error
-globalThis.IS_REACT_ACT_ENVIRONMENT = true
-
-describe('react with lazyDom', () => {
-  beforeEach(lazyDom)
-
+export const suite = () => {
   it('supports createRoot()', () => {
     const div = document.createElement('div')
     document.body.appendChild(div)
@@ -47,4 +42,8 @@ describe('react with lazyDom', () => {
 
     expect(clicked).to.be.true
   })
-})
+
+  it('supports render() from testing-library', async () => {
+    render(createElement('h1', {}, 'Hello' ))
+  })
+}
