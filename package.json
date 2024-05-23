@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "benchmark": "tsx benchmark.ts",
+    "benchmark:watch": "tsx watch benchmark.ts",
     "test:watch": "nodemon --config nodemon.test.json",
     "test": "mocha"
   },
@@ -25,7 +27,9 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "source-map-support": "^0.5.21",
-    "ts-node": "^10.9.2"
+    "tinybench": "^2.8.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.11.0"
   },
   "dependencies": {
     "jsdom": "^24.0.0"
