@@ -3,13 +3,5 @@
     "ts"
   ],
   "spec": ["**/*.test.ts"],
-  "node-option": [
-    "experimental-specifier-resolution=node",
-    "loader=ts-node/esm"
-  ],
-  "require": [
-    "ts-node/register",
-    "source-map-support/register"
-  ],
   "recursive": true
 }

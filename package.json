@@ -6,8 +6,8 @@
   "scripts": {
     "benchmark": "tsx benchmark.ts",
     "benchmark:watch": "tsx watch benchmark.ts",
-    "test:watch": "nodemon --config nodemon.test.json",
-    "test": "mocha"
+    "test:watch": "tsx watch ./node_modules/mocha/bin/mocha.js",
+    "test": "tsx watch ./node_modules/mocha/bin/mocha.js"
   },
   "type": "module",
   "keywords": [],
@@ -28,7 +28,6 @@
     "react-dom": "^18.3.1",
     "source-map-support": "^0.5.21",
     "tinybench": "^2.8.0",
-    "ts-node": "^10.9.2",
     "tsx": "^4.11.0"
   },
   "dependencies": {
