@@ -15,9 +15,7 @@ class NodeStore {
   ownerDocument: Future<Document> = () => {
     throw valueNotSetError('ownerDocument')
   }
-  parent: Future<Node> = () => {
-    throw valueNotSetError('parent')
-  }
+  parent: Future<Node | undefined> = () => undefined
 }
 
 class Node {
@@ -31,11 +29,11 @@ class Node {
     return this.nodeStore.ownerDocument()
   }
 
-  get parent(): Node {
+  get parent(): Node | undefined {
     return this.nodeStore.parent()
   }
 
-  get parentNode(): Node {
+  get parentNode(): Node | undefined {
     return this.nodeStore.parent()
   }
 }
@@ -57,6 +55,10 @@ class Text extends Node {
     super()
 
     this.nodeStore.nodeType = () => NodeTypes.TEXT_NODE
+  }
+
+  get textContent() {
+    return this.textStore.data()
   }
 
   get data() {
@@ -245,7 +247,7 @@ class Document {
   }
 
   get all(): Element[] {
-    return this.lookupStore.elements()
+    return this.lookupStore.elements().filter(x => x.parent)
   }
 
   get body(): Element {
