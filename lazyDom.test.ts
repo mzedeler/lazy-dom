@@ -35,11 +35,21 @@ describe('main', () => {
     })
   })
 
+  describe('Body', () => {
+    it('has tagName', () => {
+      expect(document.body).to.have.property('tagName', 'BODY')
+    })
+
+    it('has nodeType', () => {
+      expect(document.body).to.have.property('nodeType', document.ELEMENT_NODE)
+    })
+  })
+
   describe('Element', () => {
     it('has tagName', () => {
       const element = document.createElement('div')
 
-      expect(element).to.have.property('tagName', 'div')
+      expect(element).to.have.property('tagName', 'DIV')
     })
 
     it('has nodeType set to ELEMENT_NODE (1)', () => {

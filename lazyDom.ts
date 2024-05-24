@@ -51,6 +51,14 @@ class TextStore extends NodeStore {
 }
 
 class Text extends Node {
+  get data() {
+    return this.store.data()
+  }
+
+  set data(data: string) {
+    this.store.data = () => data
+  }
+
   store = new TextStore()
 }
 
@@ -102,11 +110,23 @@ class ElementStore extends NodeStore {
 const isEventTarget = (node: unknown): node is EventTarget =>
   Boolean((node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
 
+class LookupStore {
+  elements: Future<Element[]> = () => []
+}
+
 class Element extends Node implements EventTarget {
   store = new ElementStore()
 
+  static lookupStore = new LookupStore()
+
   constructor() {
     super()
+    const previousElements = Element.lookupStore.elements
+    Element.lookupStore.elements = () => {
+      const result = previousElements()
+      result.push(this)
+      return result
+    }
     this.store.nodeType = () => NodeTypes.ELEMENT_NODE
   }
 
@@ -115,7 +135,7 @@ class Element extends Node implements EventTarget {
   }
 
   get tagName() {
-    return this.store.tagName()
+    return this.store.tagName().toUpperCase()
   }
 
   get outerHTML() {
@@ -187,7 +207,8 @@ class Element extends Node implements EventTarget {
   }
 
   querySelectorAll(query: string) {
-    return []
+    console.log(Element.lookupStore.elements().map(e => e.nodeType))
+    return Element.lookupStore.elements()
   }
 }
 
@@ -198,15 +219,13 @@ class DocumentStore extends ElementStore {
 }
 
 class BodyStore extends ElementStore {
-
 }
 
 class Body extends Element {
-  store = new BodyStore()
+  bodyStore = new BodyStore()
 
   constructor() {
     super()
-
     this.store.tagName = () => 'body'
   }
 }
@@ -226,6 +245,7 @@ class Document extends Element {
       body.store.ownerDocument = () => this
       return body
     }
+    Object.assign(this, NodeTypes)
   }
 
   createElement(localName: string): Element {
