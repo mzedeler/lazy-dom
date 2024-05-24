@@ -1,10 +1,6 @@
-import { Element } from './Element'
-
-class BodyStore  {}
+import { Element } from "./Element"
 
 export class Body extends Element {
-  bodyStore = new BodyStore()
-
   constructor() {
     super()
     this.elementStore.tagName = () => 'body'

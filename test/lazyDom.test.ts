@@ -70,5 +70,18 @@ describe('main', () => {
 
       expect(element).to.have.property('ownerDocument', document)
     })
+
+    it('has addEventListener', () => {
+      const element = document.createElement('div')
+
+      expect(element).to.have.property('addEventListener')
+      expect(element).to.have.property('addEventListener').instanceOf(Function)
+    })
+
+    it('is possible to call addEventListener', () => {
+      const element = document.createElement('div')
+
+      expect(() => element.addEventListener('click', () => {})).not.to.throw
+    })
   })
 })

@@ -35,7 +35,7 @@ export class Document {
     return this.lookupStore.elements().filter(x => x.parent)
   }
 
-  get body(): Element {
+  get body(): Body {
     return this.documentStore.body()
   }
 
