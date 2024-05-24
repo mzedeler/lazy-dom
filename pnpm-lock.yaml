@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      jsdom:
-        specifier: ^24.0.0
-        version: 24.0.0
     devDependencies:
       '@testing-library/dom':
         specifier: ^10.1.0
@@ -36,6 +32,12 @@ importers:
       chai:
         specifier: ^5.1.0
         version: 5.1.0
+      global-jsdom:
+        specifier: ^24.0.0
+        version: 24.0.0(jsdom@24.0.0)
+      jsdom:
+        specifier: ^24.0.0
+        version: 24.0.0
       mocha:
         specifier: ^10.4.0
         version: 10.4.0
@@ -561,6 +563,12 @@ packages:
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
+
+  global-jsdom@24.0.0:
+    resolution: {integrity: sha512-CARBUWkqZ3O9VOc2PIVE5kQpdQeJh9eF9kQ7zSeNtmqx5vAFDKMr9XnDt1epVMMrz1s9uK/yFCa4HLwpa6TcPA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      jsdom: '>=24 <25'
 
   globalthis@1.0.4:
     resolution: {integrity: sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==}
@@ -1768,6 +1776,10 @@ snapshots:
       inherits: 2.0.4
       minimatch: 5.0.1
       once: 1.4.0
+
+  global-jsdom@24.0.0(jsdom@24.0.0):
+    dependencies:
+      jsdom: 24.0.0
 
   globalthis@1.0.4:
     dependencies:

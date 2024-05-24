@@ -96,6 +96,7 @@ class ElementStore extends NodeStore {
     throw valueNotSetError('tagName')
   }
   childNodes: Future<Array<Node>> = () => []
+  style: Future<Record<string, unknown>> = () => ({})
 }
 
 const isEventTarget = (node: unknown): node is EventTarget =>
@@ -123,6 +124,14 @@ class Element extends Node implements EventTarget {
 
   get childNodes() {
     return this.store.childNodes()
+  }
+
+  get style() {
+    return this.store.style()
+  }
+
+  setAttribute(name, value) {
+    return
   }
 
   appendChild(node: Node) {
@@ -236,6 +245,12 @@ class Document extends Element {
 }
 
 class Window {
+  get location() {
+    return {
+      href: ''
+    }
+  }
+
   getComputedStyle() {
     return {}
   }
