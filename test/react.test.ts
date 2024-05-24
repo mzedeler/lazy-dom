@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client'
 import { act, createElement } from 'react'
 import { expect } from 'chai'
 
-export const suite = () => {
+describe('React', () => {
   it('supports createRoot()', () => {
     const div = document.createElement('div')
     document.body.appendChild(div)
@@ -41,4 +41,4 @@ export const suite = () => {
 
     expect(clicked).to.be.true
   })
-}
+})
