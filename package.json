@@ -6,8 +6,10 @@
   "scripts": {
     "benchmark": "tsx benchmark.ts",
     "benchmark:watch": "tsx watch benchmark.ts",
-    "test": "echo '*** JSDOM ***'; tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js && echo '*** lazyDom ***'; tsx --import ./register.js ./node_modules/mocha/bin/mocha.js ",
-    "test:watch": "tsx watch ./node_modules/mocha/bin/mocha.js",
+    "test:lazydom": "echo '*** lazyDom ***'; tsx --import ./register.js ./node_modules/mocha/bin/mocha.js ",
+    "test:jsdom": "echo '*** JSDOM ***'; tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js",
+    "test": "pnpm test:jsdom && pnpm test:lazydom",
+    "test:watch": "nodemon --config nodemon.test.json",
     "dev": "pnpm benchmark && pnpm test",
     "dev:watch": "nodemon --config nodemon.dev.json"
   },
