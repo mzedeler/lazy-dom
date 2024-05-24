@@ -1,29 +1,20 @@
 
 import { expect } from 'chai'
-import lazyDom from './lazyDom.js'
 
 describe('main', () => {
   it('initializes correctly', () => {
-    lazyDom()
-
     expect(document).to.exist
   })
 
   it('has createElement()', () => {
-    lazyDom()
-
     const div = document.createElement('div')
   })
 
   it('has createTextNode()', () => {
-    lazyDom()
-
     const textNode = document.createTextNode('hello there')
   })
 
   it('has appendChild()', () => {
-    lazyDom()
-
     const div = document.createElement('div')
     const textNode = document.createTextNode('hello there')
 
@@ -45,8 +36,6 @@ describe('main', () => {
   })
 
   describe('Element', () => {
-    beforeEach(lazyDom)
-
     it('has tagName', () => {
       const element = document.createElement('div')
 

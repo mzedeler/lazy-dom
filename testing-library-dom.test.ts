@@ -12,4 +12,18 @@ describe('@testing-library/dom', () => {
 
     expect(screen.queryByText('hello')).to.be.null
   })
+
+  it('supports screen.queryByText() where it finds a node', async () => {
+    console.log(document.body)
+
+    const div = document.createElement('div')
+    const textNode = document.createTextNode('hello')
+    div.appendChild(textNode)
+    document.body.appendChild(div)
+
+    console.log('------------')
+    console.log(document.body.outerHTML)
+
+    expect(screen.queryByText('hello')).to.be.null
+  })
 })
