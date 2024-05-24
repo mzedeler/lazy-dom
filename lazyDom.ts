@@ -21,22 +21,22 @@ class NodeStore {
 }
 
 class Node {
-  store = new NodeStore()
+  nodeStore = new NodeStore()
 
   get nodeType(): NodeTypes {
-    return this.store.nodeType()
+    return this.nodeStore.nodeType()
   }
 
   get ownerDocument(): Document {
-    return this.store.ownerDocument()
+    return this.nodeStore.ownerDocument()
   }
 
   get parent(): Node {
-    return this.store.parent()
+    return this.nodeStore.parent()
   }
 
   get parentNode(): Node {
-    return this.store.parent()
+    return this.nodeStore.parent()
   }
 }
 
@@ -44,22 +44,28 @@ type Future<T> = () => T
 
 const valueNotSetError = (property?: string) => new Error('value not set: ' + (property || ''))
 
-class TextStore extends NodeStore {
+class TextStore  {
   data: Future<string> = () => {
     throw valueNotSetError('data')
   }
 }
 
 class Text extends Node {
+  textStore = new TextStore()
+
+  constructor() {
+    super()
+
+    this.nodeStore.nodeType = () => NodeTypes.TEXT_NODE
+  }
+
   get data() {
-    return this.store.data()
+    return this.textStore.data()
   }
 
   set data(data: string) {
-    this.store.data = () => data
+    this.textStore.data = () => data
   }
-
-  store = new TextStore()
 }
 
 type EventType = 'click'
@@ -74,14 +80,14 @@ class EventStore {
 }
 
 class Event {
-  store = new EventStore()
+  eventStore = new EventStore()
 
   get target(): Node {
-    return this.store.target()
+    return this.eventStore.target()
   }
 
   get type(): EventType {
-    return this.store.type()
+    return this.eventStore.type()
   }
 }
 
@@ -98,7 +104,7 @@ interface EventTarget {
   dispatchEvent: (event: Event) => void
 }
 
-class ElementStore extends NodeStore {
+class ElementStore {
   eventListeners: Future<Listeners> = () => ({})
   tagName: Future<string> = () => {
     throw valueNotSetError('tagName')
@@ -110,32 +116,21 @@ class ElementStore extends NodeStore {
 const isEventTarget = (node: unknown): node is EventTarget =>
   Boolean((node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
 
-class LookupStore {
-  elements: Future<Element[]> = () => []
-}
 
 class Element extends Node implements EventTarget {
-  store = new ElementStore()
-
-  static lookupStore = new LookupStore()
+  elementStore = new ElementStore()
 
   constructor() {
     super()
-    const previousElements = Element.lookupStore.elements
-    Element.lookupStore.elements = () => {
-      const result = previousElements()
-      result.push(this)
-      return result
-    }
-    this.store.nodeType = () => NodeTypes.ELEMENT_NODE
+    this.nodeStore.nodeType = () => NodeTypes.ELEMENT_NODE
   }
 
   get ownerDocument() {
-    return this.store.ownerDocument()
+    return this.nodeStore.ownerDocument()
   }
 
   get tagName() {
-    return this.store.tagName().toUpperCase()
+    return this.elementStore.tagName().toUpperCase()
   }
 
   get outerHTML() {
@@ -143,21 +138,21 @@ class Element extends Node implements EventTarget {
   }
 
   get childNodes() {
-    return this.store.childNodes()
+    return this.elementStore.childNodes()
   }
 
   get style() {
-    return this.store.style()
+    return this.elementStore.style()
   }
 
-  setAttribute(name, value) {
+  setAttribute() {
     return
   }
 
   appendChild(node: Node) {
-    const previousChildNodes = this.store.childNodes()
-    node.store.parent = () => this
-    this.store.childNodes = () => {
+    const previousChildNodes = this.elementStore.childNodes()
+    node.nodeStore.parent = () => this
+    this.elementStore.childNodes = () => {
       previousChildNodes.push(node)
 
       return previousChildNodes
@@ -165,8 +160,8 @@ class Element extends Node implements EventTarget {
   }
 
   addEventListener: EventTarget['addEventListener'] = (type, listener) => {
-    const previousEventListeners = this.store.eventListeners()
-    this.store.eventListeners = () => {
+    const previousEventListeners = this.elementStore.eventListeners()
+    this.elementStore.eventListeners = () => {
       let queue = previousEventListeners[type]
       if (!queue) {
         queue = []
@@ -179,12 +174,12 @@ class Element extends Node implements EventTarget {
   }
 
   dispatchEvent(event: Event) {
-    const listeners = this.store.eventListeners()
+    const listeners = this.elementStore.eventListeners()
     const queue = listeners[event.type]
     if (queue && queue.length) {
       queue.forEach(listener => listener(event))
     } else {
-      const parent = this.store.parent()
+      const parent = this.nodeStore.parent()
       if (isEventTarget(parent)) {
         parent.dispatchEvent(event)
       }
@@ -193,8 +188,8 @@ class Element extends Node implements EventTarget {
 
   click() {
     const event = new PointerEvent()
-    event.store.type = () => 'click'
-    event.store.target = () => this
+    event.eventStore.type = () => 'click'
+    event.eventStore.target = () => this
     this.dispatchEvent(event)
   }
 
@@ -207,18 +202,12 @@ class Element extends Node implements EventTarget {
   }
 
   querySelectorAll(query: string) {
-    console.log(Element.lookupStore.elements().map(e => e.nodeType))
-    return Element.lookupStore.elements()
+    return this.ownerDocument.all
   }
 }
 
-class DocumentStore extends ElementStore {
-  body: Future<Element> = () => {
-    throw valueNotSetError('body')
-  }
-}
 
-class BodyStore extends ElementStore {
+class BodyStore  {
 }
 
 class Body extends Element {
@@ -226,40 +215,63 @@ class Body extends Element {
 
   constructor() {
     super()
-    this.store.tagName = () => 'body'
+    this.elementStore.tagName = () => 'body'
   }
 }
 
-class Document extends Element {
-  store = new DocumentStore()
+class LookupStore {
+  elements: Future<Element[]> = () => []
+}
 
-  get body(): Element {
-    return this.store.body()
+class DocumentStore  {
+  nodeType = () => NodeTypes.DOCUMENT_NODE
+
+  body: Future<Element> = () => {
+    throw valueNotSetError('body')
   }
+}
+
+class Document {
+  documentStore = new DocumentStore()
+  lookupStore = new LookupStore()
 
   constructor() {
-    super()
-    this.store.nodeType = () => NodeTypes.DOCUMENT_NODE
-    this.store.body = () => {
+    this.documentStore.body = () => {
       const body = new Body()
-      body.store.ownerDocument = () => this
+      body.nodeStore.ownerDocument = () => this
       return body
     }
     Object.assign(this, NodeTypes)
   }
 
+  get all(): Element[] {
+    return this.lookupStore.elements()
+  }
+
+  get body(): Element {
+    return this.documentStore.body()
+  }
+
   createElement(localName: string): Element {
     const element = new Element()
-    element.store.tagName = () => localName
-    element.store.ownerDocument = () => this
+    element.elementStore.tagName = () => localName
+    element.nodeStore.ownerDocument = () => this
+
+    const elements = this.lookupStore.elements
+    const elementsFuture = () => {
+      const result = elements ? elements() : []
+      result.push(element)
+      return result
+    }
+    this.lookupStore.elements = elementsFuture
+
     return element
   }
 
   createTextNode(data: string): Text {
     const textNode = new Text()
-    textNode.store.ownerDocument = () => this
-    textNode.store.data = () => data
-
+    textNode.nodeStore.ownerDocument = () => this
+    textNode.textStore.data = () => data
     return textNode
   }
 }

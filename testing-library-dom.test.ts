@@ -1,7 +1,7 @@
-// import { screen } from '@testing-library/dom'
+import { screen } from '@testing-library/dom'
 import { expect } from 'chai'
 
-describe.skip('@testing-library/dom', () => {
+describe('@testing-library/dom', () => {
   it('supports screen.queryByText() with empty DOM', async () => {
     expect(screen.queryByText('hello')).to.be.null
   })
