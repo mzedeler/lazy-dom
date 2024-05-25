@@ -57,8 +57,12 @@ export class Element extends Node implements EventTarget {
   removeChild(node: Node) {
     node.nodeStore.parent = () => undefined
 
+    // Validation: node not child: throw NotFoundError DOMException
+
     const previousChildNodes = this.elementStore.childNodes
     this.elementStore.childNodes = () => previousChildNodes().filter(childNode => childNode !== node)
+
+    return node
   }
 
   appendChild(node: Node) {
