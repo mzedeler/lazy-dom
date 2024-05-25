@@ -54,13 +54,13 @@ export class Element extends Node implements EventTarget {
     return
   }
 
-  removeChild(node: Node) {
+  removeChild(node: Node): Node {
     node.nodeStore.parent = () => undefined
 
     // Validation: node not child: throw NotFoundError DOMException
 
-    const previousChildNodes = this.elementStore.childNodes
-    this.elementStore.childNodes = () => previousChildNodes().filter(childNode => childNode !== node)
+    const previousChildNodesFuture = this.elementStore.childNodes
+    this.elementStore.childNodes = () => previousChildNodesFuture().filter(childNode => childNode !== node)
 
     return node
   }
@@ -68,9 +68,9 @@ export class Element extends Node implements EventTarget {
   appendChild(node: Node) {
     node.nodeStore.parent = () => this
 
-    const previousChildNodes = this.elementStore.childNodes
+    const previousChildNodesFuture = this.elementStore.childNodes
     this.elementStore.childNodes = () => {
-      const childNodes = previousChildNodes()
+      const childNodes = previousChildNodesFuture()
       childNodes.push(node)
       return childNodes
     }
@@ -81,8 +81,9 @@ export class Element extends Node implements EventTarget {
       if (!listener) {
         return
       }
-      const previousEventListeners = this.elementStore.eventListeners()
+      const previousEventListenersFuture = this.elementStore.eventListeners
       this.elementStore.eventListeners = () => {
+        const previousEventListeners = previousEventListenersFuture()
         let queue = previousEventListeners[type]
         if (!queue) {
           queue = []

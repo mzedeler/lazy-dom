@@ -48,12 +48,11 @@ export class Document implements EventTarget {
     element.nodeStore.ownerDocument = () => this
 
     const elements = this.lookupStore.elements
-    const elementsFuture = () => {
+    this.lookupStore.elements = () => {
       const result = elements ? elements() : []
       result.push(element)
       return result
     }
-    this.lookupStore.elements = elementsFuture
 
     return element
   }
