@@ -54,13 +54,21 @@ export class Element extends Node implements EventTarget {
     return
   }
 
-  appendChild(node: Node) {
-    const previousChildNodes = this.elementStore.childNodes()
-    node.nodeStore.parent = () => this
-    this.elementStore.childNodes = () => {
-      previousChildNodes.push(node)
+  removeChild(node: Node) {
+    node.nodeStore.parent = () => undefined
 
-      return previousChildNodes
+    const previousChildNodes = this.elementStore.childNodes
+    this.elementStore.childNodes = () => previousChildNodes().filter(childNode => childNode !== node)
+  }
+
+  appendChild(node: Node) {
+    node.nodeStore.parent = () => this
+
+    const previousChildNodes = this.elementStore.childNodes
+    this.elementStore.childNodes = () => {
+      const childNodes = previousChildNodes()
+      childNodes.push(node)
+      return childNodes
     }
   }
 
