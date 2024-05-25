@@ -21,6 +21,7 @@ const isEventTarget = (node: unknown): node is EventTarget =>
   Boolean((node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
 
 
+let x = 0
 export class Element extends Node implements EventTarget {
   elementStore = new ElementStore()
 
@@ -63,20 +64,22 @@ export class Element extends Node implements EventTarget {
     }
   }
 
-  addEventListener: EventTarget['addEventListener'] = (type, listener) => {
-    if (!listener) {
-      return
-    }
-    const previousEventListeners = this.elementStore.eventListeners()
-    this.elementStore.eventListeners = () => {
-      let queue = previousEventListeners[type]
-      if (!queue) {
-        queue = []
+  get addEventListener(): EventTarget['addEventListener'] {
+    return (type, listener) => {
+      if (!listener) {
+        return
       }
-      queue.push(listener)
-      previousEventListeners[type] = queue
-
-      return previousEventListeners
+      const previousEventListeners = this.elementStore.eventListeners()
+      this.elementStore.eventListeners = () => {
+        let queue = previousEventListeners[type]
+        if (!queue) {
+          queue = []
+        }
+        queue.push(listener)
+        previousEventListeners[type] = queue
+  
+        return previousEventListeners
+      }
     }
   }
 

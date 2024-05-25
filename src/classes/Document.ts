@@ -5,6 +5,9 @@ import valueNotSetError from "../utils/valueNotSetError"
 import { Element } from "./Element"
 import { Body } from "./Body"
 import { Text } from "./Text"
+import { EventTarget } from "../types/EventTarget"
+import { Listener } from "../types/Listener"
+import { Event } from "./Event"
 
 class LookupStore {
   elements: Future<Element[]> = () => []
@@ -18,7 +21,7 @@ class DocumentStore  {
   }
 }
 
-export class Document {
+export class Document implements EventTarget {
   documentStore = new DocumentStore()
   lookupStore = new LookupStore()
 
@@ -60,6 +63,14 @@ export class Document {
     textNode.nodeStore.ownerDocument = () => this
     textNode.textStore.data = () => data
     return textNode
+  }
+
+  dispatchEvent(event: Event) {
+
+  }
+
+  addEventListener(type: string, listener: Listener) {
+
   }
 }
 

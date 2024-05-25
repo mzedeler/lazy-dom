@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client'
-import { act, createElement } from 'react'
+import * as React from 'react'
 import { expect } from 'chai'
 
-describe('React', () => {
+describe('react', () => {
   it('supports createRoot()', () => {
     const div = document.createElement('div')
     document.body.appendChild(div)
@@ -15,7 +15,7 @@ describe('React', () => {
     document.body.appendChild(div)
     const root = createRoot(div)
 
-    act(() => root.render([]))
+    React.act(() => root.render([]))
   })
 
   it('supports React.createElement()', () => {
@@ -23,7 +23,7 @@ describe('React', () => {
     document.body.appendChild(div)
     const root = createRoot(div)
 
-    act(() => root.render(createElement('h1', {}, 'Hello' )))
+    React.act(() => root.render(React.createElement('h1', {}, 'Hello' )))
   })
 
   it('supports onClick() with Reacts synthetic events', async () => {
@@ -32,12 +32,12 @@ describe('React', () => {
     const root = createRoot(div)
     let clicked = false
     const onClick = () => { clicked = true }
-    const children: ReturnType<typeof createElement>[] = [createElement('span', {}, 'child')]
-    act(() => root.render(createElement('span', { onClick, children }, 'Hello' )))
+    const children: ReturnType<typeof React.createElement>[] = [React.createElement('span', {}, 'child')]
+    React.act(() => root.render(React.createElement('span', { onClick, children }, 'Hello' )))
     const [span] = div.childNodes
 
     // @ts-expect-error click is on span
-    act(() => span.click())
+    React.act(() => span.click())
 
     expect(clicked).to.be.true
   })
