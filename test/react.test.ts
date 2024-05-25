@@ -41,4 +41,29 @@ describe('react', () => {
 
     expect(clicked).to.be.true
   })
+
+  it('supports disappearing elements', async () => {
+    const div = document.createElement('div')
+    document.body.appendChild(div)
+    const root = createRoot(div)
+
+    let resolve: (value?: unknown) => void
+    const promise = new Promise(r => { resolve = r })
+
+    const Container = () => {
+      const [displayChildren, setDisplayChildren] = React.useState(true)
+      React.useEffect(() => { setDisplayChildren(false) }, [])
+
+      if (!displayChildren) {
+        resolve()
+      }
+
+      return displayChildren ? React.createElement('span') : null
+    }
+
+    React.act(() => root.render(React.createElement(Container)))
+    await promise
+
+    expect(div).to.have.property('childNodes').with.length(0)
+  })
 })
