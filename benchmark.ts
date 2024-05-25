@@ -56,6 +56,12 @@ const eventHandling = () => {
   React.act(() => span.click())
 }
 
+const removingChild = async () => {
+  const div = document.createElement('div')
+  document.body.appendChild(div)
+  document.body.removeChild(div)
+}
+
 bench
   .add('lazyDom: React.createRoot', createReactRoot, lazyDomOptions)
   .add('JSDOM: React.createRoot', createReactRoot, JSDOMOptions)
@@ -63,6 +69,8 @@ bench
   .add('JSDOM: React.createRoot + React.createElement', createElement, JSDOMOptions)
   .add('lazyDom: event handling', eventHandling, lazyDomOptions)
   .add('JSDOM: event handling', eventHandling, JSDOMOptions)
+  .add('lazyDom: removing child', removingChild, lazyDomOptions)
+  .add('JSDOM: removing child', removingChild, JSDOMOptions)
 
 const main = async () => {
   await bench.warmup()
