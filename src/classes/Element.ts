@@ -50,6 +50,11 @@ export class Element extends Node implements EventTarget {
     return this.elementStore.style()
   }
 
+  set textContent(data: string) {
+    const ownerDocumentFuture = this.nodeStore.ownerDocument
+    this.elementStore.childNodes = () => [ownerDocumentFuture().createTextNode(data)]
+  }
+
   setAttribute() {
     return
   }

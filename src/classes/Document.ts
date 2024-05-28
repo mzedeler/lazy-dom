@@ -25,6 +25,10 @@ export class Document implements EventTarget {
   documentStore = new DocumentStore()
   lookupStore = new LookupStore()
 
+  debug() {
+    return this.lookupStore.elements()
+  }
+
   constructor() {
     this.documentStore.body = () => {
       const body = new Body()
