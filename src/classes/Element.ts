@@ -3,6 +3,7 @@ import { Listeners } from "../types/Listeners"
 import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 
+import { Text } from "./Text"
 import { Node } from "./Node"
 import { Event } from "./Event"
 import { EventTarget } from "../types/EventTarget"
@@ -50,9 +51,15 @@ export class Element extends Node implements EventTarget {
     return this.elementStore.style()
   }
 
+  get textContent(): string {
+    return this.elementStore.childNodes().filter(childNode => childNode instanceof Text).join('')
+  }
+
   set textContent(data: string) {
     const ownerDocumentFuture = this.nodeStore.ownerDocument
-    this.elementStore.childNodes = () => [ownerDocumentFuture().createTextNode(data)]
+    this.elementStore.childNodes = () => data.length === 0 ? [] : [
+      ownerDocumentFuture().createTextNode(data)
+    ]
   }
 
   setAttribute() {
@@ -64,8 +71,26 @@ export class Element extends Node implements EventTarget {
 
     // Validation: node not child: throw NotFoundError DOMException
 
+    const elementsFuture = node.ownerDocument.lookupStore.elements
+    node.ownerDocument.lookupStore.elements = () => {
+      const stack: Node[] = [node]
+      const remove: Node[] = []
+      do {
+        const nextNode = stack.shift()
+        if (nextNode) {
+          remove.push(nextNode)
+          if (node instanceof Element) {
+            stack.push(...node.childNodes)
+          }
+        }
+      } while (stack.length)
+      return elementsFuture().filter(otherNode => !remove.includes(otherNode))
+    }
+
     const previousChildNodesFuture = this.elementStore.childNodes
-    this.elementStore.childNodes = () => previousChildNodesFuture().filter(childNode => childNode !== node)
+    this.elementStore.childNodes = () => {
+      return previousChildNodesFuture().filter(childNode => childNode !== node)
+    }
 
     return node
   }
