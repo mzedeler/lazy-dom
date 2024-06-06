@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "benchmark": "tsx benchmark.ts",
-    "benchmark:watch": "tsx watch benchmark.ts",
+    "benchmark": "tsx benchmark/benchmark.ts",
+    "benchmark:watch": "tsx watch benchmark/benchmark.ts",
     "test:lazydom": "echo '*** lazyDom ***'; tsx --import ./src/register.js ./node_modules/mocha/bin/mocha.js ",
     "test:jsdom": "echo '*** JSDOM ***'; tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js",
     "test": "pnpm test:jsdom && pnpm test:lazydom",

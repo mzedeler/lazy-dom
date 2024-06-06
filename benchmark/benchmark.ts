@@ -2,7 +2,7 @@ import { Bench } from 'tinybench'
 import { createRoot } from 'react-dom/client'
 import * as React from 'react'
 import { JSDOM } from 'jsdom'
-import lazyDom from './src/lazyDom'
+import lazyDom from '../src/lazyDom'
 
 // @ts-expect-error
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
