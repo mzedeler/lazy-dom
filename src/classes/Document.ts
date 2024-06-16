@@ -3,7 +3,7 @@ import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 
 import { Element } from "./Element"
-import { Body } from "./Body"
+import { HTMLBodyElement } from "./HTMLBodyElement"
 import { Text } from "./Text"
 import { EventTarget } from "../types/EventTarget"
 import { Listener } from "../types/Listener"
@@ -16,7 +16,7 @@ class LookupStore {
 class DocumentStore  {
   nodeType = () => NodeTypes.DOCUMENT_NODE
 
-  body: Future<Body> = () => {
+  body: Future<HTMLBodyElement> = () => {
     throw valueNotSetError('body')
   }
 }
@@ -31,7 +31,7 @@ export class Document implements EventTarget {
 
   constructor() {
     this.documentStore.body = () => {
-      const body = new Body()
+      const body = new HTMLBodyElement()
       body.nodeStore.ownerDocument = () => this
       return body
     }
@@ -42,7 +42,7 @@ export class Document implements EventTarget {
     return this.lookupStore.elements().filter(x => x.parent)
   }
 
-  get body(): Body {
+  get body(): HTMLBodyElement {
     return this.documentStore.body()
   }
 

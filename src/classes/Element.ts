@@ -62,6 +62,10 @@ export class Element extends Node implements EventTarget {
     ]
   }
 
+  attributes() {
+    return []
+  }
+
   setAttribute() {
     return
   }
