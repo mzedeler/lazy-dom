@@ -104,6 +104,8 @@ export class Element extends Node implements EventTarget {
       childNodes.push(node)
       return childNodes
     }
+
+    return node
   }
 
   get addEventListener(): EventTarget['addEventListener'] {
