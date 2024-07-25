@@ -32,6 +32,7 @@ export class Document implements EventTarget {
   constructor() {
     this.documentStore.body = () => {
       const body = new HTMLBodyElement()
+      this.documentStore.body = () => body
       body.nodeStore.ownerDocument = () => this
       return body
     }
