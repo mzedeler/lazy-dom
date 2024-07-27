@@ -3,11 +3,13 @@ import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 
 import { Element } from "./Element"
-import { HTMLBodyElement } from "./HTMLBodyElement"
+import { HTMLBodyElement } from "./elements/HTMLBodyElement"
 import { Text } from "./Text"
 import { EventTarget } from "../types/EventTarget"
 import { Listener } from "../types/Listener"
 import { Event } from "./Event"
+import { HTMLDivElement } from "./elements/HTMLDivElement"
+import { HTMLImageElement } from "./elements/HTMLImageElement"
 
 class LookupStore {
   elements: Future<Element[]> = () => []
@@ -48,7 +50,13 @@ export class Document implements EventTarget {
   }
 
   createElement(localName: string): Element {
-    const element = new Element()
+    let element: Element
+    switch(localName.toUpperCase()) {
+      case 'DIV': element = new HTMLDivElement(); break;
+      case 'IMG': element = new HTMLImageElement; break;
+      default: throw new Error('unknown element name: ' + localName)
+    }
+
     element.elementStore.tagName = () => localName
     element.nodeStore.ownerDocument = () => this
 

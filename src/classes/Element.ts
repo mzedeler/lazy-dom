@@ -8,6 +8,8 @@ import { Node } from "./Node"
 import { Event } from "./Event"
 import { EventTarget } from "../types/EventTarget"
 import { PointerEvent } from "./PointerEvent"
+import { Attr } from "./Attr"
+import { NamedNodeMap } from "./NamedNodeMap"
 
 class ElementStore {
   eventListeners: Future<Listeners> = () => ({})
@@ -16,6 +18,7 @@ class ElementStore {
   }
   childNodes: Future<Array<Node>> = () => []
   style: Future<Record<string, unknown>> = () => ({})
+  attributes: Future<NamedNodeMap> = () => new NamedNodeMap()
 }
 
 const isEventTarget = (node: unknown): node is EventTarget =>
@@ -62,11 +65,18 @@ export class Element extends Node implements EventTarget {
     ]
   }
 
-  attributes() {
-    return []
+  get attributes() {
+    return this.elementStore.attributes()
   }
 
-  setAttribute() {
+  setAttribute(localName: string, value: string) {
+    const previousAttributesFuture = this.elementStore.attributes
+    this.elementStore.attributes = () => {
+      const previousAttributes: NamedNodeMap = previousAttributesFuture()
+      const attr = new Attr(this, localName, value)
+      previousAttributes.setNamedItem(attr)
+      return previousAttributes
+    }
     return
   }
 

@@ -25,11 +25,11 @@ describe('@testing-library/dom', () => {
     })
 
     it.only('supports screen.debug()', () => {
-      render(React.createElement('input', { value: 'hello', onChange: () => {} }))
+      render(React.createElement('img', { alt: 'hello' }))
   
       screen.debug()
   
-      expect(spy.firstCall.args[0]).to.match(/value.*=.*"hello"/)
+      expect(spy.firstCall.args[0]).to.match(/alt.*=.*"hello"/)
     })
    })
  
