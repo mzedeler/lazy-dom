@@ -24,7 +24,7 @@ describe('@testing-library/dom', () => {
       spy.restore()
     })
 
-    it.only('supports screen.debug()', () => {
+    it('supports screen.debug()', () => {
       render(React.createElement('img', { alt: 'hello' }))
   
       screen.debug()

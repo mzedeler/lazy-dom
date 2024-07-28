@@ -10,6 +10,13 @@ import { Listener } from "../types/Listener"
 import { Event } from "./Event"
 import { HTMLDivElement } from "./elements/HTMLDivElement"
 import { HTMLImageElement } from "./elements/HTMLImageElement"
+import { HTMLHeadingElement } from "./elements/HTMLHeadingElement"
+import { HTMLLabelElement } from "./elements/HTMLLabelElement"
+import { HTMLInputElement } from "./elements/HTMLInputElement"
+import { HTMLButtonElement } from "./elements/HTMLButtonElement"
+import { HTMLFormElement } from "./elements/HTMLFormElement"
+import { HTMLSpanElement } from "./elements/HTMLSpanElement"
+import { HTMLUListElement } from "./elements/HTMLUListElement"
 
 class LookupStore {
   elements: Future<Element[]> = () => []
@@ -52,8 +59,20 @@ export class Document implements EventTarget {
   createElement(localName: string): Element {
     let element: Element
     switch(localName.toUpperCase()) {
+      case 'BUTTON': element = new HTMLButtonElement(); break;
+      case 'FORM': element = new HTMLFormElement(); break;
+      case 'H1':
+      case 'H2':
+      case 'H3':
+      case 'H4':
+      case 'H5':
+      case 'H6': element = new HTMLHeadingElement(); break;
+      case 'LABEL': element = new HTMLLabelElement(); break;
       case 'DIV': element = new HTMLDivElement(); break;
-      case 'IMG': element = new HTMLImageElement; break;
+      case 'IMG': element = new HTMLImageElement(); break;
+      case 'INPUT': element = new HTMLInputElement(); break;
+      case 'SPAN': element = new HTMLSpanElement(); break;
+      case 'UL': element = new HTMLUListElement(); break;
       default: throw new Error('unknown element name: ' + localName)
     }
 
