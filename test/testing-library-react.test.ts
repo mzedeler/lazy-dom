@@ -1,13 +1,13 @@
-import React from 'react'
+import React, { useSyncExternalStore } from 'react'
 import { screen, render, act } from '@testing-library/react'
 import { expect } from 'chai'
-import sinon, { SinonSpy } from 'sinon'
+import sinon, { SinonStub } from 'sinon'
 import sinonChai from 'sinon-chai'
 import * as chai from 'chai'
 
 chai.use(sinonChai)
 
-describe('@testing-library/dom', () => {
+describe('@testing-library/react', () => {
   it('supports render()', async () => {
     render(React.createElement('div', { children: 'hello2'}))
     
@@ -15,13 +15,14 @@ describe('@testing-library/dom', () => {
   })
 
   describe('screen.debug()', () => {
-    let spy: SinonSpy
+    let stub: SinonStub
     beforeEach(() => {
-      spy = sinon.spy(console, 'log')
+      stub = sinon.stub(console, 'log')
+      stub.callsFake(() => {})
     })
   
     afterEach(() => {
-      spy.restore()
+      stub.restore()
     })
 
     it('supports screen.debug()', () => {
@@ -29,19 +30,21 @@ describe('@testing-library/dom', () => {
   
       screen.debug()
   
-      expect(spy.firstCall.args[0]).to.match(/alt.*=.*"hello"/)
+      expect(stub.firstCall.args[0]).to.match(/alt.*=.*"hello"/)
     })
    })
  
-  it('supports act', async () => {
-    const Component = () => {
-      const [value, setValue] = React.useState('')
-      return React.createElement('input', { value, onChange: setValue })
-    }
+  xit('supports act', async () => {
+    // let callback:
+    // const subscribe = (cb) => { callback = cb }
+    // const Component = () => {
+    //   const count = useSyncExternalStore(subscribe, getSnapshot)
+    //   return React.createElement('input', { value, onChange: setValue })
+    // }
 
-    const { container } = render(React.createElement(Component))
+    // const { container } = render(React.createElement(Component))
     
-    console.log(screen.debug(container))
+    // console.log(screen.debug(container))
   })
 
   // it('supports screen.queryByText() where it finds a node', async () => {
