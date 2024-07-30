@@ -90,6 +90,7 @@ export class Element extends Node implements EventTarget {
       const stack: Node[] = [node]
       const remove: Node[] = []
       do {
+ENDLESS LOOP HERE
         const nextNode = stack.shift()
         if (nextNode) {
           remove.push(nextNode)
@@ -171,6 +172,7 @@ export class Element extends Node implements EventTarget {
   }
 
   querySelectorAll(query: string) {
+    console.log('querySelectorAll: ', this.ownerDocument)
     return this.ownerDocument.all
   }
 }
