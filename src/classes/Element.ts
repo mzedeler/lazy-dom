@@ -43,7 +43,21 @@ export class Element extends Node implements EventTarget {
   }
 
   get outerHTML() {
-    return ''
+    const attributes = [...this.elementStore.attributes()]
+      .map((attr: Attr) => ' ' + attr.localName + '="' + attr.value + '"')
+      .join('')
+    const content = this.childNodes
+      .map((node: Node): string | void => {
+        if (node instanceof Element) {
+          return node.outerHTML
+        } else if (node instanceof Text) {
+          return node.data
+        }
+      })
+      .filter(segment => Boolean(segment))
+      .join('')
+    return '<' + this.tagName.toLocaleLowerCase() + attributes
+      + (content ? '>' + content + '</' + this.tagName + '>' : '/>')
   }
 
   get childNodes() {
@@ -89,12 +103,21 @@ export class Element extends Node implements EventTarget {
     node.ownerDocument.lookupStore.elements = () => {
       const stack: Node[] = [node]
       const remove: Node[] = []
+      const seen = new Set<Node>()
+      console.log(node instanceof Element && node.outerHTML)
+      // throw new Error()
       do {
-ENDLESS LOOP HERE
+// ENDLESS LOOP HERE
         const nextNode = stack.shift()
         if (nextNode) {
+          if (seen.has(nextNode)) {
+            throw new Error(`Already seen this node: ${nextNode.dump()}`)
+          }
+          seen.add(nextNode)
           remove.push(nextNode)
           if (node instanceof Element) {
+            console.log('node: ', node.tagName, node.instance)
+            console.log('push: ', node.childNodes)
             stack.push(...node.childNodes)
           }
         }

@@ -49,7 +49,6 @@ export class Document implements EventTarget {
   }
 
   get all(): Element[] {
-    console.log('all', this.lookupStore.elements.toString())
     return this.lookupStore.elements().filter(x => x.parent)
   }
 
@@ -82,9 +81,7 @@ export class Document implements EventTarget {
 
     const elementsFuture = this.lookupStore.elements
     this.lookupStore.elements = () => {
-      console.log('lookupstore.createElement', element.tagName)
-      const result = console.log('heps!', elementsFuture.toString()) || (elementsFuture ? elementsFuture() : [])
-      // console.log({ result })
+      const result = elementsFuture ? elementsFuture() : []
       result.push(element)
       return result
     }
