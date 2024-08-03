@@ -7,7 +7,7 @@ describe('react', () => {
     const div = document.createElement('div')
     document.body.appendChild(div)
 
-    const root = createRoot(div)
+    createRoot(div)
   })
 
   it('supports root.render()', () => {

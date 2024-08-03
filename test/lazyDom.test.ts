@@ -7,11 +7,11 @@ describe('main', () => {
   })
 
   it('has createElement()', () => {
-    const div = document.createElement('div')
+    document.createElement('div')
   })
 
   it('has createTextNode()', () => {
-    const textNode = document.createTextNode('hello there')
+    document.createTextNode('hello there')
   })
 
   it('has appendChild()', () => {

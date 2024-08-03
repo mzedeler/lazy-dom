@@ -5,7 +5,7 @@ import { expect } from 'chai'
 
 import App from './todo-react/src/App.jsx'
 
-describe.only('todoApp', () => {
+describe('todoApp', () => {
   it('can render', () => {
     const div = document.createElement('div')
     document.body.appendChild(div)

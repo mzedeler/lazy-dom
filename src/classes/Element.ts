@@ -25,7 +25,6 @@ const isEventTarget = (node: unknown): node is EventTarget =>
   Boolean((node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
 
 
-let x = 0
 export class Element extends Node implements EventTarget {
   elementStore = new ElementStore()
 
@@ -190,10 +189,12 @@ export class Element extends Node implements EventTarget {
     return false
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   querySelector(query: string) {
     return new Element()
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   querySelectorAll(query: string) {
     console.log('querySelectorAll: ', this.ownerDocument)
     return this.ownerDocument.all

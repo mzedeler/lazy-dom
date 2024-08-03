@@ -4,20 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "benchmark": "tsx benchmark/benchmark.ts",
     "benchmark:watch": "tsx watch benchmark/benchmark.ts",
-    "test:lazydom": "echo '*** lazyDom ***'; tsx --import ./src/register.js ./node_modules/mocha/bin/mocha.js ",
-    "test:jsdom": "echo '*** JSDOM ***'; tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js",
-    "test": "pnpm test:jsdom && pnpm test:lazydom",
-    "test:watch": "nodemon --config nodemon.test.json",
+    "benchmark": "tsx benchmark/benchmark.ts",
+    "dev:watch": "nodemon --config nodemon.dev.json",
     "dev": "pnpm benchmark && pnpm test",
-    "dev:watch": "nodemon --config nodemon.dev.json"
+    "lint": "eslint .",
+    "test:jsdom": "echo '*** JSDOM ***'; tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js",
+    "test:lazydom": "echo '*** lazyDom ***'; tsx --import ./src/register.js ./node_modules/mocha/bin/mocha.js ",
+    "test:watch": "nodemon --config nodemon.test.json",
+    "test": "pnpm test:jsdom && pnpm test:lazydom"
   },
   "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@eslint/js": "^9.8.0",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/react": "^16.0.0",
     "@types/chai": "^4.3.16",
@@ -29,7 +31,10 @@
     "@types/sinon": "^17.0.3",
     "@types/sinon-chai": "^3.2.12",
     "chai": "^5.1.0",
+    "eslint": "9.x",
+    "eslint-plugin-mocha": "^10.5.0",
     "global-jsdom": "^24.0.0",
+    "globals": "^15.9.0",
     "jsdom": "^24.0.0",
     "mocha": "^10.4.0",
     "nanoid": "^5.0.7",
@@ -40,6 +45,7 @@
     "sinon-chai": "^3.7.0",
     "source-map-support": "^0.5.21",
     "tinybench": "^2.8.0",
-    "tsx": "^4.11.0"
+    "tsx": "^4.11.0",
+    "typescript-eslint": "^8.0.0"
   }
 }

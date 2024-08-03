@@ -18,12 +18,13 @@ export class NamedNodeMap extends Array {
   }
 
   getNamedItem(name: string): Attr {
-    return this.namedNodeMapStore.itemsLookup()['name']
+    return this.namedNodeMapStore.itemsLookup()[name]
   }
 
   removeNamedItem(name: string) {
     const previousItems = this.namedNodeMapStore.itemsLookup
     this.namedNodeMapStore.itemsLookup = () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const {[name]: _deleted_, ...result } = previousItems()
       return result
     }

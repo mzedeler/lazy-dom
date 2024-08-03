@@ -1,5 +1,5 @@
-import React, { useSyncExternalStore } from 'react'
-import { screen, render, act } from '@testing-library/react'
+import React from 'react'
+import { screen, render } from '@testing-library/react'
 import { expect } from 'chai'
 import sinon, { SinonStub } from 'sinon'
 import sinonChai from 'sinon-chai'
@@ -16,6 +16,7 @@ describe('@testing-library/react', () => {
 
   describe('screen.debug()', () => {
     let stub: SinonStub
+
     beforeEach(() => {
       stub = sinon.stub(console, 'log')
       stub.callsFake(() => {})

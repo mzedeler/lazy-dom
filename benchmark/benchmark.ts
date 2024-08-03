@@ -6,7 +6,7 @@ import { reactCreateElement } from './suite/react.createElement'
 import { reactEventHandling } from './suite/react.eventHandling'
 import { reactCreateRoot } from './suite/react.createRoot'
 
-// @ts-expect-error
+// @ts-expect-error TODO
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const bench = new Bench({ time: 100 })
@@ -21,7 +21,7 @@ const JSDOMOptions = { beforeAll: () => {
     storageQuota: 10000000
   })
 
-  // @ts-expect-error
+  // @ts-expect-error TODO
   global.window = dom.window
   global.document = dom.window.document
 }}

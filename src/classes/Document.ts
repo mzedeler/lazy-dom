@@ -96,27 +96,13 @@ export class Document implements EventTarget {
     return textNode
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   dispatchEvent(event: Event) {
 
   }
-
+  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   addEventListener(type: string, listener: Listener) {
 
   }
 }
-
-class Window {
-  get location() {
-    return {
-      href: ''
-    }
-  }
-
-  getComputedStyle() {
-    return {}
-  }
-}
-
-class HTMLIFrameElement {}
-
-class Navigator {}
