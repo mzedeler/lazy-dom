@@ -17,6 +17,7 @@ import { HTMLButtonElement } from "./elements/HTMLButtonElement"
 import { HTMLFormElement } from "./elements/HTMLFormElement"
 import { HTMLSpanElement } from "./elements/HTMLSpanElement"
 import { HTMLUListElement } from "./elements/HTMLUListElement"
+import { Attr } from "./Attr"
 
 class LookupStore {
   elements: Future<Element[]> = () => []
@@ -94,6 +95,19 @@ export class Document implements EventTarget {
     textNode.nodeStore.ownerDocument = () => this
     textNode.textStore.data = () => data
     return textNode
+  }
+
+  getElementById(id: string): Element | null {
+    const attributeMatchingId = (attribute: Attr) => attribute
+      .name === 'id' && attribute.value === id 
+    const elementMatchingId = (element: Element) => [...element
+      .attributes]
+      .find(attributeMatchingId)
+
+    return this
+      .lookupStore
+      .elements()
+      .find(elementMatchingId) || null
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

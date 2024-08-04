@@ -56,7 +56,7 @@ export class Element extends Node implements EventTarget {
       .filter(segment => Boolean(segment))
       .join('')
     return '<' + this.tagName.toLocaleLowerCase() + attributes
-      + (content ? '>' + content + '</' + this.tagName + '>' : '/>')
+      + (content ? '>' + content + '</' + this.tagName.toLocaleLowerCase() + '>' : '/>')
   }
 
   get childNodes() {

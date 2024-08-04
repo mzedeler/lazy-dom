@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "test:jsdom": "echo '*** JSDOM ***'; tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js",
     "test:lazydom": "echo '*** lazyDom ***'; tsx --import ./src/register.js ./node_modules/mocha/bin/mocha.js ",
-    "test:watch": "nodemon --config nodemon.test.json",
+    "test:watch": "nodemon --config nodemon.test.json --",
     "test": "pnpm test:jsdom && pnpm test:lazydom"
   },
   "type": "module",

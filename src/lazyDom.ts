@@ -19,6 +19,7 @@ const lazyDom = () => {
   const classes = { HTMLIFrameElement, EventTarget }
   Object.assign(window, instances, classes)
   Object.assign(global, { window, document })
+  return { window, document }
 }
 
 export default lazyDom
