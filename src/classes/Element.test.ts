@@ -2,15 +2,7 @@ import { expect } from 'chai'
 import { Element } from './Element'
 import lazyDom from '../lazyDom'
 import type { Document } from './Document'
-import type { Window } from './Window'
-
-// import sinonChai from 'sinon-chai'
-// import * as chai from 'chai'
-
-// chai.use(sinonChai)
-
-// globalThis.window = new Window()
-// globalThis.document = globalThis.window.document
+import { Node } from './Node'
 
 describe('Element', () => {
   let document: Document
@@ -62,5 +54,44 @@ describe('Element', () => {
     const element = document.createElement('div')
 
     expect(() => element.addEventListener('click', () => {})).not.to.throw
+  })
+
+  const div = (id: string, ...children: Node[]) => {
+    const result = document.createElement('div')
+    result.setAttribute('id', id)
+    for (const child of children) {
+      result.appendChild(child)
+    }
+    return result
+  }
+
+  it('has removeChild()', () => {
+    const rootId = 'root'
+    const parent1Id = 'parent1'
+    const parent2Id = 'parent2'
+    const parent1Leaft1Id = 'leaf11'
+    const parent1Leaft2Id = 'leaf12'
+    const parent2Leaf = 'leaf2'
+    const root =
+      div(rootId,
+        div(parent1Id,
+          div(parent1Leaft1Id),
+          div(parent1Leaft2Id)
+        ),
+        div(parent2Id,
+          div(parent2Leaf)
+        )
+      )
+
+    const parent1 = document.getElementById(parent1Id)
+
+    if (!parent1) {
+      throw new Error('assertion failed: this element should exist')
+    }
+
+    root.removeChild(parent1)
+
+    expect(root.outerHTML).to.eql('<div id="root"><div id="parent2"><div id="leaf2"/></div></div>')
+    expect(document.getElementById(parent1Id)).to.be.null
   })
 })
