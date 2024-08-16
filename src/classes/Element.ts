@@ -191,7 +191,6 @@ export class Element extends Node implements EventTarget {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   querySelectorAll(query: string) {
-    console.log('querySelectorAll: ', this.ownerDocument)
     return this.ownerDocument.all
   }
 }

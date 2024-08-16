@@ -1,5 +1,5 @@
 {
   "exec": "pnpm dev",
-  "ext": "*.ts,*.json",
+  "ext": "*.ts,*.tsx,*.js,*.jsx*.json",
   "watch": ["**/*.ts", "package.json", "pnpm-lock.yaml", "**/*.json"]
 }
