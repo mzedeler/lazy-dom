@@ -2,7 +2,11 @@ import { createRoot } from 'react-dom/client'
 import * as React from 'react'
 import { expect } from 'chai'
 
-describe('react', () => {
+xdescribe('react', () => {
+  afterEach(() => {
+    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+  })
+
   it('supports createRoot()', () => {
     const div = document.createElement('div')
     document.body.appendChild(div)

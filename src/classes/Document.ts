@@ -18,6 +18,7 @@ import { HTMLFormElement } from "./elements/HTMLFormElement"
 import { HTMLSpanElement } from "./elements/HTMLSpanElement"
 import { HTMLUListElement } from "./elements/HTMLUListElement"
 import { Attr } from "./Attr"
+import { Node } from './Node'
 
 class LookupStore {
   elements: Future<Element[]> = () => []
@@ -80,14 +81,28 @@ export class Document implements EventTarget {
     element.elementStore.tagName = () => localName
     element.nodeStore.ownerDocument = () => this
 
-    const elementsFuture = this.lookupStore.elements
-    this.lookupStore.elements = () => {
-      const result = elementsFuture ? elementsFuture() : []
-      result.push(element)
-      return result
-    }
-
     return element
+  }
+
+  _connect(node: Node) {
+    if (node instanceof Element) {
+      const elementsFuture = this.lookupStore.elements
+      this.lookupStore.elements = () => {
+        const result = elementsFuture ? elementsFuture() : []
+        result.push(node)
+        return result
+      }
+    }
+  }
+
+  _disconnect(node: Node) {
+    if (node instanceof Element) {
+      const elementsFuture = this.lookupStore.elements
+      this.lookupStore.elements = () => {
+        return (elementsFuture ? elementsFuture() : [])
+          .filter(otherNode => otherNode !== node)
+      }
+    }
   }
 
   createTextNode(data: string): Text {

@@ -124,6 +124,8 @@ export class Element extends Node implements EventTarget {
       return previousChildNodesFuture().filter(childNode => childNode !== node)
     }
 
+    this.ownerDocument._disconnect(node)
+
     return node
   }
 
@@ -136,6 +138,8 @@ export class Element extends Node implements EventTarget {
       childNodes.push(node)
       return childNodes
     }
+
+    this.ownerDocument._connect(node)
 
     return node
   }

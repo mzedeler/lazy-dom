@@ -39,4 +39,8 @@ export class Node {
   get parentNode(): Node | undefined {
     return this.nodeStore.parent()
   }
+
+  get isConnected(): boolean {
+    return this.parentNode ? this.parentNode.isConnected : false
+  }
 }

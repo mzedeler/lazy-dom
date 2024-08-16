@@ -1,13 +1,8 @@
 import { expect } from 'chai'
-import lazyDom from '../lazyDom'
-import type { Document } from './Document'
 
 describe('Document', () => {
-  let document: Document
-
-  beforeEach(() => {
-    const globals = lazyDom()
-    document = globals.document
+  afterEach(() => {
+    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   it('initializes correctly', () => {
@@ -23,10 +18,19 @@ describe('Document', () => {
   })
 
   describe('getElementById()', () => {
+    it('does not return elements that have not been attached', () => {
+      const id = '1'
+      const element = document.createElement('div')
+      element.setAttribute('id', id)
+
+      expect(document.getElementById(id)).to.be.null
+    })
+
     it('has getElementById()', () => {
       const id = '1'
       const element = document.createElement('div')
       element.setAttribute('id', id)
+      document.body.appendChild(element)
   
       const result = document.getElementById(id)
   
@@ -37,12 +41,14 @@ describe('Document', () => {
       const id = '1'
       const element = document.createElement('div')
       element.setAttribute('id', id)
+      document.body.appendChild(element)
 
       const id2 = '2'
       const element2 = document.createElement('span')
       element2.setAttribute('id', id2)
+      document.body.appendChild(element2)
 
-      const result = document.getElementById(id)  
+      const result = document.getElementById(id)
       expect(result).to.eq(element)
 
       const result2 = document.getElementById(id2)

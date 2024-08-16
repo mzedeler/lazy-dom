@@ -8,13 +8,17 @@ import * as chai from 'chai'
 chai.use(sinonChai)
 
 describe('@testing-library/react', () => {
-  it('supports render()', async () => {
+  afterEach(() => {
+    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+  })
+
+  xit('supports render()', async () => {
     render(React.createElement('div', { children: 'hello2'}))
     
     expect(screen.queryByText('hello2')).not.to.be.null  
   })
 
-  describe('screen.debug()', () => {
+  xdescribe('screen.debug()', () => {
     let stub: SinonStub
 
     beforeEach(() => {

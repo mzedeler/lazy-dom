@@ -2,6 +2,10 @@
 import { expect } from 'chai'
 
 describe('main', () => {
+  afterEach(() => {
+    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+  })
+
   it('has appendChild()', () => {
     const div = document.createElement('div')
     const textNode = document.createTextNode('hello there')
