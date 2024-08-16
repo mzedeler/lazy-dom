@@ -97,34 +97,12 @@ export class Element extends Node implements EventTarget {
     node.nodeStore.parent = () => undefined
 
     // Validation: node not child: throw NotFoundError DOMException
-
-    const elementsFuture = node.ownerDocument.lookupStore.elements
-    node.ownerDocument.lookupStore.elements = () => {
-      const stack: Node[] = [node]
-      const remove: Node[] = []
-      const seen = new Set<Node>()
-      do {
-        const nextNode = stack.shift()
-        if (nextNode) {
-          if (seen.has(nextNode)) {
-            throw new Error(`Already seen this node: ${nextNode.dump()}`)
-          }
-          seen.add(nextNode)
-          remove.push(nextNode)
-          if (nextNode instanceof Element) {
-            stack.push(...nextNode.childNodes)
-          }
-        }
-      } while (stack.length)
-      return elementsFuture().filter(otherNode => !remove.includes(otherNode))
-    }
-
     const previousChildNodesFuture = this.elementStore.childNodes
     this.elementStore.childNodes = () => {
       return previousChildNodesFuture().filter(childNode => childNode !== node)
     }
 
-    this.ownerDocument._disconnect(node)
+    this.ownerDocument.documentStore.disconnect(node)
 
     return node
   }
@@ -139,7 +117,7 @@ export class Element extends Node implements EventTarget {
       return childNodes
     }
 
-    this.ownerDocument._connect(node)
+    this.ownerDocument.documentStore.connect(node)
 
     return node
   }

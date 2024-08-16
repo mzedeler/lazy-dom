@@ -20,24 +20,54 @@ import { HTMLUListElement } from "./elements/HTMLUListElement"
 import { Attr } from "./Attr"
 import { Node } from './Node'
 
-class LookupStore {
-  elements: Future<Element[]> = () => []
+const subtree = (node: Node): Node[] => {
+  const stack: Node[] = [node]
+  const result: Node[] = []
+  do {
+    const nextNode = stack.shift()
+    if (nextNode) {
+      result.push(nextNode)
+      if (nextNode instanceof Element) {
+        stack.push(...nextNode.childNodes)
+      }
+    }
+  } while (stack.length)
+  return result
 }
 
 class DocumentStore  {
+  elements: Future<Element[]> = () => []
+
   nodeType = () => NodeTypes.DOCUMENT_NODE
 
   body: Future<HTMLBodyElement> = () => {
     throw valueNotSetError('body')
   }
+
+  disconnect(node: Node) {
+    const elementsFuture = this.elements
+    this.elements = () => {
+      const remove = subtree(node)
+      return elementsFuture().filter(otherNode => !remove.includes(otherNode))
+    }
+  }
+
+  connect(node: Node) {
+    const elementsFuture = this.elements
+    this.elements = () => {
+      const newNodes = subtree(node)
+      const result = elementsFuture ? elementsFuture() : []
+      result.push(...newNodes.filter(node => node instanceof Element))
+      return result
+    }
+  }
 }
 
 export class Document implements EventTarget {
   documentStore = new DocumentStore()
-  lookupStore = new LookupStore()
 
   debug() {
-    return this.lookupStore.elements()
+    return this.documentStore.elements()
   }
 
   constructor() {
@@ -51,7 +81,7 @@ export class Document implements EventTarget {
   }
 
   get all(): Element[] {
-    return this.lookupStore.elements().filter(x => x.parent)
+    return this.documentStore.elements().filter(x => x.parent)
   }
 
   get body(): HTMLBodyElement {
@@ -84,21 +114,10 @@ export class Document implements EventTarget {
     return element
   }
 
-  _connect(node: Node) {
-    if (node instanceof Element) {
-      const elementsFuture = this.lookupStore.elements
-      this.lookupStore.elements = () => {
-        const result = elementsFuture ? elementsFuture() : []
-        result.push(node)
-        return result
-      }
-    }
-  }
-
   _disconnect(node: Node) {
     if (node instanceof Element) {
-      const elementsFuture = this.lookupStore.elements
-      this.lookupStore.elements = () => {
+      const elementsFuture = this.documentStore.elements
+      this.documentStore.elements = () => {
         return (elementsFuture ? elementsFuture() : [])
           .filter(otherNode => otherNode !== node)
       }
@@ -120,7 +139,7 @@ export class Document implements EventTarget {
       .find(attributeMatchingId)
 
     return this
-      .lookupStore
+      .documentStore
       .elements()
       .find(elementMatchingId) || null
   }
