@@ -103,10 +103,7 @@ export class Element extends Node implements EventTarget {
       const stack: Node[] = [node]
       const remove: Node[] = []
       const seen = new Set<Node>()
-      console.log(node instanceof Element && node.outerHTML)
-      // throw new Error()
       do {
-// ENDLESS LOOP HERE
         const nextNode = stack.shift()
         if (nextNode) {
           if (seen.has(nextNode)) {
@@ -114,10 +111,8 @@ export class Element extends Node implements EventTarget {
           }
           seen.add(nextNode)
           remove.push(nextNode)
-          if (node instanceof Element) {
-            console.log('node: ', node.tagName, node.instance)
-            console.log('push: ', node.childNodes)
-            stack.push(...node.childNodes)
+          if (nextNode instanceof Element) {
+            stack.push(...nextNode.childNodes)
           }
         }
       } while (stack.length)
