@@ -69,14 +69,14 @@ describe('Element', () => {
     const rootId = 'root'
     const parent1Id = 'parent1'
     const parent2Id = 'parent2'
-    const parent1Leaft1Id = 'leaf11'
-    const parent1Leaft2Id = 'leaf12'
+    const parent1Leaf1Id = 'leaf11'
+    const parent1Leaf2Id = 'leaf12'
     const parent2Leaf = 'leaf2'
     const root =
       div(rootId,
         div(parent1Id,
-          div(parent1Leaft1Id),
-          div(parent1Leaft2Id)
+          div(parent1Leaf1Id),
+          div(parent1Leaf2Id)
         ),
         div(parent2Id,
           div(parent2Leaf)
@@ -93,5 +93,7 @@ describe('Element', () => {
 
     expect(root.outerHTML).to.eql('<div id="root"><div id="parent2"><div id="leaf2"/></div></div>')
     expect(document.getElementById(parent1Id)).to.be.null
+    expect(document.getElementById(parent1Leaf1Id)).to.be.null
+    expect(document.getElementById(parent1Leaf2Id)).to.be.null
   })
 })
