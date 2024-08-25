@@ -55,8 +55,9 @@ export class Element extends Node implements EventTarget {
       })
       .filter(segment => Boolean(segment))
       .join('')
-    return '<' + this.tagName.toLocaleLowerCase() + attributes
-      + (content ? '>' + content + '</' + this.tagName.toLocaleLowerCase() + '>' : '/>')
+    return '<' + this.tagName.toLocaleLowerCase() + attributes + '>'
+      + content
+      + '</' + this.tagName.toLocaleLowerCase() + '>'
   }
 
   get childNodes() {
@@ -168,7 +169,7 @@ export class Element extends Node implements EventTarget {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   querySelector(query: string) {
-    return new Element()
+    throw new Error('unsupported method')
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,21 +1,14 @@
 import { expect } from 'chai'
-import { Element } from './Element'
-import lazyDom from '../lazyDom'
-import type { Document } from './Document'
-import { Node } from './Node'
 
 describe('Element', () => {
-  let document: Document
-
   beforeEach(() => {
-    const globals = lazyDom()
-    document = globals.document
+    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   it('can be created', () => {
     const element = document.createElement('div')
 
-    expect(element).to.be.instanceOf(Element)
+    expect(element).to.be.instanceOf(HTMLDivElement)
   })
 
   it('has tagName', () => {
@@ -83,15 +76,15 @@ describe('Element', () => {
         )
       )
 
+    document.body.appendChild(root)
     const parent1 = document.getElementById(parent1Id)
-
     if (!parent1) {
       throw new Error('assertion failed: this element should exist')
     }
 
     root.removeChild(parent1)
 
-    expect(root.outerHTML).to.eql('<div id="root"><div id="parent2"><div id="leaf2"/></div></div>')
+    expect(root.outerHTML).to.eql('<div id="root"><div id="parent2"><div id="leaf2"></div></div></div>')
     expect(document.getElementById(parent1Id)).to.be.null
     expect(document.getElementById(parent1Leaf1Id)).to.be.null
     expect(document.getElementById(parent1Leaf2Id)).to.be.null

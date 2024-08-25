@@ -2,6 +2,7 @@
 
 import { Window } from "./classes/Window"
 import { Document } from "./classes/Document"
+import { HTMLDivElement } from "./classes/elements/HTMLDivElement"
 
 class EventTarget {}
 
@@ -16,9 +17,9 @@ const lazyDom = () => {
   // document.defaultView = window
   const navigator = new Navigator()
   const instances = { document, window, navigator }
-  const classes = { HTMLIFrameElement, EventTarget }
+  const classes = { HTMLDivElement, HTMLIFrameElement, EventTarget }
   Object.assign(window, instances, classes)
-  Object.assign(global, { window, document })
+  Object.assign(global, { window, document }, classes)
   return { window, document }
 }
 

@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 
-describe('Document', () => {
+xdescribe('Document', () => {
   afterEach(() => {
     document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })

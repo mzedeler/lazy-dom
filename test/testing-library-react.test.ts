@@ -9,6 +9,7 @@ chai.use(sinonChai)
 
 describe('@testing-library/react', () => {
   afterEach(() => {
+    // Use this: https://testing-library.com/docs/react-testing-library/api#cleanup
     document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
