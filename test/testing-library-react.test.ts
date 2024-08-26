@@ -1,5 +1,5 @@
 import React from 'react'
-import { screen, render } from '@testing-library/react'
+import { screen, render, cleanup } from '@testing-library/react'
 import { expect } from 'chai'
 import sinon, { SinonStub } from 'sinon'
 import sinonChai from 'sinon-chai'
@@ -8,15 +8,12 @@ import * as chai from 'chai'
 chai.use(sinonChai)
 
 describe('@testing-library/react', () => {
-  afterEach(() => {
-    // Use this: https://testing-library.com/docs/react-testing-library/api#cleanup
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
-  })
+  afterEach(cleanup)
 
-  xit('supports render()', async () => {
-    render(React.createElement('div', { children: 'hello2'}))
-    
-    expect(screen.queryByText('hello2')).not.to.be.null  
+  it('supports render()', async () => {
+    render(React.createElement('div', { children: 'hello3'}))
+
+    expect(screen.queryByText('hello3')).not.to.be.null
   })
 
   xdescribe('screen.debug()', () => {

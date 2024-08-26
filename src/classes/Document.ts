@@ -20,18 +20,20 @@ import { HTMLUListElement } from "./elements/HTMLUListElement"
 import { Attr } from "./Attr"
 import { Node } from './Node'
 
-const subtree = (node: Node): Node[] => {
+const subtree = (node: Node): Set<Node> => {
   const stack: Node[] = [node]
-  const result: Node[] = []
+  const result: Set<Node> = new Set()
+
   do {
     const nextNode = stack.shift()
     if (nextNode) {
-      result.push(nextNode)
+      result.add(nextNode)
       if (nextNode instanceof Element) {
         stack.push(...nextNode.childNodes)
       }
     }
   } while (stack.length)
+
   return result
 }
 
@@ -48,7 +50,7 @@ class DocumentStore  {
     const elementsFuture = this.elements
     this.elements = () => {
       const remove = subtree(node)
-      return elementsFuture().filter(otherNode => !remove.includes(otherNode))
+      return elementsFuture().filter(otherNode => !remove.has(otherNode))
     }
   }
 
@@ -56,9 +58,13 @@ class DocumentStore  {
     const elementsFuture = this.elements
     this.elements = () => {
       const newNodes = subtree(node)
-      const result = elementsFuture ? elementsFuture() : []
-      result.push(...newNodes.filter(node => node instanceof Element))
-      return result
+      const result = new Set(elementsFuture ? elementsFuture() : [])
+      newNodes.forEach(node => {
+        if (node instanceof Element) {
+          result.add(node)
+        }
+      })
+      return Array.from(result)
     }
   }
 }

@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 
 describe('Element', () => {
-  beforeEach(() => {
+  afterEach(() => {
     document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
