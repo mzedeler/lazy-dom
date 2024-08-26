@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client'
 import * as React from 'react'
 import { expect } from 'chai'
 
-xdescribe('react', () => {
+describe('react', () => {
   afterEach(() => {
     document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
