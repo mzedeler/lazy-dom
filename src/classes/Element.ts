@@ -11,14 +11,42 @@ import { PointerEvent } from "./PointerEvent"
 import { Attr } from "./Attr"
 import { NamedNodeMap } from "./NamedNodeMap"
 
-class ElementStore {
+const MyClass = class {}
+const x = { ['#foo']: 42 }
+Object.defineProperty(MyClass.prototype, 'foo', {
+  get() {
+    return 'hello there!'
+  },
+  set(x) {
+    this._foo = x
+  }
+})
+
+Object.assign(MyClass.prototype, x)
+
+const getFancy = () => MyClass
+
+class ElementStore extends getFancy() {
   eventListeners: Future<Listeners> = () => ({})
   tagName: Future<string> = () => {
     throw valueNotSetError('tagName')
   }
   childNodes: Future<Array<Node>> = () => []
   style: Future<Record<string, unknown>> = () => ({})
-  attributes: Future<NamedNodeMap> = () => new NamedNodeMap()
+
+  #attributes: Future<NamedNodeMap> = () => new NamedNodeMap() 
+  get attributes(): Future<NamedNodeMap> {
+    const attributesFuture = this.#attributes
+    return () => {
+      const result = attributesFuture()
+      this.#attributes = () => result
+      return result
+    }
+  }
+  set attributes(value: Future<NamedNodeMap>) {
+    console.log(this.foo)
+    this.#attributes = value
+  }
 }
 
 const isEventTarget = (node: unknown): node is EventTarget =>
