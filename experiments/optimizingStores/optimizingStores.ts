@@ -6,8 +6,12 @@ import { Bench } from 'tinybench'
 import { NaiveConsumer } from './NaiveConsumer'
 import { ResetNaiveConsumer } from './ResetNaiveConsumer'
 import { Consumer } from './Consumer'
+import { QueueLengthConsumer } from './QueueLengthConsumer'
+import { DirtyNaiveConsumer } from './DirtyNaiveConsumer'
 
 const bench = new Bench({ time: 100 })
+
+type AddCaseSignature = (bench: Bench, ConsumerClass: new() => Consumer) => void
 
 const addNewSetGetCase = (bench: Bench, ConsumerClass: new() => Consumer) => {
   bench.add(`addNewSetGetCase: ${ConsumerClass.prototype.constructor.name}`, () => {
@@ -41,7 +45,7 @@ const addNewSet10Get1000Case = (bench: Bench, ConsumerClass: new() => Consumer) 
   })
 }
 
-const addNewSet2Get1000Case = (bench: Bench, ConsumerClass: new() => Consumer) => {
+const addNewSet2Get1000Case: AddCaseSignature = (bench, ConsumerClass) => {
   bench.add(`addNewSet2Get1000Case: ${ConsumerClass.prototype.constructor.name}`, () => {
     const consumer = new ConsumerClass()
     for (let i = 0; i < 2; i++) {
@@ -55,14 +59,18 @@ const addNewSet2Get1000Case = (bench: Bench, ConsumerClass: new() => Consumer) =
   })
 }
 
-addNewSetGetCase(bench, NaiveConsumer)
-addNewSetGetCase(bench, ResetNaiveConsumer)
-addNewSetGet1000Case(bench, NaiveConsumer)
-addNewSetGet1000Case(bench, ResetNaiveConsumer)
-addNewSet10Get1000Case(bench, NaiveConsumer)
-addNewSet10Get1000Case(bench, ResetNaiveConsumer)
-addNewSet2Get1000Case(bench, NaiveConsumer)
-addNewSet2Get1000Case(bench, ResetNaiveConsumer)
+
+const addCase = (addCaseCallback: AddCaseSignature) => {
+  addCaseCallback(bench, NaiveConsumer)
+  addCaseCallback(bench, ResetNaiveConsumer)
+  addCaseCallback(bench, QueueLengthConsumer)
+  addCaseCallback(bench, DirtyNaiveConsumer)
+}
+
+addCase(addNewSetGetCase)
+addCase(addNewSetGet1000Case)
+addCase(addNewSet10Get1000Case)
+addCase(addNewSet2Get1000Case)
 
 const main = async () => {
   await bench.warmup()
