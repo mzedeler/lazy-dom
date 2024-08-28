@@ -167,6 +167,13 @@ export class Element extends Node implements EventTarget {
     return false
   }
 
+  getAttribute(qualifiedName: string) {
+    return this
+      .elementStore
+      .attributes()
+      .getNamedItem(qualifiedName)?.value || null
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   querySelector(query: string) {
     throw new Error('unsupported method')

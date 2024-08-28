@@ -5,8 +5,9 @@ import { expect } from 'chai'
 
 import App from './todo-react/src/App.jsx'
 
-describe.skip('todoApp', () => {
+describe('todoApp', () => {
   it('can render', () => {
+    console.time('render')
     const div = document.createElement('div')
     document.body.appendChild(div)
     const root = createRoot(div)
@@ -15,9 +16,11 @@ describe.skip('todoApp', () => {
 
     React.act(() => root.unmount())
     document.body.removeChild(div)
+    console.timeEnd('render')
   })
 
   it('has title', () => {
+    console.time('title')
     const div = document.createElement('div')
     document.body.appendChild(div)
     const root = createRoot(div)
@@ -28,5 +31,6 @@ describe.skip('todoApp', () => {
 
     React.act(() => root.unmount())
     document.body.removeChild(div)
+    console.timeEnd('title')
   })
 })

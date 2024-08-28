@@ -28,7 +28,7 @@ describe('@testing-library/dom', () => {
     expect(screen.getByText(/hello/)).to.eq(div)
   })
 
-  xit('supports screen.queryByTestId()', () => {
+  it('supports screen.queryByTestId()', () => {
     const div = document.createElement('div')
     const textNode = document.createTextNode('hello')
     div.appendChild(textNode)
