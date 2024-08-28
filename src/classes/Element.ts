@@ -18,19 +18,7 @@ class ElementStore {
   }
   childNodes: Future<Array<Node>> = () => []
   style: Future<Record<string, unknown>> = () => ({})
-
-  #attributes: Future<NamedNodeMap> = () => new NamedNodeMap() 
-  get attributes(): Future<NamedNodeMap> {
-    const attributesFuture = this.#attributes
-    return () => {
-      const result = attributesFuture()
-      this.#attributes = () => result
-      return result
-    }
-  }
-  set attributes(value: Future<NamedNodeMap>) {
-    this.#attributes = value
-  }
+  attributes: Future<NamedNodeMap> = () => new NamedNodeMap()
 }
 
 const isEventTarget = (node: unknown): node is EventTarget =>
