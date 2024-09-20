@@ -3,6 +3,6 @@ import { Element } from "../Element"
 export class HTMLBodyElement extends Element {
   constructor() {
     super()
-    this.elementStore.tagName = () => 'body'
+    this.elementStore.tagName.set(() => 'BODY')
   }
 }

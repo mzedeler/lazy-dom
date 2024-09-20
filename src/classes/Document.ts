@@ -114,7 +114,7 @@ export class Document implements EventTarget {
       default: throw new Error('unknown element name: ' + localName)
     }
 
-    element.elementStore.tagName = () => localName
+    element.elementStore.tagName.set(() => localName)
     element.nodeStore.ownerDocument = () => this
 
     return element

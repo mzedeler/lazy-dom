@@ -1,7 +1,6 @@
 import { Future } from "../types/Future"
 import { Listeners } from "../types/Listeners"
 import { NodeTypes } from "../types/NodeTypes"
-import valueNotSetError from "../utils/valueNotSetError"
 
 import { Text } from "./Text"
 import { Node } from "./Node"
@@ -11,14 +10,14 @@ import { PointerEvent } from "./PointerEvent"
 import { Attr } from "./Attr"
 import { NamedNodeMap } from "./NamedNodeMap"
 
+import { FutureContainer } from '../utils/FutureContainer'
+
 class ElementStore {
   eventListeners: Future<Listeners> = () => ({})
-  tagName: Future<string> = () => {
-    throw valueNotSetError('tagName')
-  }
-  childNodes: Future<Array<Node>> = () => []
-  style: Future<Record<string, unknown>> = () => ({})
-  attributes: Future<NamedNodeMap> = () => new NamedNodeMap()
+  tagName = new FutureContainer<string>()
+  childNodes = new FutureContainer<Array<Node>>().set(() => [])
+  style = new FutureContainer<Record<string, unknown>>().set(() => ({}))
+  attributes = new FutureContainer<NamedNodeMap>().set(() => new NamedNodeMap())
 }
 
 const isEventTarget = (node: unknown): node is EventTarget =>
@@ -38,11 +37,11 @@ export class Element extends Node implements EventTarget {
   }
 
   get tagName() {
-    return this.elementStore.tagName().toUpperCase()
+    return this.elementStore.tagName.get().toUpperCase()
   }
 
   get outerHTML() {
-    const attributes = [...this.elementStore.attributes()]
+    const attributes = [...this.elementStore.attributes.get()]
       .map((attr: Attr) => ' ' + attr.localName + '="' + attr.value + '"')
       .join('')
     const content = this.childNodes
@@ -61,36 +60,35 @@ export class Element extends Node implements EventTarget {
   }
 
   get childNodes() {
-    return this.elementStore.childNodes()
+    return this.elementStore.childNodes.get()
   }
 
   get style() {
-    return this.elementStore.style()
+    return this.elementStore.style.get()
   }
 
   get textContent(): string {
-    return this.elementStore.childNodes().filter(childNode => childNode instanceof Text).join('')
+    return this.elementStore.childNodes.get().filter(childNode => childNode instanceof Text).join('')
   }
 
   set textContent(data: string) {
     const ownerDocumentFuture = this.nodeStore.ownerDocument
-    this.elementStore.childNodes = () => data.length === 0 ? [] : [
+    this.elementStore.childNodes.set(() => data.length === 0 ? [] : [
       ownerDocumentFuture().createTextNode(data)
-    ]
+    ])
   }
 
   get attributes() {
-    return this.elementStore.attributes()
+    return this.elementStore.attributes.get()
   }
 
   setAttribute(localName: string, value: string) {
-    const previousAttributesFuture = this.elementStore.attributes
-    this.elementStore.attributes = () => {
+    this.elementStore.attributes.set((previousAttributesFuture) => {
       const previousAttributes: NamedNodeMap = previousAttributesFuture()
       const attr = new Attr(this, localName, value)
       previousAttributes.setNamedItem(attr)
       return previousAttributes
-    }
+    })
     return
   }
 
@@ -98,10 +96,9 @@ export class Element extends Node implements EventTarget {
     node.nodeStore.parent = () => undefined
 
     // Validation: node not child: throw NotFoundError DOMException
-    const previousChildNodesFuture = this.elementStore.childNodes
-    this.elementStore.childNodes = () => {
+    this.elementStore.childNodes.set((previousChildNodesFuture) => {
       return previousChildNodesFuture().filter(childNode => childNode !== node)
-    }
+    })
 
     this.ownerDocument.documentStore.disconnect(node)
 
@@ -111,12 +108,11 @@ export class Element extends Node implements EventTarget {
   appendChild(node: Node) {
     node.nodeStore.parent = () => this
 
-    const previousChildNodesFuture = this.elementStore.childNodes
-    this.elementStore.childNodes = () => {
+    this.elementStore.childNodes.set((previousChildNodesFuture) => {
       const childNodes = previousChildNodesFuture()
       childNodes.push(node)
       return childNodes
-    }
+    })
 
     this.ownerDocument.documentStore.connect(node)
 
@@ -170,7 +166,8 @@ export class Element extends Node implements EventTarget {
   getAttribute(qualifiedName: string) {
     return this
       .elementStore
-      .attributes()
+      .attributes
+      .get()
       .getNamedItem(qualifiedName)?.value || null
   }
 
