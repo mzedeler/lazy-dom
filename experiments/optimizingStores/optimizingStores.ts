@@ -1,4 +1,5 @@
 import { Bench } from 'tinybench'
+import { groupBy, mapValues, maxBy, minBy } from 'lodash-es'
 
 // The purpose of this file is to benchmark different store approaches
 // against each other
@@ -75,7 +76,35 @@ addCase(addNewSet2Get1000Case)
 const main = async () => {
   await bench.warmup()
   await bench.run()
-  console.table(bench.table())
+  type Entry = {
+    ['Task Name']: string
+    ['ops/sec']: string
+    ['Average Time (ns)']: number
+    Margin: string
+    Samples: number
+  }
+
+  const splitTaskName = (entry: Entry) => {
+    console.log({ entry })
+    const { 'Task Name': taskName , ...rest } = entry
+    const [task, consumer] = taskName.split(': ')
+    return { task, consumer, ...rest }
+  }
+
+  const aggregate = (entries: Entry[]) => console.log({ entries }) || ({
+    maxTime: maxBy(entries, 'Average Time (ns)'),
+    minTime: minBy(entries, 'Average Time (ns)'),
+  })
+
+  const tasks = groupBy(mapValues(bench.table(), splitTaskName), 'task')
+  const aggregates = mapValues(tasks, aggregate)
+  const relativeTasks = Object.keys(tasks).map(key => tasks[key].map(entry => ({
+    'Relative Time (%)': 
+    (100 * entry['Average Time (ns)']/aggregates[key].maxTime['Average Time (ns)']).toFixed(2),
+    ...entry
+  })))
+
+  Object.keys(relativeTasks).forEach(key => console.log(key) || console.table(relativeTasks[key]))
 }
 
 main()

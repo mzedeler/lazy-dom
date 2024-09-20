@@ -6,6 +6,7 @@
   "scripts": {
     "benchmark:watch": "tsx watch benchmark/benchmark.ts",
     "benchmark": "tsx benchmark/benchmark.ts",
+    "benchmark:optimizing-stores": "nodemon -e ts --exec pnpm exec tsx experiments/optimizingStores/optimizingStores.ts",
     "dev:watch": "nodemon --config nodemon.dev.json",
     "dev": "pnpm benchmark && pnpm test",
     "lint": "eslint .",
@@ -36,6 +37,7 @@
     "global-jsdom": "^24.0.0",
     "globals": "^15.9.0",
     "jsdom": "^24.0.0",
+    "lodash-es": "^4.17.21",
     "mocha": "^10.4.0",
     "nanoid": "^5.0.7",
     "nodemon": "^3.1.0",
@@ -47,5 +49,8 @@
     "tinybench": "^2.8.0",
     "tsx": "^4.11.0",
     "typescript-eslint": "^8.0.0"
+  },
+  "dependencies": {
+    "@types/lodash-es": "^4.17.12"
   }
 }
