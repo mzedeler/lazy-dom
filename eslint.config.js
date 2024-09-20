@@ -13,7 +13,8 @@ export default tseslint.config(
   mochaPlugin.configs.flat.recommended,
   {
     rules: {
-      'mocha/no-mocha-arrows': 'off' 
+      'mocha/no-mocha-arrows': 'off',
+      'no-unused-vars': 'off' // already handled correctly by @typescript/no-unused-vars
     }
   },
   {
