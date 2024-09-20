@@ -91,20 +91,24 @@ const main = async () => {
     return { task, consumer, ...rest }
   }
 
-  const aggregate = (entries: Entry[]) => console.log({ entries }) || ({
+  const aggregate = (entries: Entry[]) => ({
     maxTime: maxBy(entries, 'Average Time (ns)'),
     minTime: minBy(entries, 'Average Time (ns)'),
   })
 
   const tasks = groupBy(mapValues(bench.table(), splitTaskName), 'task')
   const aggregates = mapValues(tasks, aggregate)
+  const relativeTime = (key: keyof typeof tasks, entry: Entry) => 
+    (100 * entry['Average Time (ns)'] / aggregates[key].maxTime['Average Time (ns)']).toFixed(2)
+
   const relativeTasks = Object.keys(tasks).map(key => tasks[key].map(entry => ({
-    'Relative Time (%)': 
-    (100 * entry['Average Time (ns)']/aggregates[key].maxTime['Average Time (ns)']).toFixed(2),
+    'Relative Time (%)': relativeTime(key, entry),
     ...entry
   })))
 
-  Object.keys(relativeTasks).forEach(key => console.log(key) || console.table(relativeTasks[key]))
+  Object.keys(relativeTasks).forEach(key => {
+    console.table(relativeTasks[key])
+  })
 }
 
 main()
