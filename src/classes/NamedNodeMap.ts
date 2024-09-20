@@ -5,7 +5,7 @@ class NamedNodeMapStore {
   itemsLookup: Future<Record<string, Attr>> = () => ({})
 }
 
-export class NamedNodeMap extends Array {
+export class NamedNodeMap {
   namedNodeMapStore = new NamedNodeMapStore()
 
   get length() {

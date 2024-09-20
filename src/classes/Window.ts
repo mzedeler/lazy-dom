@@ -1,7 +1,7 @@
 export class Window {
   get location() {
     return {
-      href: ''
+      href: 'http://localhost:9009/b'
     }
   }
 

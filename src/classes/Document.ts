@@ -19,6 +19,7 @@ import { HTMLSpanElement } from "./elements/HTMLSpanElement"
 import { HTMLUListElement } from "./elements/HTMLUListElement"
 import { Attr } from "./Attr"
 import { Node } from './Node'
+import { HTMLAnchorElement } from "./elements/HTMLAnchorElement"
 
 const subtree = (node: Node): Set<Node> => {
   const stack: Node[] = [node]
@@ -97,6 +98,7 @@ export class Document implements EventTarget {
   createElement(localName: string): Element {
     let element: Element
     switch(localName.toUpperCase()) {
+      case 'A': element = new HTMLAnchorElement(); break;
       case 'BUTTON': element = new HTMLButtonElement(); break;
       case 'FORM': element = new HTMLFormElement(); break;
       case 'H1':
