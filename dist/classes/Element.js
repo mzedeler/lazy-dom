@@ -14,15 +14,6 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Element = void 0;
 var NodeTypes_1 = require("../types/NodeTypes");
@@ -71,7 +62,9 @@ var Element = /** @class */ (function (_super) {
     });
     Object.defineProperty(Element.prototype, "outerHTML", {
         get: function () {
-            var attributes = __spreadArray([], this.elementStore.attributes(), true).map(function (attr) { return ' ' + attr.localName + '="' + attr.value + '"'; })
+            var attributes = Object
+                .values(this.elementStore.attributes().namedNodeMapStore.itemsLookup())
+                .map(function (attr) { return ' ' + attr.localName + '="' + attr.value + '"'; })
                 .join('');
             var content = this.childNodes
                 .map(function (node) {
@@ -203,6 +196,12 @@ var Element = /** @class */ (function (_super) {
     };
     Element.prototype.matches = function () {
         return false;
+    };
+    Element.prototype.hasAttribute = function (name) {
+        return this
+            .elementStore
+            .attributes()
+            .getNamedItem(name) !== undefined;
     };
     Element.prototype.getAttribute = function (qualifiedName) {
         var _a;

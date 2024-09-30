@@ -42,9 +42,11 @@ export class Element extends Node implements EventTarget {
   }
 
   get outerHTML() {
-    const attributes = [...this.elementStore.attributes()]
+    const attributes = Object
+      .values(this.elementStore.attributes().namedNodeMapStore.itemsLookup())
       .map((attr: Attr) => ' ' + attr.localName + '="' + attr.value + '"')
       .join('')
+
     const content = this.childNodes
       .map((node: Node): string | void => {
         if (node instanceof Element) {
@@ -166,6 +168,13 @@ export class Element extends Node implements EventTarget {
   matches() {
     return false
   }
+
+  hasAttribute(name: string): boolean {
+    return this
+      .elementStore
+      .attributes()
+      .getNamedItem(name) !== undefined
+}
 
   getAttribute(qualifiedName: string) {
     return this

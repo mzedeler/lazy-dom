@@ -8,4 +8,27 @@ export class Window {
   getComputedStyle() {
     return {}
   }
+
+  matchMedia(mediaQueryString: string) {
+    return true
+  }
+
+  addEventListener() {
+
+  }
+
+  removeEventListener() {
+
+  }
+
+  get localStorage() {
+    return {
+      getItem() {
+        return null
+      },
+      setItem() {
+        return
+      }
+    }
+  }
 }

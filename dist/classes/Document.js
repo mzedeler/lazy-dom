@@ -1,13 +1,4 @@
 "use strict";
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Document = void 0;
 var NodeTypes_1 = require("../types/NodeTypes");
@@ -25,6 +16,12 @@ var HTMLFormElement_1 = require("./elements/HTMLFormElement");
 var HTMLSpanElement_1 = require("./elements/HTMLSpanElement");
 var HTMLUListElement_1 = require("./elements/HTMLUListElement");
 var HTMLAnchorElement_1 = require("./elements/HTMLAnchorElement");
+var HTMLPreElement_1 = require("./elements/HTMLPreElement");
+var HTMLParagraphElement_1 = require("./elements/HTMLParagraphElement");
+var HTMLElement_1 = require("./elements/HTMLElement");
+var SVGPathElement_1 = require("./elements/SVGPathElement");
+var SVGElement_1 = require("./elements/SVGElement");
+var HTMLLIElement_1 = require("./elements/HTMLLIElement");
 var subtree = function (node) {
     var stack = [node];
     var result = new Set();
@@ -98,6 +95,32 @@ var Document = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Document.prototype.createElementNS = function (namespaceURI, qualifiedName, options) {
+        var _this = this;
+        var element;
+        switch (namespaceURI) {
+            case 'http://www.w3.org/2000/svg':
+                switch (qualifiedName.toUpperCase()) {
+                    case 'PATH':
+                        element = new SVGPathElement_1.SVGPathElement();
+                        break;
+                    case 'SVG':
+                        element = new SVGElement_1.SVGElement();
+                        break;
+                    default:
+                        console.log({ qualifiedName: qualifiedName, namespaceURI: namespaceURI });
+                        process.exit();
+                }
+                ;
+                break;
+            default:
+                console.log({ qualifiedName: qualifiedName, namespaceURI: namespaceURI });
+                process.exit();
+        }
+        element.elementStore.tagName = function () { return qualifiedName; };
+        element.nodeStore.ownerDocument = function () { return _this; };
+        return element;
+    };
     Document.prototype.createElement = function (localName) {
         var _this = this;
         var element;
@@ -131,11 +154,23 @@ var Document = /** @class */ (function () {
             case 'INPUT':
                 element = new HTMLInputElement_1.HTMLInputElement();
                 break;
+            case 'LI':
+                element = new HTMLLIElement_1.HTMLLIElement();
+                break;
             case 'SPAN':
                 element = new HTMLSpanElement_1.HTMLSpanElement();
                 break;
             case 'UL':
                 element = new HTMLUListElement_1.HTMLUListElement();
+                break;
+            case 'PRE':
+                element = new HTMLPreElement_1.HTMLPreElement();
+                break;
+            case 'P':
+                element = new HTMLParagraphElement_1.HTMLParagraphElement();
+                break;
+            case 'CODE':
+                element = new HTMLElement_1.HTMLElement();
                 break;
             default: throw new Error('unknown element name: ' + localName);
         }
@@ -162,8 +197,7 @@ var Document = /** @class */ (function () {
     Document.prototype.getElementById = function (id) {
         var attributeMatchingId = function (attribute) { return attribute
             .name === 'id' && attribute.value === id; };
-        var elementMatchingId = function (element) { return __spreadArray([], element
-            .attributes, true).find(attributeMatchingId); };
+        var elementMatchingId = function (element) { return element.getAttribute('id') === id; };
         return this
             .documentStore
             .elements()
@@ -175,6 +209,19 @@ var Document = /** @class */ (function () {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Document.prototype.addEventListener = function (type, listener) {
     };
+    Document.prototype.removeEventListener = function () {
+    };
+    Document.prototype.querySelectorAll = function (query) {
+        return this.body.querySelectorAll(query);
+    };
+    Object.defineProperty(Document.prototype, "documentElement", {
+        // should be html, but body for now
+        get: function () {
+            return this.body;
+        },
+        enumerable: false,
+        configurable: true
+    });
     return Document;
 }());
 exports.Document = Document;

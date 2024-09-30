@@ -20,6 +20,12 @@ import { HTMLUListElement } from "./elements/HTMLUListElement"
 import { Attr } from "./Attr"
 import { Node } from './Node'
 import { HTMLAnchorElement } from "./elements/HTMLAnchorElement"
+import { HTMLPreElement } from "./elements/HTMLPreElement"
+import { HTMLParagraphElement } from "./elements/HTMLParagraphElement"
+import { HTMLElement } from "./elements/HTMLElement"
+import { SVGPathElement } from "./elements/SVGPathElement"
+import { SVGElement } from "./elements/SVGElement"
+import { HTMLLIElement } from "./elements/HTMLLIElement"
 
 const subtree = (node: Node): Set<Node> => {
   const stack: Node[] = [node]
@@ -95,6 +101,24 @@ export class Document implements EventTarget {
     return this.documentStore.body()
   }
 
+  createElementNS(namespaceURI: string, qualifiedName: string, options?: { is: string }) {
+    let element: Element
+    switch(namespaceURI) {
+      case 'http://www.w3.org/2000/svg':
+        switch(qualifiedName.toUpperCase()) {
+          case 'PATH': element = new SVGPathElement(); break;
+          case 'SVG': element = new SVGElement(); break;
+          default: console.log({ qualifiedName, namespaceURI }); process.exit()
+        }; break;
+      default: console.log({ qualifiedName, namespaceURI}); process.exit()
+    }
+
+    element.elementStore.tagName = () => qualifiedName
+    element.nodeStore.ownerDocument = () => this
+
+    return element
+  }
+
   createElement(localName: string): Element {
     let element: Element
     switch(localName.toUpperCase()) {
@@ -111,8 +135,12 @@ export class Document implements EventTarget {
       case 'DIV': element = new HTMLDivElement(); break;
       case 'IMG': element = new HTMLImageElement(); break;
       case 'INPUT': element = new HTMLInputElement(); break;
+      case 'LI': element = new HTMLLIElement(); break;
       case 'SPAN': element = new HTMLSpanElement(); break;
       case 'UL': element = new HTMLUListElement(); break;
+      case 'PRE': element = new HTMLPreElement(); break;
+      case 'P': element = new HTMLParagraphElement(); break;
+      case 'CODE': element = new HTMLElement(); break;
       default: throw new Error('unknown element name: ' + localName)
     }
 
@@ -142,9 +170,7 @@ export class Document implements EventTarget {
   getElementById(id: string): Element | null {
     const attributeMatchingId = (attribute: Attr) => attribute
       .name === 'id' && attribute.value === id 
-    const elementMatchingId = (element: Element) => [...element
-      .attributes]
-      .find(attributeMatchingId)
+    const elementMatchingId = (element: Element) => element.getAttribute('id') === id
 
     return this
       .documentStore
@@ -160,5 +186,18 @@ export class Document implements EventTarget {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   addEventListener(type: string, listener: Listener) {
 
+  }
+
+  removeEventListener() {
+
+  }
+
+  querySelectorAll(query: string) {
+    return this.body.querySelectorAll(query)
+  }
+
+  // should be html, but body for now
+  get documentElement() {
+    return this.body
   }
 }
