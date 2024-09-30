@@ -76,6 +76,36 @@ class DocumentStore  {
   }
 }
 
+type Constructor = new (...args: any[]) => HTMLElement | SVGElement
+
+const constructors: Record<string, Record<string, Constructor>> = {
+  'http://www.w3.org/1999/xhtml': {
+    A: HTMLAnchorElement,
+    BUTTON: HTMLButtonElement,
+    FORM: HTMLFormElement,
+    H1: HTMLHeadingElement,
+    H2: HTMLHeadingElement,
+    H3: HTMLHeadingElement,
+    H4: HTMLHeadingElement,
+    H5: HTMLHeadingElement,
+    H6: HTMLHeadingElement,
+    LABEL: HTMLLabelElement,
+    DIV: HTMLDivElement,
+    IMG: HTMLImageElement,
+    INPUT: HTMLInputElement,
+    LI: HTMLLIElement,
+    SPAN: HTMLSpanElement,
+    UL: HTMLUListElement,
+    PRE: HTMLPreElement,
+    P: HTMLParagraphElement,
+    CODE: HTMLElement,
+  },
+  'http://www.w3.org/2000/svg': {
+    PATH: SVGPathElement,
+    SVG: SVGElement,
+  }
+}
+
 export class Document implements EventTarget {
   documentStore = new DocumentStore()
 
@@ -101,18 +131,13 @@ export class Document implements EventTarget {
     return this.documentStore.body()
   }
 
-  createElementNS(namespaceURI: string, qualifiedName: string, options?: { is: string }) {
-    let element: Element
-    switch(namespaceURI) {
-      case 'http://www.w3.org/2000/svg':
-        switch(qualifiedName.toUpperCase()) {
-          case 'PATH': element = new SVGPathElement(); break;
-          case 'SVG': element = new SVGElement(); break;
-          default: console.log({ qualifiedName, namespaceURI }); process.exit()
-        }; break;
-      default: console.log({ qualifiedName, namespaceURI}); process.exit()
+  createElementNS(namespaceURI: keyof typeof constructors, qualifiedName: string, options?: { is: string }) {
+    const constructor = constructors[namespaceURI][qualifiedName.toUpperCase()]
+    if (!constructor) {
+      throw new Error('Unknown element name: ' + qualifiedName + ' with namespace ' + namespaceURI)
     }
 
+    const element = new constructor()
     element.elementStore.tagName = () => qualifiedName
     element.nodeStore.ownerDocument = () => this
 
@@ -120,30 +145,12 @@ export class Document implements EventTarget {
   }
 
   createElement(localName: string): Element {
-    let element: Element
-    switch(localName.toUpperCase()) {
-      case 'A': element = new HTMLAnchorElement(); break;
-      case 'BUTTON': element = new HTMLButtonElement(); break;
-      case 'FORM': element = new HTMLFormElement(); break;
-      case 'H1':
-      case 'H2':
-      case 'H3':
-      case 'H4':
-      case 'H5':
-      case 'H6': element = new HTMLHeadingElement(); break;
-      case 'LABEL': element = new HTMLLabelElement(); break;
-      case 'DIV': element = new HTMLDivElement(); break;
-      case 'IMG': element = new HTMLImageElement(); break;
-      case 'INPUT': element = new HTMLInputElement(); break;
-      case 'LI': element = new HTMLLIElement(); break;
-      case 'SPAN': element = new HTMLSpanElement(); break;
-      case 'UL': element = new HTMLUListElement(); break;
-      case 'PRE': element = new HTMLPreElement(); break;
-      case 'P': element = new HTMLParagraphElement(); break;
-      case 'CODE': element = new HTMLElement(); break;
-      default: throw new Error('unknown element name: ' + localName)
+    const constructor = constructors['http://www.w3.org/1999/xhtml'][localName.toUpperCase()]
+    if (!constructor) {
+      throw new Error('Unknown element name: ' + localName)
     }
 
+    const element = new constructor()
     element.elementStore.tagName = () => localName
     element.nodeStore.ownerDocument = () => this
 
