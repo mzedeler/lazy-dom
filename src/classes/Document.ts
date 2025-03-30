@@ -26,6 +26,7 @@ import { HTMLElement } from "./elements/HTMLElement"
 import { SVGPathElement } from "./elements/SVGPathElement"
 import { SVGElement } from "./elements/SVGElement"
 import { HTMLLIElement } from "./elements/HTMLLIElement"
+import { HTMLCollection } from "./HTMLCollection"
 
 const subtree = (node: Node): Set<Node> => {
   const stack: Node[] = [node]
@@ -139,6 +140,7 @@ export class Document implements EventTarget {
 
     const element = new constructor()
     element.elementStore.tagName = () => qualifiedName
+    element.elementStore.namespaceURI = () => namespaceURI
     element.nodeStore.ownerDocument = () => this
 
     return element
@@ -201,6 +203,48 @@ export class Document implements EventTarget {
 
   querySelectorAll(query: string) {
     return this.body.querySelectorAll(query)
+  }
+
+  getElementsByTagNameNS(namespaceURI: string, localName: string) {
+    const filter = (element: Element) => {
+      return element.tagName.toUpperCase() === localName.toUpperCase() && element.namespaceURI === namespaceURI
+    }
+
+    class ByTagNameNSCollection extends HTMLCollection {
+      documentStore: DocumentStore
+      filter: (element: Element) => boolean
+      constructor(documentStore: DocumentStore, filter: (element: Element) => boolean) {
+        super()
+        this.filter = filter
+        this.documentStore = documentStore
+      }
+
+      item(index: number) {
+        return this
+          .documentStore
+          .elements()
+          .filter(filter)
+          .at(index) || null
+      }
+
+      get length() {
+        return this
+          .documentStore
+          .elements()
+          .filter(filter)
+          .length
+      }
+
+      namedItem(key: string) {
+        return this
+          .documentStore
+          .elements()
+          .filter(filter)
+          .find(element => element.getAttribute('name') === key || element.getAttribute('id') === key) || null
+      }
+    }
+
+    return new ByTagNameNSCollection(this.documentStore, filter)
   }
 
   // should be html, but body for now

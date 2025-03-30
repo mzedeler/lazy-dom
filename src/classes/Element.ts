@@ -19,6 +19,7 @@ class ElementStore {
   childNodes: Future<Array<Node>> = () => []
   style: Future<Record<string, unknown>> = () => ({})
   attributes: Future<NamedNodeMap> = () => new NamedNodeMap()
+  namespaceURI: Future<string | null> = () => null
 }
 
 const isEventTarget = (node: unknown): node is EventTarget =>
@@ -39,6 +40,14 @@ export class Element extends Node implements EventTarget {
 
   get tagName() {
     return this.elementStore.tagName().toUpperCase()
+  }
+
+  get namespaceURI() {
+    return this.elementStore.namespaceURI()
+  }
+
+  set namespaceURI(namespaceURI: string | null) {
+    this.elementStore.namespaceURI = () => namespaceURI
   }
 
   get outerHTML() {
