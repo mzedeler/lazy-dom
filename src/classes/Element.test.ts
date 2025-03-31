@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { div } from './helpers/div'
+import { div } from '../utils/div'
 
 describe('Element', () => {
   afterEach(() => {

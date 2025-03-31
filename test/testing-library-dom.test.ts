@@ -65,4 +65,18 @@ describe('@testing-library/dom', () => {
 
     expect(screen.queryByText(text)).to.eq(div)
   })
+
+  describe('scren.queryByRole', () => {
+    // Still not supported
+    it.skip('role=button using button', () => {
+      const role = 'button'
+      const text = 'some text'
+      const button = document.createElement('button')
+      const textNode = document.createTextNode(text)
+      button.appendChild(textNode)
+      document.body.appendChild(button)
+  
+      expect(screen.queryByRole(role)).to.eq(button)
+    })  
+  })
 })

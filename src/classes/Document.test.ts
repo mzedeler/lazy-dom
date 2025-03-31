@@ -1,6 +1,6 @@
 import { expect } from 'chai'
-import { tag } from './helpers/tag'
-import { div } from './helpers/div'
+import { tag } from '../utils/tag'
+import { div } from '../utils/div'
 
 describe('Document', () => {
   beforeEach(() => {
