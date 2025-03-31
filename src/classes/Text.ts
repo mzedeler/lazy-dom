@@ -9,7 +9,7 @@ class TextStore  {
   }
 }
 
-export class Text extends Node {
+export class Text extends Node<string> {
   textStore = new TextStore()
 
   constructor() {

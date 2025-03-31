@@ -16,7 +16,6 @@ class ElementStore {
   tagName: Future<string> = () => {
     throw valueNotSetError('tagName')
   }
-  childNodes: Future<Array<Node>> = () => []
   style: Future<Record<string, unknown>> = () => ({})
   attributes: Future<NamedNodeMap> = () => new NamedNodeMap()
   namespaceURI: Future<string | null> = () => null
@@ -71,21 +70,22 @@ export class Element extends Node implements EventTarget {
       + '</' + this.tagName.toLocaleLowerCase() + '>'
   }
 
-  get childNodes() {
-    return this.elementStore.childNodes()
-  }
-
   get style() {
     return this.elementStore.style()
   }
 
   get textContent(): string {
-    return this.elementStore.childNodes().filter(childNode => childNode instanceof Text).join('')
+    return this
+        .nodeStore
+        .childNodes()
+        .filter(childNode => childNode instanceof Text)
+        .map((text: Text) => text.data)
+        .join('')
   }
 
   set textContent(data: string) {
     const ownerDocumentFuture = this.nodeStore.ownerDocument
-    this.elementStore.childNodes = () => data.length === 0 ? [] : [
+    this.nodeStore.childNodes = () => data.length === 0 ? [] : [
       ownerDocumentFuture().createTextNode(data)
     ]
   }
@@ -103,35 +103,6 @@ export class Element extends Node implements EventTarget {
       return previousAttributes
     }
     return
-  }
-
-  removeChild(node: Node): Node {
-    node.nodeStore.parent = () => undefined
-
-    // Validation: node not child: throw NotFoundError DOMException
-    const previousChildNodesFuture = this.elementStore.childNodes
-    this.elementStore.childNodes = () => {
-      return previousChildNodesFuture().filter(childNode => childNode !== node)
-    }
-
-    this.ownerDocument.documentStore.disconnect(node)
-
-    return node
-  }
-
-  appendChild(node: Node) {
-    node.nodeStore.parent = () => this
-
-    const previousChildNodesFuture = this.elementStore.childNodes
-    this.elementStore.childNodes = () => {
-      const childNodes = previousChildNodesFuture()
-      childNodes.push(node)
-      return childNodes
-    }
-
-    this.ownerDocument.documentStore.connect(node)
-
-    return node
   }
 
   get addEventListener(): EventTarget['addEventListener'] {

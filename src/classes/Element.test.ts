@@ -1,5 +1,6 @@
 import { expect } from 'chai'
 import { div } from '../utils/div'
+import { Text } from './Text'
 
 describe('Element', () => {
   afterEach(() => {
@@ -50,35 +51,14 @@ describe('Element', () => {
     expect(() => element.addEventListener('click', () => {})).not.to.throw
   })
 
-  it('has removeChild()', () => {
-    const rootId = 'root'
-    const parent1Id = 'parent1'
-    const parent2Id = 'parent2'
-    const parent1Leaf1Id = 'leaf11'
-    const parent1Leaf2Id = 'leaf12'
-    const parent2Leaf = 'leaf2'
-    const root =
-      div(rootId,
-        div(parent1Id,
-          div(parent1Leaf1Id),
-          div(parent1Leaf2Id)
-        ),
-        div(parent2Id,
-          div(parent2Leaf)
-        )
-      )
+  it('has textContent getter', () => {
+    const text1 = document.createTextNode('some')
+    const text2 = document.createTextNode(' ')
+    const text3 = document.createTextNode('text')
+    const root = div('root', text1, text2, text3)
 
-    document.body.appendChild(root)
-    const parent1 = document.getElementById(parent1Id)
-    if (!parent1) {
-      throw new Error('assertion failed: this element should exist')
-    }
+    console.log(root.textContent)
 
-    root.removeChild(parent1)
-
-    expect(root.outerHTML).to.eql('<div id="root"><div id="parent2"><div id="leaf2"></div></div></div>')
-    expect(document.getElementById(parent1Id)).to.be.null
-    expect(document.getElementById(parent1Leaf1Id)).to.be.null
-    expect(document.getElementById(parent1Leaf2Id)).to.be.null
+    expect(root.textContent).to.eql('some text')
   })
 })
