@@ -10,6 +10,10 @@ import { EventTarget } from "../types/EventTarget"
 import { PointerEvent } from "./PointerEvent"
 import { Attr } from "./Attr"
 import { NamedNodeMap } from "./NamedNodeMap"
+import { CssSelectAdapter } from "../utils/CssSelectAdapter"
+import * as CSSselect from 'css-select'
+
+const adapter = new CssSelectAdapter()
 
 class ElementStore {
   eventListeners: Future<Listeners> = () => ({})
@@ -23,7 +27,6 @@ class ElementStore {
 
 const isEventTarget = (node: unknown): node is EventTarget =>
   Boolean((node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
-
 
 export class Element extends Node implements EventTarget {
   elementStore = new ElementStore()
@@ -145,10 +148,6 @@ export class Element extends Node implements EventTarget {
     this.dispatchEvent(event)
   }
 
-  matches() {
-    return false
-  }
-
   hasAttribute(name: string): boolean {
     return this
       .elementStore
@@ -164,12 +163,15 @@ export class Element extends Node implements EventTarget {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  querySelector(query: string) {
-    throw new Error('unsupported method')
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   querySelectorAll(query: string) {
     return this.ownerDocument.all
+  }
+
+  matches(selectors: string): boolean {
+    return CSSselect.is(this, selectors, { adapter })
+  }
+
+  querySelector(selectors: string): Element | null {
+    return CSSselect.selectOne(selectors, this, {  adapter })
   }
 }

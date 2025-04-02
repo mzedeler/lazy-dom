@@ -1,8 +1,12 @@
 import { expect } from 'chai'
 import { div } from '../utils/div'
-import { Text } from './Text'
+import * as CSSselect from 'css-select'
 
 describe('Element', () => {
+  beforeEach(() => {
+    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+  })
+
   afterEach(() => {
     document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
@@ -60,5 +64,53 @@ describe('Element', () => {
     console.log(root.textContent)
 
     expect(root.textContent).to.eql('some text')
+  })
+
+  describe('matches()', () => {
+    it('can match the element that is being called', () => {
+      const root = div('root')
+  
+      expect(root.matches('#root')).to.be.true
+    })
+  
+    it('can match a child element', () => {
+      const child = div('child')
+      const root = div('root', child)
+  
+      expect(root.matches('#root:has(#child)')).to.be.true
+    })
+
+    it('supports class selectors', () => {
+      const root = div('root')
+      root.setAttribute('class', 'root')
+  
+      expect(root.matches('.root')).to.be.true
+    })
+  })
+
+  describe('querySelector', () => {
+    it('can find a child based on id', () => {
+      const child = div('child')
+      const root = div('root', child)
+
+      expect(root.querySelector('#child')).to.eq(child)
+    })
+
+    it('can find a child based on class', () => {
+      const child = div('child')
+      child.setAttribute('class', 'child')
+      const root = div('root', child)
+
+      expect(root.querySelector('.child')).to.eq(child)
+    })
+
+    it('can find a grandchild based on class', () => {
+      const grandchild = div('grandchild')
+      grandchild.setAttribute('class', 'grandchild')
+      const child = div('child')
+      const root = div('root', child)
+
+      expect(root.querySelector('.grandchild')).to.eq(grandchild)
+    })
   })
 })
