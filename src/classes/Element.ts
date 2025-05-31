@@ -4,7 +4,7 @@ import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 
 import { Text } from "./Text"
-import { Node } from "./Node"
+import { Node } from "./Node/Node"
 import { Event } from "./Event"
 import { EventTarget } from "../types/EventTarget"
 import { PointerEvent } from "./PointerEvent"
@@ -12,6 +12,8 @@ import { Attr } from "./Attr"
 import { NamedNodeMap } from "./NamedNodeMap"
 import { CssSelectAdapter } from "../utils/CssSelectAdapter"
 import * as CSSselect from 'css-select'
+import { toIterator } from "../utils/toIterator"
+import { iteratorToArray } from "../utils/iteratorToArray"
 
 const adapter = new CssSelectAdapter()
 
@@ -44,6 +46,10 @@ export class Element extends Node implements EventTarget {
     return this.elementStore.tagName().toUpperCase()
   }
 
+  get nodeName() {
+    return this.elementStore.tagName().toUpperCase()
+  }
+
   get namespaceURI() {
     return this.elementStore.namespaceURI()
   }
@@ -58,7 +64,7 @@ export class Element extends Node implements EventTarget {
       .map((attr: Attr) => ' ' + attr.localName + '="' + attr.value + '"')
       .join('')
 
-    const content = this.childNodes
+    const content = iteratorToArray(this.nodeStore.childNodes())
       .map((node: Node): string | void => {
         if (node instanceof Element) {
           return node.outerHTML
@@ -78,19 +84,23 @@ export class Element extends Node implements EventTarget {
   }
 
   get textContent(): string {
-    return this
-        .nodeStore
-        .childNodes()
-        .filter(childNode => childNode instanceof Text)
-        .map((text: Text) => text.data)
-        .join('')
+    const iterator = this
+      .nodeStore
+      .childNodes()
+    const fragments = []
+    for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
+      if (value instanceof Text) {
+        fragments.push(value.nodeValue)
+      }
+    }
+
+    return fragments.join('')
   }
 
   set textContent(data: string) {
     const ownerDocumentFuture = this.nodeStore.ownerDocument
-    this.nodeStore.childNodes = () => data.length === 0 ? [] : [
-      ownerDocumentFuture().createTextNode(data)
-    ]
+    const textNode: Array<Node<string>> = [ownerDocumentFuture().createTextNode(data)]
+    this.nodeStore.childNodes = () => toIterator(textNode)
   }
 
   get attributes() {
@@ -142,6 +152,7 @@ export class Element extends Node implements EventTarget {
   }
 
   click() {
+    console.log('click')
     const event = new PointerEvent()
     event.eventStore.type = () => 'click'
     event.eventStore.target = () => this

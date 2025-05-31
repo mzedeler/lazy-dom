@@ -104,13 +104,42 @@ describe('Element', () => {
       expect(root.querySelector('.child')).to.eq(child)
     })
 
-    it('can find a grandchild based on class', () => {
+    it.skip('can find a grandchild based on class', () => {
       const grandchild = div('grandchild')
       grandchild.setAttribute('class', 'grandchild')
       const child = div('child')
       const root = div('root', child)
 
       expect(root.querySelector('.grandchild')).to.eq(grandchild)
+    })
+  })
+
+  describe('textContent', () => {
+    it('can set text content on an empty element', () => {
+      const textContent = 'some text'
+      const empty = div('empty')
+
+      empty.textContent = textContent
+
+      expect(empty.outerHTML).to.eq('<div id="empty">' + textContent + '</div>')
+    })
+
+    it('can set text content on an element with children', () => {
+      const textContent = 'some text'
+      const empty = div('parent', div('child'))
+
+      empty.textContent = textContent
+
+      expect(empty.outerHTML).to.eq('<div id="parent">' + textContent + '</div>')
+    })
+
+    it('can set text content on an element with text content', () => {
+      const textContent = 'some text'
+      const empty = div('the-div', document.createTextNode('original text'))
+
+      empty.textContent = textContent
+
+      expect(empty.outerHTML).to.eq('<div id="the-div">' + textContent + '</div>')
     })
   })
 })

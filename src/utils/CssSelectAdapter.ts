@@ -1,6 +1,7 @@
 import { Element } from "../classes/Element";
-import { Node } from "../classes/Node";
+import { Node } from "../classes/Node/Node";
 import { NodeTypes } from "../types/NodeTypes";
+import { NodeList } from "../classes/NodeList";
 
 type NodeTest = (node: Node) => boolean
 
@@ -9,8 +10,15 @@ export class CssSelectAdapter {
     return node.nodeType === NodeTypes.ELEMENT_NODE
   }
 
-  getChildren(node: Node): Node[] {
-    return node.childNodes
+  getChildren<NV>(node: Node<NV>): Node[] {
+    const result: Node[] = []
+
+    const iterator = node.childNodes.values()
+    for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
+      result.push(value)
+    }
+
+    return result
   }
 
   getParent(element: Node): Node | undefined {
@@ -49,12 +57,15 @@ export class CssSelectAdapter {
     return nodes as Node[];
   }
 
-  existsOne(test: NodeTest, nodes: Node[]): boolean {
-		return nodes.some((node: Node) =>
-      this.isTag(node)
-        ? test(node) || this.existsOne(test, this.getChildren(node))
-        : false
-    )
+  existsOne(test: NodeTest, nodes: NodeList): boolean {
+    const iterator = nodes.values()
+    for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
+      if (value && test(value)) {
+        return true
+      }
+    }
+
+    return false
   }
 
   getSiblings(node: Node): Node[] {

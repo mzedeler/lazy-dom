@@ -1,7 +1,7 @@
 import { Future } from "../types/Future"
 import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
-import { Node } from "./Node"
+import { Node } from "./Node/Node"
 
 class TextStore  {
   data: Future<string> = () => {
@@ -11,6 +11,8 @@ class TextStore  {
 
 export class Text extends Node<string> {
   textStore = new TextStore()
+
+  nodeName = '#text'
 
   constructor() {
     super()
@@ -28,5 +30,9 @@ export class Text extends Node<string> {
 
   set data(data: string) {
     this.textStore.data = () => data
+  }
+
+  get nodeValue() {
+    return this.textStore.data()
   }
 }

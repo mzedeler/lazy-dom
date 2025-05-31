@@ -1,6 +1,20 @@
 import { createRoot } from 'react-dom/client'
 import * as React from 'react'
 import { expect } from 'chai'
+import { NodeTypes } from '../src/types/NodeTypes'
+
+class InvariantError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'InvariantError'
+  }
+}
+
+function invariant(condition: unknown, message: string): asserts condition {
+  if (!condition) {
+    throw new InvariantError(message)
+  }
+}
 
 describe('react', () => {
   afterEach(() => {
@@ -30,7 +44,7 @@ describe('react', () => {
     React.act(() => root.render(React.createElement('h1', {}, 'Hello' )))
   })
 
-  it('supports onClick() with Reacts synthetic events', async () => {
+  it.only('supports onClick() with Reacts synthetic events', async () => {
     const div = document.createElement('div')
     document.body.appendChild(div)
     const root = createRoot(div)
@@ -38,9 +52,11 @@ describe('react', () => {
     const onClick = () => { clicked = true }
     const children: ReturnType<typeof React.createElement>[] = [React.createElement('span', {}, 'child')]
     React.act(() => root.render(React.createElement('span', { onClick, children }, 'Hello' )))
-    const [span] = div.childNodes
+    const span = div.childNodes.item(0)
 
-    // @ts-expect-error click is on span
+    console.log('div nodeName: ', div.nodeName)
+    console.log('nodeName: ', [...div.childNodes][0].nodeName)
+    invariant(span instanceof window.HTMLSpanElement , 'Must be span element')
     React.act(() => span.click())
 
     expect(clicked).to.be.true

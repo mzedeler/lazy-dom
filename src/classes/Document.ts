@@ -18,7 +18,7 @@ import { HTMLFormElement } from "./elements/HTMLFormElement"
 import { HTMLSpanElement } from "./elements/HTMLSpanElement"
 import { HTMLUListElement } from "./elements/HTMLUListElement"
 import { Attr } from "./Attr"
-import { Node } from './Node'
+import { Node } from './Node/Node'
 import { HTMLAnchorElement } from "./elements/HTMLAnchorElement"
 import { HTMLPreElement } from "./elements/HTMLPreElement"
 import { HTMLParagraphElement } from "./elements/HTMLParagraphElement"
@@ -37,7 +37,7 @@ const subtree = (node: Node): Set<Node> => {
     if (nextNode) {
       result.add(nextNode)
       if (nextNode instanceof Element) {
-        stack.push(...nextNode.childNodes)
+        nextNode.childNodes.forEach((childNode: Node) => stack.push(childNode))
       }
     }
   } while (stack.length)

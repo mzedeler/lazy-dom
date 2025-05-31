@@ -66,7 +66,7 @@ describe('@testing-library/dom', () => {
     expect(screen.queryByText(text)).to.eq(div)
   })
 
-  describe('scren.queryByRole', () => {
+  describe('screen.queryByRole', () => {
     // Still not supported
     it.skip('role=button using button', () => {
       const role = 'button'

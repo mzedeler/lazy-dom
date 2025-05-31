@@ -27,14 +27,14 @@ const JSDOMOptions = { beforeAll: () => {
 }}
 
 bench
-  .add('lazyDom: React.createRoot', reactCreateRoot, lazyDomOptions)
-  .add('JSDOM: React.createRoot', reactCreateRoot, JSDOMOptions)
-  .add('lazyDom: React.createRoot + React.createElement', reactCreateElement, lazyDomOptions)
-  .add('JSDOM: React.createRoot + React.createElement', reactCreateElement, JSDOMOptions)
+  // .add('lazyDom: React.createRoot', reactCreateRoot, lazyDomOptions)
+  // .add('JSDOM: React.createRoot', reactCreateRoot, JSDOMOptions)
+  // .add('lazyDom: React.createRoot + React.createElement', reactCreateElement, lazyDomOptions)
+  // .add('JSDOM: React.createRoot + React.createElement', reactCreateElement, JSDOMOptions)
   .add('lazyDom: event handling', reactEventHandling, lazyDomOptions)
-  .add('JSDOM: event handling', reactEventHandling, JSDOMOptions)
-  .add('lazyDom: removing child', domRemoveChild, lazyDomOptions)
-  .add('JSDOM: removing child', domRemoveChild, JSDOMOptions)
+  // .add('JSDOM: event handling', reactEventHandling, JSDOMOptions)
+  // .add('lazyDom: removing child', domRemoveChild, lazyDomOptions)
+  // .add('JSDOM: removing child', domRemoveChild, JSDOMOptions)
 
 const main = async () => {
   await bench.warmup()

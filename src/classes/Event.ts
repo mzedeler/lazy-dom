@@ -1,7 +1,7 @@
 import { Future } from "../types/Future"
 import valueNotSetError from "../utils/valueNotSetError"
 
-import { Node } from './Node'
+import { Node } from './Node/Node'
 import { EventType } from '../types/EventType'
 
 class EventStore {
