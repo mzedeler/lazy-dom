@@ -4,6 +4,7 @@ import { Document } from "../Document"
 import { Element } from "../Element"
 import { NodeStore } from "./NodeStore"
 import { ChildNodeList } from "./ChildNodeList"
+import { invariant } from "../../utils/invariant"
 
 function* lazyFilter<T>(iterator: Iterator<T>, test: (t: T) => boolean): Iterator<T> {
   for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
@@ -14,9 +15,7 @@ function* lazyFilter<T>(iterator: Iterator<T>, test: (t: T) => boolean): Iterato
 }
 
 function* lazyAppend<T>(iterator: Iterator<T>, last: T): Iterator<T> {
-  if (!('next' in iterator)) {
-    throw new Error('Provided parameter does not appear to be an iterator.')
-  }
+  invariant('next' in iterator, 'iterator must have next()')
   for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
     yield value
   }
@@ -89,14 +88,13 @@ export abstract class Node<NV = null> {
 
     const previousChildNodesFuture = this.nodeStore.childNodes
     const iterator = previousChildNodesFuture()
-    if (!('next' in iterator)) {
-      console.log('append: ', previousChildNodesFuture(), node)
-      throw new Error()
-    }
+    invariant('next' in iterator, 'iterator must have next()')
+
     this.nodeStore.childNodes = () => lazyAppend(
       previousChildNodesFuture(),
       node
     )
+
     this.ownerDocument.documentStore.connect(node)
 
     return node

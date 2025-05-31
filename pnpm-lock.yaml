@@ -48,8 +48,8 @@ importers:
         specifier: ^3.2.12
         version: 3.2.12
       chai:
-        specifier: ^5.1.0
-        version: 5.1.0
+        specifier: ^5.2.0
+        version: 5.2.0
       css-select:
         specifier: ^5.1.0
         version: 5.1.0
@@ -91,7 +91,7 @@ importers:
         version: 18.0.0
       sinon-chai:
         specifier: ^3.7.0
-        version: 3.7.0(chai@5.1.0)(sinon@18.0.0)
+        version: 3.7.0(chai@5.2.0)(sinon@18.0.0)
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
@@ -554,8 +554,8 @@ packages:
     resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
     engines: {node: '>=10'}
 
-  chai@5.1.0:
-    resolution: {integrity: sha512-kDZ7MZyM6Q1DhR9jy7dalKohXQ2yrlXkk59CR52aRKxJrobmlBNqnFQxX9xOX8w+4mz8SYlKJa/7D7ddltFXCw==}
+  chai@5.2.0:
+    resolution: {integrity: sha512-mCuXncKXk5iCLhfhwTc0izo0gtEmpz5CtG2y8GiOINBlMVS6v8TMRc5TaLWKS6692m9+dVVfzgeVxR5UxWHTYw==}
     engines: {node: '>=12'}
 
   chalk@2.4.2:
@@ -566,8 +566,8 @@ packages:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
 
-  check-error@2.0.0:
-    resolution: {integrity: sha512-tjLAOBHKVxtPoHe/SA7kNOMvhCRdCJ3vETdeY0RuAc9popf+hyaSV6ZEg9hr4cpWF7jmo/JSWEnLDrnijS9Tog==}
+  check-error@2.1.1:
+    resolution: {integrity: sha512-OAlb+T7V4Op9OwdkjmguYRqncdlx5JiofwOAUkmTF+jNdHwzTaTs4sRAGpzLF3oOz5xAyDGrPgeIDFQmDOTiJw==}
     engines: {node: '>= 16'}
 
   chokidar@3.5.3:
@@ -1831,10 +1831,10 @@ snapshots:
 
   camelcase@6.3.0: {}
 
-  chai@5.1.0:
+  chai@5.2.0:
     dependencies:
       assertion-error: 2.0.1
-      check-error: 2.0.0
+      check-error: 2.1.1
       deep-eql: 5.0.1
       loupe: 3.1.0
       pathval: 2.0.0
@@ -1850,7 +1850,7 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  check-error@2.0.0: {}
+  check-error@2.1.1: {}
 
   chokidar@3.5.3:
     dependencies:
@@ -2553,9 +2553,9 @@ snapshots:
     dependencies:
       semver: 7.6.2
 
-  sinon-chai@3.7.0(chai@5.1.0)(sinon@18.0.0):
+  sinon-chai@3.7.0(chai@5.2.0)(sinon@18.0.0):
     dependencies:
-      chai: 5.1.0
+      chai: 5.2.0
       sinon: 18.0.0
 
   sinon@18.0.0:

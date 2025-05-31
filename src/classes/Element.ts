@@ -99,8 +99,11 @@ export class Element extends Node implements EventTarget {
 
   set textContent(data: string) {
     const ownerDocumentFuture = this.nodeStore.ownerDocument
-    const textNode: Array<Node<string>> = [ownerDocumentFuture().createTextNode(data)]
-    this.nodeStore.childNodes = () => toIterator(textNode)
+    // Implicit behavior here: if data is empty, remove all children
+    const childNodes: Array<Node<string>> = data.length
+      ? [ownerDocumentFuture().createTextNode(data)]
+      : []
+    this.nodeStore.childNodes = () => toIterator(childNodes)
   }
 
   get attributes() {
@@ -152,7 +155,6 @@ export class Element extends Node implements EventTarget {
   }
 
   click() {
-    console.log('click')
     const event = new PointerEvent()
     event.eventStore.type = () => 'click'
     event.eventStore.target = () => this
