@@ -17,6 +17,8 @@ import { iteratorToArray } from "../utils/iteratorToArray"
 
 const adapter = new CssSelectAdapter()
 
+const emptyArray = [] as const
+
 class ElementStore {
   eventListeners: Future<Listeners> = () => ({})
   tagName: Future<string> = () => {
@@ -100,9 +102,9 @@ export class Element extends Node implements EventTarget {
   set textContent(data: string) {
     const ownerDocumentFuture = this.nodeStore.ownerDocument
     // Implicit behavior here: if data is empty, remove all children
-    const childNodes: Array<Node<string>> = data.length
+    const childNodes = data.length
       ? [ownerDocumentFuture().createTextNode(data)]
-      : []
+      : emptyArray
     this.nodeStore.childNodes = () => toIterator(childNodes)
   }
 
