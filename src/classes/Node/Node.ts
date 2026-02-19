@@ -57,6 +57,11 @@ export abstract class Node<NV = null> {
     return this.nodeStore.parent()
   }
 
+  get parentElement(): Element | null {
+    const parent = this.nodeStore.parent()
+    return parent instanceof Element ? parent : null
+  }
+
   get isConnected(): boolean {
     return this.parentNode ? this.parentNode.isConnected : false
   }

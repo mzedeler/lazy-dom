@@ -16,7 +16,7 @@ class Navigator {}
 const lazyDom = () => {
   const window = new Window()
   const document = new Document()
-  // document.defaultView = window
+  document.defaultView = window
   const navigator = new Navigator()
   const instances = { document, window, navigator }
   const classes = { HTMLDivElement, HTMLLIElement, HTMLIFrameElement, EventTarget, HTMLCanvasElement, HTMLSpanElement }

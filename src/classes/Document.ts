@@ -27,6 +27,7 @@ import { SVGPathElement } from "./elements/SVGPathElement"
 import { SVGElement } from "./elements/SVGElement"
 import { HTMLLIElement } from "./elements/HTMLLIElement"
 import { HTMLCollection } from "./HTMLCollection"
+import { Window } from "./Window"
 
 const subtree = (node: Node): Set<Node> => {
   const stack: Node[] = [node]
@@ -109,6 +110,7 @@ const constructors: Record<string, Record<string, Constructor>> = {
 
 export class Document implements EventTarget {
   documentStore = new DocumentStore()
+  defaultView: Window | null = null
 
   debug() {
     return this.documentStore.elements()

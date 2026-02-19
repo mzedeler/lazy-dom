@@ -67,8 +67,7 @@ describe('@testing-library/dom', () => {
   })
 
   describe('screen.queryByRole', () => {
-    // Still not supported
-    it.skip('role=button using button', () => {
+    it('role=button using button', () => {
       const role = 'button'
       const text = 'some text'
       const button = document.createElement('button')

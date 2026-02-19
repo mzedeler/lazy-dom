@@ -163,6 +163,10 @@ export class Element extends Node implements EventTarget {
     this.dispatchEvent(event)
   }
 
+  get hidden(): boolean {
+    return this.hasAttribute('hidden')
+  }
+
   hasAttribute(name: string): boolean {
     return this
       .elementStore
