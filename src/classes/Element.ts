@@ -181,9 +181,8 @@ export class Element extends Node implements EventTarget {
       .getNamedItem(qualifiedName)?.value || null
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   querySelectorAll(query: string) {
-    return this.ownerDocument.all
+    return CSSselect.selectAll(query, this, { adapter })
   }
 
   matches(selectors: string): boolean {
