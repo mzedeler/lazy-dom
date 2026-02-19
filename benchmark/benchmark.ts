@@ -5,6 +5,7 @@ import { domRemoveChild } from './suite/dom.removeChild'
 import { reactCreateElement } from './suite/react.createElement'
 import { reactEventHandling } from './suite/react.eventHandling'
 import { reactCreateRoot } from './suite/react.createRoot'
+import { tldomGetByRole } from './suite/tldom.getByRole'
 
 // @ts-expect-error TODO
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -31,10 +32,12 @@ bench
   // .add('JSDOM: React.createRoot', reactCreateRoot, JSDOMOptions)
   // .add('lazyDom: React.createRoot + React.createElement', reactCreateElement, lazyDomOptions)
   // .add('JSDOM: React.createRoot + React.createElement', reactCreateElement, JSDOMOptions)
-  .add('lazyDom: event handling', reactEventHandling, lazyDomOptions)
+  // .add('lazyDom: event handling', reactEventHandling, lazyDomOptions)
   // .add('JSDOM: event handling', reactEventHandling, JSDOMOptions)
   // .add('lazyDom: removing child', domRemoveChild, lazyDomOptions)
   // .add('JSDOM: removing child', domRemoveChild, JSDOMOptions)
+  .add('lazyDom: getByRole', tldomGetByRole, lazyDomOptions)
+  .add('JSDOM: getByRole', tldomGetByRole, JSDOMOptions)
 
 const main = async () => {
   await bench.warmup()
