@@ -36,7 +36,7 @@ describe('react', () => {
     React.act(() => root.render(React.createElement('h1', {}, 'Hello' )))
   })
 
-  it.only('supports onClick() with Reacts synthetic events', async () => {
+  it('supports onClick() with Reacts synthetic events', async () => {
     const div = document.createElement('div')
     document.body.appendChild(div)
     const root = createRoot(div)

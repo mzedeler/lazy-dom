@@ -4,7 +4,6 @@ import { expect } from 'chai'
 import sinon, { SinonSandbox, SinonStub } from 'sinon'
 import sinonChai from 'sinon-chai'
 import * as chai from 'chai'
-import { HTMLSpanElement } from '../src/classes/elements/HTMLSpanElement'
 import { createRoot } from 'react-dom/client'
 
 chai.use(sinonChai)
@@ -62,7 +61,7 @@ describe('@testing-library/react', () => {
 
     const spanElement: HTMLElement = document.getElementById(id)!
     expect(spanElement).not.to.be.null
-    expect(spanElement).to.be.instanceOf(HTMLSpanElement)
+    expect(spanElement).to.be.instanceOf(window.HTMLSpanElement)
     React.act(() => spanElement.click())
   })
 
