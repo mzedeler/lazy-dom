@@ -17,7 +17,6 @@ import { HTMLButtonElement } from "./elements/HTMLButtonElement"
 import { HTMLFormElement } from "./elements/HTMLFormElement"
 import { HTMLSpanElement } from "./elements/HTMLSpanElement"
 import { HTMLUListElement } from "./elements/HTMLUListElement"
-import { Attr } from "./Attr"
 import { Node } from './Node/Node'
 import { HTMLAnchorElement } from "./elements/HTMLAnchorElement"
 import { HTMLPreElement } from "./elements/HTMLPreElement"
@@ -134,6 +133,7 @@ export class Document implements EventTarget {
     return this.documentStore.body()
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   createElementNS(namespaceURI: keyof typeof constructors, qualifiedName: string, options?: { is: string }) {
     const constructor = constructors[namespaceURI][qualifiedName.toUpperCase()]
     if (!constructor) {
@@ -179,8 +179,6 @@ export class Document implements EventTarget {
   }
 
   getElementById(id: string): Element | null {
-    const attributeMatchingId = (attribute: Attr) => attribute
-      .name === 'id' && attribute.value === id 
     const elementMatchingId = (element: Element) => element.getAttribute('id') === id
 
     return this

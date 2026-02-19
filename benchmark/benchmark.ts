@@ -1,10 +1,10 @@
 import { Bench } from 'tinybench'
 import { JSDOM } from 'jsdom'
 import lazyDom from '../src/lazyDom'
-import { domRemoveChild } from './suite/dom.removeChild'
-import { reactCreateElement } from './suite/react.createElement'
-import { reactEventHandling } from './suite/react.eventHandling'
-import { reactCreateRoot } from './suite/react.createRoot'
+// import { domRemoveChild } from './suite/dom.removeChild'
+// import { reactCreateElement } from './suite/react.createElement'
+// import { reactEventHandling } from './suite/react.eventHandling'
+// import { reactCreateRoot } from './suite/react.createRoot'
 import { tldomGetByRole } from './suite/tldom.getByRole'
 
 // @ts-expect-error TODO
@@ -12,7 +12,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const bench = new Bench({ time: 100 })
 
-const lazyDomOptions = { beforeAll: lazyDom }
+const lazyDomOptions = { beforeAll: () => { lazyDom() } }
 const JSDOMOptions = { beforeAll: () => {
   const dom = new JSDOM(``, {
     url: "https://example.org/",

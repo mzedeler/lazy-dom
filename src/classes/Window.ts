@@ -9,6 +9,7 @@ export class Window {
     return {}
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   matchMedia(mediaQueryString: string) {
     return true
   }

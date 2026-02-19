@@ -4,19 +4,19 @@ import { expect } from 'chai'
 import sinon, { SinonSandbox, SinonStub } from 'sinon'
 import sinonChai from 'sinon-chai'
 import * as chai from 'chai'
-import { createRoot } from 'react-dom/client'
 
 chai.use(sinonChai)
 
 describe('@testing-library/react', () => {
-  afterEach(cleanup)
-
   let sandbox: SinonSandbox
+
   beforeEach(() => {
     sandbox = sinon.createSandbox()
   })
+
   afterEach(() => {
     sandbox.restore()
+    cleanup()
   })
 
   it('supports render()', async () => {

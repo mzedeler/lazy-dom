@@ -137,7 +137,7 @@ export class Element extends Node implements EventTarget {
         }
         queue.push(listener)
         previousEventListeners[type] = queue
-  
+
         return previousEventListeners
       }
     }
@@ -172,7 +172,7 @@ export class Element extends Node implements EventTarget {
       .elementStore
       .attributes()
       .getNamedItem(name) !== undefined
-}
+  }
 
   getAttribute(qualifiedName: string) {
     return this
@@ -190,6 +190,6 @@ export class Element extends Node implements EventTarget {
   }
 
   querySelector(selectors: string): Element | null {
-    return CSSselect.selectOne(selectors, this, {  adapter })
+    return CSSselect.selectOne(selectors, this, { adapter })
   }
 }

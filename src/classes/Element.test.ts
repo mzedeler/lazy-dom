@@ -1,6 +1,5 @@
 import { expect } from 'chai'
 import { div } from '../utils/div'
-import * as CSSselect from 'css-select'
 
 describe('Element', () => {
   beforeEach(() => {

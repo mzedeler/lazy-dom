@@ -29,7 +29,7 @@ export class ChildNodeList<NV> extends NodeList {
 
     const nodes: Node[] = [];
     const iterator = this.nodeStore.childNodes();
-    let position = 0;
+    const position = 0;
     let result: Node | null = null;
     for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
       nodes.push(value);
