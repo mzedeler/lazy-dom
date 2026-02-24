@@ -60,8 +60,6 @@ describe('Element', () => {
     const text3 = document.createTextNode('text')
     const root = div('root', text1, text2, text3)
 
-    console.log(root.textContent)
-
     expect(root.textContent).to.eql('some text')
   })
 
