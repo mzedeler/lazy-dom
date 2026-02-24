@@ -6,6 +6,7 @@ import lazyDom from '../src/lazyDom'
 // import { reactEventHandling } from './suite/react.eventHandling'
 // import { reactCreateRoot } from './suite/react.createRoot'
 import { tldomGetByRole } from './suite/tldom.getByRole'
+import { childNodeListIndexAccess, childNodeListIteration, childNodeListLength, childNodeListArrayFrom } from './suite/dom.childNodeList'
 
 // @ts-expect-error TODO
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -38,6 +39,14 @@ bench
   // .add('JSDOM: removing child', domRemoveChild, JSDOMOptions)
   .add('lazyDom: getByRole', tldomGetByRole, lazyDomOptions)
   .add('JSDOM: getByRole', tldomGetByRole, JSDOMOptions)
+  .add('lazyDom: childNodes[i] access', childNodeListIndexAccess, lazyDomOptions)
+  .add('JSDOM: childNodes[i] access', childNodeListIndexAccess, JSDOMOptions)
+  .add('lazyDom: childNodes.forEach', childNodeListIteration, lazyDomOptions)
+  .add('JSDOM: childNodes.forEach', childNodeListIteration, JSDOMOptions)
+  .add('lazyDom: childNodes.length', childNodeListLength, lazyDomOptions)
+  .add('JSDOM: childNodes.length', childNodeListLength, JSDOMOptions)
+  .add('lazyDom: Array.from(childNodes)', childNodeListArrayFrom, lazyDomOptions)
+  .add('JSDOM: Array.from(childNodes)', childNodeListArrayFrom, JSDOMOptions)
 
 const main = async () => {
   await bench.warmup()
