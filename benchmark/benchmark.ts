@@ -11,7 +11,7 @@ import { childNodeListIndexAccess, childNodeListIteration, childNodeListLength, 
 // @ts-expect-error TODO
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-const bench = new Bench({ time: 100 })
+const bench = new Bench({ time: 200 })
 
 const lazyDomOptions = { beforeAll: () => { lazyDom() } }
 const JSDOMOptions = { beforeAll: () => {
@@ -37,8 +37,8 @@ bench
   // .add('JSDOM: event handling', reactEventHandling, JSDOMOptions)
   // .add('lazyDom: removing child', domRemoveChild, lazyDomOptions)
   // .add('JSDOM: removing child', domRemoveChild, JSDOMOptions)
-  .add('lazyDom: getByRole', tldomGetByRole, lazyDomOptions)
-  .add('JSDOM: getByRole', tldomGetByRole, JSDOMOptions)
+  // .add('lazyDom: getByRole', tldomGetByRole, lazyDomOptions)
+  // .add('JSDOM: getByRole', tldomGetByRole, JSDOMOptions)
   .add('lazyDom: childNodes[i] access', childNodeListIndexAccess, lazyDomOptions)
   .add('JSDOM: childNodes[i] access', childNodeListIndexAccess, JSDOMOptions)
   .add('lazyDom: childNodes.forEach', childNodeListIteration, lazyDomOptions)

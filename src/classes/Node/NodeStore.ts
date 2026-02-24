@@ -1,13 +1,10 @@
 import { Future } from "../../types/Future";
 import { NodeTypes } from "../../types/NodeTypes";
-import { emptyIterator } from "../../utils/emptyIterator";
 import { invariant } from "../../utils/invariant";
 import { toIterator } from "../../utils/toIterator";
 import valueNotSetError from "../../utils/valueNotSetError";
 import { Document } from "../Document";
 import { Node } from "./Node";
-
-const childNodesCache = new WeakMap<Function, Node<any>[]>();
 
 export class NodeStore<NV = null> {
   nodeType: Future<NodeTypes> = () => {
@@ -17,35 +14,33 @@ export class NodeStore<NV = null> {
     throw valueNotSetError('ownerDocument');
   };
   parent: Future<Node<any> | undefined> = () => undefined;
+
+  _childNodes: () => Node<any>[] = () => [];
+
   set childNodes(cn: Future<Iterator<Node>>) {
     invariant('next' in cn(), 'cn must have next')
-    this._childNodes = cn;
+    let cached: Node<any>[] | null = null;
+    this._childNodes = () => {
+      if (cached === null) {
+        cached = [...cn() as IterableIterator<Node<any>>];
+      }
+      return cached;
+    };
   }
-  get childNodes(): Future<Iterator<Node<any>>> {
-    return this._childNodes;
-  }
-  _childNodes: Future<Iterator<Node<any>>> = () => emptyIterator;
 
-  private materializeChildNodes(): Node<any>[] {
-    const fn = this._childNodes;
-    let cached = childNodesCache.get(fn);
-    if (!cached) {
-      cached = [...fn() as IterableIterator<Node<any>>];
-      childNodesCache.set(fn, cached);
-      const nodes = cached;
-      this._childNodes = () => toIterator(nodes);
-      childNodesCache.set(this._childNodes, nodes);
-    }
-    return cached;
+  get childNodes(): Future<Iterator<Node<any>>> {
+    const arrayThunk = this._childNodes;
+    return () => toIterator(arrayThunk());
   }
 
   getChildNode(index: number): Node<any> | undefined {
-    return this.materializeChildNodes()[index];
+    return this._childNodes()[index];
   }
 
   getChildNodesArray(): Node<any>[] {
-    return this.materializeChildNodes();
+    return this._childNodes();
   }
+
   nodeValue: Future<NV> = () => {
     throw valueNotSetError('nodeValue');
   };

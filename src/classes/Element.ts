@@ -13,7 +13,6 @@ import { NamedNodeMap } from "./NamedNodeMap"
 import { CssSelectAdapter } from "../utils/CssSelectAdapter"
 import * as CSSselect from 'css-select'
 import { toIterator } from "../utils/toIterator"
-import { iteratorToArray } from "../utils/iteratorToArray"
 
 const adapter = new CssSelectAdapter()
 
@@ -66,7 +65,7 @@ export class Element extends Node implements EventTarget {
       .map((attr: Attr) => ' ' + attr.localName + '="' + attr.value + '"')
       .join('')
 
-    const content = iteratorToArray(this.nodeStore.childNodes())
+    const content = this.nodeStore.getChildNodesArray()
       .map((node: Node): string | void => {
         if (node instanceof Element) {
           return node.outerHTML
@@ -86,11 +85,9 @@ export class Element extends Node implements EventTarget {
   }
 
   get textContent(): string {
-    const iterator = this
-      .nodeStore
-      .childNodes()
+    const children = this.nodeStore.getChildNodesArray()
     const fragments = []
-    for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
+    for (const value of children) {
       if (value instanceof Text) {
         fragments.push(value.nodeValue)
       }

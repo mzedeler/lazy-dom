@@ -14,7 +14,7 @@ export class ChildNodeList<NV> extends NodeList {
       get(target, prop, receiver) {
         if (typeof prop === 'string') {
           const index = Number(prop);
-          if (Number.isInteger(index) && index >= 0) {
+          if (!isNaN(index)) {
             return target.nodeStore.getChildNode(index);
           }
         }
