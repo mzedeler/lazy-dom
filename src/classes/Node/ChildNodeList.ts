@@ -10,6 +10,18 @@ export class ChildNodeList<NV> extends NodeList {
   constructor(nodeStore: NodeStore<NV>) {
     super();
     this.nodeStore = nodeStore;
+
+    return new Proxy(this, {
+      get(target, prop, receiver) {
+        if (typeof prop === 'string') {
+          const index = Number(prop);
+          if (Number.isInteger(index) && index >= 0) {
+            return target.item(index);
+          }
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
   }
 
   get length() {
@@ -29,11 +41,10 @@ export class ChildNodeList<NV> extends NodeList {
 
     const nodes: Node[] = [];
     const iterator = this.nodeStore.childNodes();
-    const position = 0;
     let result: Node | null = null;
     for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
       nodes.push(value);
-      if (index === position) {
+      if (nodes.length - 1 === index) {
         result = value;
         break;
       }

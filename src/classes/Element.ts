@@ -181,6 +181,13 @@ export class Element extends Node implements EventTarget {
       .getNamedItem(qualifiedName)?.value || null
   }
 
+  getAttributeNode(qualifiedName: string): Attr | null {
+    return this
+      .elementStore
+      .attributes()
+      .getNamedItem(qualifiedName) ?? null
+  }
+
   querySelectorAll(query: string) {
     return CSSselect.selectAll(query, this, { adapter })
   }

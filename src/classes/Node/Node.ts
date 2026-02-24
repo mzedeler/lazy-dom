@@ -28,6 +28,12 @@ export abstract class Node<NV = null> {
   nodeStore: NodeStore<NV>
   readonly _childNodes: ChildNodeList<NV>
 
+  readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
+  readonly TEXT_NODE = NodeTypes.TEXT_NODE
+  readonly COMMENT_NODE = NodeTypes.COMMENT_NODE
+  readonly DOCUMENT_NODE = NodeTypes.DOCUMENT_NODE
+  readonly DOCUMENT_FRAGMENT_NODE = NodeTypes.DOCUMENT_FRAGMENT_NODE
+
   constructor() {
     this.nodeStore = new NodeStore<NV>()
     this._childNodes = new ChildNodeList<NV>(this.nodeStore)

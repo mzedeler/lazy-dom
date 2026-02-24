@@ -6,7 +6,11 @@ export class Window {
   }
 
   getComputedStyle() {
-    return {}
+    return {
+      getPropertyValue() {
+        return ''
+      }
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
