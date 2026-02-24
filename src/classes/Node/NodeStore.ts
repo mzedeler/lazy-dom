@@ -1,44 +1,38 @@
 import { Future } from "../../types/Future";
-import { NodeTypes } from "../../types/NodeTypes";
-import { invariant } from "../../utils/invariant";
-import { toIterator } from "../../utils/toIterator";
 import valueNotSetError from "../../utils/valueNotSetError";
 import { Document } from "../Document";
 import { Node } from "./Node";
+import * as nodeOps from "../../wasm/nodeOps";
+import * as NodeRegistry from "../../wasm/NodeRegistry";
 
 export class NodeStore<NV = null> {
-  nodeType: Future<NodeTypes> = () => {
-    throw valueNotSetError('nodeType');
-  };
+  wasmId: number;
+
   ownerDocument: Future<Document> = () => {
     throw valueNotSetError('ownerDocument');
   };
-  parent: Future<Node<any> | undefined> = () => undefined;
 
-  _childNodes: () => Node<any>[] = () => [];
-
-  set childNodes(cn: Future<Iterator<Node>>) {
-    invariant('next' in cn(), 'cn must have next')
-    let cached: Node<any>[] | null = null;
-    this._childNodes = () => {
-      if (cached === null) {
-        cached = [...cn() as IterableIterator<Node<any>>];
-      }
-      return cached;
-    };
-  }
-
-  get childNodes(): Future<Iterator<Node<any>>> {
-    const arrayThunk = this._childNodes;
-    return () => toIterator(arrayThunk());
+  constructor(wasmId: number) {
+    this.wasmId = wasmId;
   }
 
   getChildNode(index: number): Node<any> | undefined {
-    return this._childNodes()[index];
+    const childId = nodeOps.getChildId(this.wasmId, index);
+    if (childId === 0) return undefined;
+    return NodeRegistry.getNode(childId);
   }
 
   getChildNodesArray(): Node<any>[] {
-    return this._childNodes();
+    const ids = nodeOps.getChildIds(this.wasmId);
+    const result: Node<any>[] = new Array(ids.length);
+    for (let i = 0; i < ids.length; i++) {
+      result[i] = NodeRegistry.getNodeOrThrow(ids[i]);
+    }
+    return result;
+  }
+
+  getChildCount(): number {
+    return nodeOps.getChildCount(this.wasmId);
   }
 
   nodeValue: Future<NV> = () => {

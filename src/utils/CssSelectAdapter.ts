@@ -10,8 +10,8 @@ export class CssSelectAdapter {
     return node.nodeType === NodeTypes.ELEMENT_NODE
   }
 
-  getChildren<NV>(node: Node<NV>): Node[] {
-    return node.nodeStore.getChildNodesArray()
+  getChildren(node: Node): Node[] {
+    return Array.from(node.childNodes as Iterable<Node>)
   }
 
   getParent(element: Node): Node | undefined {

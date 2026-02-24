@@ -1,4 +1,3 @@
-import { Future } from "../types/Future"
 import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 
@@ -27,53 +26,38 @@ import { SVGElement } from "./elements/SVGElement"
 import { HTMLLIElement } from "./elements/HTMLLIElement"
 import { HTMLCollection } from "./HTMLCollection"
 import { Window } from "./Window"
+import * as nodeOps from "../wasm/nodeOps"
+import * as NodeRegistry from "../wasm/NodeRegistry"
 
-const subtree = (node: Node): Set<Node> => {
-  const stack: Node[] = [node]
-  const result: Set<Node> = new Set()
+export class DocumentStore {
+  wasmDocId: number
 
-  do {
-    const nextNode = stack.shift()
-    if (nextNode) {
-      result.add(nextNode)
-      if (nextNode instanceof Element) {
-        nextNode.childNodes.forEach((childNode: Node) => stack.push(childNode))
-      }
-    }
-  } while (stack.length)
-
-  return result
-}
-
-class DocumentStore  {
-  elements: Future<Element[]> = () => []
-
-  nodeType = () => NodeTypes.DOCUMENT_NODE
-
-  body: Future<HTMLBodyElement> = () => {
+  body: () => HTMLBodyElement = () => {
     throw valueNotSetError('body')
   }
 
+  constructor() {
+    this.wasmDocId = nodeOps.createDocument()
+  }
+
   disconnect(node: Node) {
-    const elementsFuture = this.elements
-    this.elements = () => {
-      const remove = subtree(node)
-      return elementsFuture().filter(otherNode => !remove.has(otherNode))
-    }
+    nodeOps.disconnectSubtree(this.wasmDocId, node.wasmId)
   }
 
   connect(node: Node) {
-    const elementsFuture = this.elements
-    this.elements = () => {
-      const newNodes = subtree(node)
-      const result = new Set(elementsFuture ? elementsFuture() : [])
-      newNodes.forEach(node => {
-        if (node instanceof Element) {
-          result.add(node)
-        }
-      })
-      return Array.from(result)
+    nodeOps.connectSubtree(this.wasmDocId, node.wasmId)
+  }
+
+  get elements(): Element[] {
+    const ids = nodeOps.getConnectedElementIds(this.wasmDocId)
+    const result: Element[] = []
+    for (let i = 0; i < ids.length; i++) {
+      const node = NodeRegistry.getNode(ids[i])
+      if (node instanceof Element) {
+        result.push(node)
+      }
     }
+    return result
   }
 }
 
@@ -112,7 +96,7 @@ export class Document implements EventTarget {
   defaultView: Window | null = null
 
   debug() {
-    return this.documentStore.elements()
+    return this.documentStore.elements
   }
 
   constructor() {
@@ -126,7 +110,7 @@ export class Document implements EventTarget {
   }
 
   get all(): Element[] {
-    return this.documentStore.elements().filter(x => x.parent)
+    return this.documentStore.elements.filter(x => x.parent)
   }
 
   get body(): HTMLBodyElement {
@@ -163,11 +147,7 @@ export class Document implements EventTarget {
 
   _disconnect(node: Node) {
     if (node instanceof Element) {
-      const elementsFuture = this.documentStore.elements
-      this.documentStore.elements = () => {
-        return (elementsFuture ? elementsFuture() : [])
-          .filter(otherNode => otherNode !== node)
-      }
+      nodeOps.disconnectElement(this.documentStore.wasmDocId, node.wasmId)
     }
   }
 
@@ -183,7 +163,7 @@ export class Document implements EventTarget {
 
     return this
       .documentStore
-      .elements()
+      .elements
       .find(elementMatchingId) || null
   }
 
@@ -191,7 +171,7 @@ export class Document implements EventTarget {
   dispatchEvent(event: Event) {
 
   }
-  
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   addEventListener(type: string, listener: Listener) {
 
@@ -210,41 +190,38 @@ export class Document implements EventTarget {
       return element.tagName.toUpperCase() === localName.toUpperCase() && element.namespaceURI === namespaceURI
     }
 
+    const documentStore = this.documentStore
+
     class ByTagNameNSCollection extends HTMLCollection {
-      documentStore: DocumentStore
       filter: (element: Element) => boolean
-      constructor(documentStore: DocumentStore, filter: (element: Element) => boolean) {
+      constructor(filter: (element: Element) => boolean) {
         super()
         this.filter = filter
-        this.documentStore = documentStore
       }
 
       item(index: number) {
-        return this
-          .documentStore
-          .elements()
+        return documentStore
+          .elements
           .filter(filter)
           .at(index) || null
       }
 
       get length() {
-        return this
-          .documentStore
-          .elements()
+        return documentStore
+          .elements
           .filter(filter)
           .length
       }
 
       namedItem(key: string) {
-        return this
-          .documentStore
-          .elements()
+        return documentStore
+          .elements
           .filter(filter)
           .find(element => element.getAttribute('name') === key || element.getAttribute('id') === key) || null
       }
     }
 
-    return new ByTagNameNSCollection(this.documentStore, filter)
+    return new ByTagNameNSCollection(filter)
   }
 
   // should be html, but body for now

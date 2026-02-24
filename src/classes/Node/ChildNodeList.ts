@@ -1,4 +1,3 @@
-import { toIterator } from "../../utils/toIterator";
 import { NodeList } from "../NodeList";
 import { Node } from "./Node";
 import { NodeStore } from "./NodeStore";
@@ -24,7 +23,7 @@ export class ChildNodeList<NV> extends NodeList {
   }
 
   get length() {
-    return this.nodeStore.getChildNodesArray().length;
+    return this.nodeStore.getChildCount();
   }
 
   item(index: number) {
@@ -32,23 +31,26 @@ export class ChildNodeList<NV> extends NodeList {
   }
 
   forEach(callback: (currentValue: Node, currentIndex: number, listObj: NodeList) => void) {
-    this.nodeStore.getChildNodesArray().forEach((node, i) => callback(node, i, this));
+    const children = this.nodeStore.getChildNodesArray();
+    for (let i = 0; i < children.length; i++) {
+      callback(children[i], i, this);
+    }
     return undefined;
   }
 
   keys() {
-    return toIterator(this.nodeStore.getChildNodesArray().map((_, i) => i));
+    return this.nodeStore.getChildNodesArray().map((_, i) => i).values();
   }
 
   entries() {
-    return toIterator(this.nodeStore.getChildNodesArray().map<[number, Node]>((node, i) => [i, node]));
+    return this.nodeStore.getChildNodesArray().map<[number, Node]>((node, i) => [i, node]).values();
   }
 
   values() {
-    return toIterator(this.nodeStore.getChildNodesArray());
+    return this.nodeStore.getChildNodesArray().values();
   }
 
   [Symbol.iterator]() {
-    return this.nodeStore.childNodes()
+    return this.nodeStore.getChildNodesArray().values();
   }
 }

@@ -12,11 +12,10 @@ import { Attr } from "./Attr"
 import { NamedNodeMap } from "./NamedNodeMap"
 import { CssSelectAdapter } from "../utils/CssSelectAdapter"
 import * as CSSselect from 'css-select'
-import { toIterator } from "../utils/toIterator"
+import * as nodeOps from "../wasm/nodeOps"
+import * as NodeRegistry from "../wasm/NodeRegistry"
 
 const adapter = new CssSelectAdapter()
-
-const emptyArray = [] as const
 
 class ElementStore {
   eventListeners: Future<Listeners> = () => ({})
@@ -35,8 +34,7 @@ export class Element extends Node implements EventTarget {
   elementStore = new ElementStore()
 
   constructor() {
-    super()
-    this.nodeStore.nodeType = () => NodeTypes.ELEMENT_NODE
+    super(NodeTypes.ELEMENT_NODE)
   }
 
   get ownerDocument() {
@@ -97,12 +95,15 @@ export class Element extends Node implements EventTarget {
   }
 
   set textContent(data: string) {
-    const ownerDocumentFuture = this.nodeStore.ownerDocument
-    // Implicit behavior here: if data is empty, remove all children
-    const childNodes = data.length
-      ? [ownerDocumentFuture().createTextNode(data)]
-      : emptyArray
-    this.nodeStore.childNodes = () => toIterator(childNodes)
+    // Clear all existing children from WASM
+    nodeOps.clearChildren(this.wasmId)
+
+    if (data.length) {
+      const ownerDocument = this.nodeStore.ownerDocument()
+      const textNode = ownerDocument.createTextNode(data)
+      nodeOps.setParentId(textNode.wasmId, this.wasmId)
+      nodeOps.appendChild(this.wasmId, textNode.wasmId)
+    }
   }
 
   get attributes() {
@@ -146,7 +147,8 @@ export class Element extends Node implements EventTarget {
     if (queue && queue.length) {
       queue.forEach(listener => listener(event))
     } else {
-      const parent = this.nodeStore.parent()
+      const parentId = nodeOps.getParentId(this.wasmId)
+      const parent = parentId ? NodeRegistry.getNode(parentId) : undefined
       if (isEventTarget(parent)) {
         parent.dispatchEvent(event)
       }

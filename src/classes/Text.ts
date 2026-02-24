@@ -15,9 +15,7 @@ export class Text extends Node<string> {
   nodeName = '#text'
 
   constructor() {
-    super()
-
-    this.nodeStore.nodeType = () => NodeTypes.TEXT_NODE
+    super(NodeTypes.TEXT_NODE)
   }
 
   get textContent() {

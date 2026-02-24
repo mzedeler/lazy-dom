@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@assemblyscript/loader':
+        specifier: ^0.28.9
+        version: 0.28.9
       '@eslint/js':
         specifier: ^9.8.0
         version: 9.8.0
@@ -47,6 +50,9 @@ importers:
       '@types/sinon-chai':
         specifier: ^3.2.12
         version: 3.2.12
+      assemblyscript:
+        specifier: ^0.28.9
+        version: 0.28.9
       chai:
         specifier: ^5.2.0
         version: 5.2.0
@@ -109,6 +115,9 @@ importers:
         version: 8.0.0(eslint@9.8.0)(typescript@5.6.2)
 
 packages:
+
+  '@assemblyscript/loader@0.28.9':
+    resolution: {integrity: sha512-otbSV8Nb3xEprQ7SUKxuluFvwcU7gSDgjSTRMoU3Ei9o8ACZoNV2B7IX2HOOXCOYuL9vzQGzK+ihsgldphET/A==}
 
   '@babel/code-frame@7.24.2':
     resolution: {integrity: sha512-y5+tLQyV8pg3fsiln67BVLD1P13Eg4lh5RW9mF0zUuvLrv9uIQ4MCL+CRT+FTsBlBjcIan6PGsLcBN0m3ClUyQ==}
@@ -509,6 +518,11 @@ packages:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
 
+  assemblyscript@0.28.9:
+    resolution: {integrity: sha512-UQqIYSUuJzqQP6fKTs1CtanyxmnDk7K+Kmj/J67agimxDqxjdMnTF/y9rEHUBL+K/VIEV4QYu57RMrL5LwbAvw==}
+    engines: {node: '>=20', npm: '>=10'}
+    hasBin: true
+
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
@@ -522,6 +536,10 @@ packages:
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
+
+  binaryen@123.0.0-nightly.20250530:
+    resolution: {integrity: sha512-d1zPHBN5YlOd3Ff+OUxvVExuFeh8heSnqe+X3bjItFxGLvn4VGBKmrvv7pgy/cRhrIUGuPW138iaWfDhwjyDqg==}
+    hasBin: true
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
@@ -996,6 +1014,9 @@ packages:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
     engines: {node: '>=10'}
 
+  long@5.3.2:
+    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
+
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
@@ -1431,6 +1452,8 @@ packages:
 
 snapshots:
 
+  '@assemblyscript/loader@0.28.9': {}
+
   '@babel/code-frame@7.24.2':
     dependencies:
       '@babel/highlight': 7.24.5
@@ -1796,6 +1819,11 @@ snapshots:
 
   array-union@2.1.0: {}
 
+  assemblyscript@0.28.9:
+    dependencies:
+      binaryen: 123.0.0-nightly.20250530
+      long: 5.3.2
+
   assertion-error@2.0.1: {}
 
   asynckit@0.4.0: {}
@@ -1803,6 +1831,8 @@ snapshots:
   balanced-match@1.0.2: {}
 
   binary-extensions@2.3.0: {}
+
+  binaryen@123.0.0-nightly.20250530: {}
 
   boolbase@1.0.0: {}
 
@@ -2324,6 +2354,8 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       is-unicode-supported: 0.1.0
+
+  long@5.3.2: {}
 
   loose-envify@1.4.0:
     dependencies:
