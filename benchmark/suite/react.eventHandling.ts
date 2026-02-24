@@ -15,7 +15,6 @@ export const reactEventHandling = () => {
   React.act(() => root.render(React.createElement('span', { onClick }, ...children )))
   const span = div.childNodes.item(0)
 
-  console.log({ span })
   // @ts-expect-error click is on span
   React.act(() => span.click())
 }
