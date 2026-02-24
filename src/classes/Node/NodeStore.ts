@@ -2,9 +2,12 @@ import { Future } from "../../types/Future";
 import { NodeTypes } from "../../types/NodeTypes";
 import { emptyIterator } from "../../utils/emptyIterator";
 import { invariant } from "../../utils/invariant";
+import { toIterator } from "../../utils/toIterator";
 import valueNotSetError from "../../utils/valueNotSetError";
 import { Document } from "../Document";
 import { Node } from "./Node";
+
+const childNodesCache = new WeakMap<Function, Node<any>[]>();
 
 export class NodeStore<NV = null> {
   nodeType: Future<NodeTypes> = () => {
@@ -22,6 +25,27 @@ export class NodeStore<NV = null> {
     return this._childNodes;
   }
   _childNodes: Future<Iterator<Node<any>>> = () => emptyIterator;
+
+  private materializeChildNodes(): Node<any>[] {
+    const fn = this._childNodes;
+    let cached = childNodesCache.get(fn);
+    if (!cached) {
+      cached = [...fn() as IterableIterator<Node<any>>];
+      childNodesCache.set(fn, cached);
+      const nodes = cached;
+      this._childNodes = () => toIterator(nodes);
+      childNodesCache.set(this._childNodes, nodes);
+    }
+    return cached;
+  }
+
+  getChildNode(index: number): Node<any> | undefined {
+    return this.materializeChildNodes()[index];
+  }
+
+  getChildNodesArray(): Node<any>[] {
+    return this.materializeChildNodes();
+  }
   nodeValue: Future<NV> = () => {
     throw valueNotSetError('nodeValue');
   };
