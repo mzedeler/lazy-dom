@@ -3,5 +3,6 @@
     "ts"
   ],
   "spec": ["**/*.test.ts"],
+  "ignore": ["pro/**"],
   "recursive": true
 }
