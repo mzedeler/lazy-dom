@@ -11,14 +11,7 @@ export class CssSelectAdapter {
   }
 
   getChildren<NV>(node: Node<NV>): Node[] {
-    const result: Node[] = []
-
-    const iterator = node.childNodes.values()
-    for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
-      result.push(value)
-    }
-
-    return result
+    return node.nodeStore.getChildNodesArray()
   }
 
   getParent(element: Node): Node | undefined {
