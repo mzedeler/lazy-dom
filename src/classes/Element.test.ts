@@ -111,6 +111,173 @@ describe('Element', () => {
     })
   })
 
+  describe('HTML element inheritance', () => {
+    it('div is instanceof HTMLElement', () => {
+      const el = document.createElement('div')
+      expect(el).to.be.instanceOf(HTMLElement)
+    })
+
+    it('button is instanceof HTMLElement', () => {
+      const el = document.createElement('button')
+      expect(el).to.be.instanceOf(HTMLElement)
+    })
+
+    it('input is instanceof HTMLElement', () => {
+      const el = document.createElement('input')
+      expect(el).to.be.instanceOf(HTMLElement)
+    })
+
+    it('span is instanceof HTMLElement', () => {
+      const el = document.createElement('span')
+      expect(el).to.be.instanceOf(HTMLElement)
+    })
+  })
+
+  describe('focus() / blur()', () => {
+    it('has focus as a function', () => {
+      const el = document.createElement('div')
+      expect(el.focus).to.be.instanceOf(Function)
+    })
+
+    it('focus() does not throw', () => {
+      const el = document.createElement('div')
+      expect(() => el.focus()).not.to.throw
+    })
+
+    it('has blur as a function', () => {
+      const el = document.createElement('div')
+      expect(el.blur).to.be.instanceOf(Function)
+    })
+
+    it('blur() does not throw', () => {
+      const el = document.createElement('div')
+      expect(() => el.blur()).not.to.throw
+    })
+  })
+
+  describe('closest()', () => {
+    it('returns the element itself when it matches the selector', () => {
+      const el = div('target')
+      document.body.appendChild(el)
+
+      expect(el.closest('#target')).to.eq(el)
+    })
+
+    it('returns the nearest matching ancestor', () => {
+      const child = div('child')
+      const parent = div('parent', child)
+      document.body.appendChild(parent)
+
+      expect(child.closest('#parent')).to.eq(parent)
+    })
+
+    it('returns null when no ancestor matches', () => {
+      const el = div('alone')
+      document.body.appendChild(el)
+
+      expect(el.closest('#nonexistent')).to.be.null
+    })
+  })
+
+  describe('classList', () => {
+    it('add() adds a class reflected in getAttribute', () => {
+      const el = document.createElement('div')
+      el.classList.add('foo')
+
+      expect(el.getAttribute('class')).to.include('foo')
+    })
+
+    it('remove() removes a class and contains() confirms', () => {
+      const el = document.createElement('div')
+      el.classList.add('foo')
+      el.classList.remove('foo')
+
+      expect(el.classList.contains('foo')).to.be.false
+    })
+
+    it('contains() returns true/false correctly', () => {
+      const el = document.createElement('div')
+      el.classList.add('foo')
+
+      expect(el.classList.contains('foo')).to.be.true
+      expect(el.classList.contains('bar')).to.be.false
+    })
+
+    it('toggle() toggles a class on then off', () => {
+      const el = document.createElement('div')
+      el.classList.toggle('foo')
+      expect(el.classList.contains('foo')).to.be.true
+
+      el.classList.toggle('foo')
+      expect(el.classList.contains('foo')).to.be.false
+    })
+  })
+
+  describe('innerHTML getter', () => {
+    it('returns child element HTML', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      parent.appendChild(child)
+
+      expect(parent.innerHTML).to.eq('<span></span>')
+    })
+
+    it('returns text content', () => {
+      const parent = document.createElement('div')
+      parent.appendChild(document.createTextNode('hello'))
+
+      expect(parent.innerHTML).to.eq('hello')
+    })
+
+    it('returns empty string for empty element', () => {
+      const parent = document.createElement('div')
+
+      expect(parent.innerHTML).to.eq('')
+    })
+  })
+
+  describe('dataset', () => {
+    it('reflects data- attributes via getAttribute', () => {
+      const el = document.createElement('div')
+      el.setAttribute('data-foo', 'bar')
+
+      expect(el.dataset.foo).to.eq('bar')
+    })
+
+    it('setting dataset property reflects in getAttribute', () => {
+      const el = document.createElement('div')
+      el.dataset.foo = 'baz'
+
+      expect(el.getAttribute('data-foo')).to.eq('baz')
+    })
+
+    it('returns undefined for unset data attribute', () => {
+      const el = document.createElement('div')
+
+      expect(el.dataset.missing).to.be.undefined
+    })
+  })
+
+  describe('children', () => {
+    it('returns only Element children, not Text nodes', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      parent.appendChild(document.createTextNode('text'))
+      parent.appendChild(child)
+      parent.appendChild(document.createTextNode('more text'))
+
+      expect(parent.children).to.have.lengthOf(1)
+      expect(parent.children[0]).to.eq(child)
+    })
+
+    it('returns empty collection when there are only Text children', () => {
+      const parent = document.createElement('div')
+      parent.appendChild(document.createTextNode('text'))
+
+      expect(parent.children).to.have.lengthOf(0)
+    })
+  })
+
   describe('textContent', () => {
     it('can set text content on an empty element', () => {
       const textContent = 'some text'

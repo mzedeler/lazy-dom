@@ -62,7 +62,46 @@ describe('Document', () => {
     })
   })
 
-  describe('getElementsByTagNameNS', () => {  
+  describe('document.location', () => {
+    it('has protocol, hostname, pathname properties', () => {
+      expect(document.location).to.have.property('protocol')
+      expect(document.location).to.have.property('hostname')
+      expect(document.location).to.have.property('pathname')
+    })
+
+    it('has href and origin properties', () => {
+      expect(document.location).to.have.property('href')
+      expect(document.location).to.have.property('origin')
+    })
+
+    it('has search and hash properties', () => {
+      expect(document.location).to.have.property('search')
+      expect(document.location).to.have.property('hash')
+    })
+  })
+
+  describe('document.referrer', () => {
+    it('is a string', () => {
+      expect(document.referrer).to.be.a('string')
+    })
+  })
+
+  describe('document.head', () => {
+    it('exists', () => {
+      expect(document.head).to.exist
+    })
+
+    it('has tagName HEAD', () => {
+      expect(document.head).to.have.property('tagName', 'HEAD')
+    })
+
+    it('supports appendChild', () => {
+      const el = document.createElement('meta')
+      expect(() => document.head.appendChild(el)).not.to.throw
+    })
+  })
+
+  describe('getElementsByTagNameNS', () => {
     it('has getElementsByTagNameNS()', () => {
       const namespace = 'http://www.w3.org/1999/xhtml'
       const tagName = 'span'
