@@ -41,6 +41,10 @@ export function appendChild(parentId: number, childId: number): void {
   wasm.appendChild(parentId, childId);
 }
 
+export function insertBefore(parentId: number, newChildId: number, refChildId: number): void {
+  wasm.insertBefore(parentId, newChildId, refChildId);
+}
+
 export function removeChild(parentId: number, childId: number): void {
   wasm.removeChild(parentId, childId);
 }

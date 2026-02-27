@@ -9,6 +9,7 @@ export {
   getOwnerDocumentId,
   setOwnerDocumentId,
   appendChild,
+  insertBefore,
   removeChild,
   clearChildren,
   getChildCount,

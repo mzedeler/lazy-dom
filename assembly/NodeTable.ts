@@ -59,6 +59,27 @@ export function appendChild(parentId: u32, childId: u32): void {
   parent.childIds.push(childId);
 }
 
+export function insertBefore(parentId: u32, newChildId: u32, refChildId: u32): void {
+  const parent = nodes.get(parentId);
+  const children = parent.childIds;
+  if (refChildId === 0) {
+    children.push(newChildId);
+  } else {
+    const idx = children.indexOf(refChildId);
+    if (idx >= 0) {
+      const newChildren = new Array<u32>(children.length + 1);
+      for (let i = 0; i < idx; i++) {
+        unchecked(newChildren[i] = children[i]);
+      }
+      unchecked(newChildren[idx] = newChildId);
+      for (let i = idx; i < children.length; i++) {
+        unchecked(newChildren[i + 1] = children[i]);
+      }
+      parent.childIds = newChildren;
+    }
+  }
+}
+
 export function removeChild(parentId: u32, childId: u32): void {
   const parent = nodes.get(parentId);
   const children = parent.childIds;

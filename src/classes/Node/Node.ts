@@ -76,6 +76,14 @@ export abstract class Node<NV = null> {
     return node
   }
 
+  insertBefore(newNode: Node, referenceNode: Node | null): Node {
+    nodeOps.setParentId(newNode.wasmId, this.wasmId)
+    nodeOps.insertBefore(this.wasmId, newNode.wasmId, referenceNode ? referenceNode.wasmId : 0)
+    this.ownerDocument.documentStore.connect(newNode)
+
+    return newNode
+  }
+
   appendChild(node: Node) {
     nodeOps.setParentId(node.wasmId, this.wasmId)
     nodeOps.appendChild(this.wasmId, node.wasmId)
@@ -94,11 +102,18 @@ export abstract class Node<NV = null> {
     return false
   }
 
-  getRootNode(): Node {
+  // TODO: Document doesn't extend Node, so body/head have no parent link to
+  // the document. This special-cases the check instead of walking the parent
+  // chain naturally. Consider making Document a Node so this isn't needed.
+  getRootNode(): Node | Document {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let current: Node = this
     while (current.parent) {
       current = current.parent
+    }
+    const doc = current.ownerDocument
+    if (doc.body === current || doc.head === current) {
+      return doc
     }
     return current
   }
