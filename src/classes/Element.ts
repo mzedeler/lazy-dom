@@ -28,7 +28,7 @@ class ElementStore {
 }
 
 const isEventTarget = (node: unknown): node is EventTarget =>
-  Boolean((node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
+  Boolean(node && (node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
 
 export class Element extends Node implements EventTarget {
   elementStore = new ElementStore()
@@ -121,6 +121,10 @@ export class Element extends Node implements EventTarget {
     return
   }
 
+  removeAttribute(qualifiedName: string) {
+    this.elementStore.attributes().removeNamedItem(qualifiedName)
+  }
+
   get addEventListener(): EventTarget['addEventListener'] {
     return (type, listener) => {
       if (!listener) {
@@ -139,6 +143,11 @@ export class Element extends Node implements EventTarget {
         return previousEventListeners
       }
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  removeEventListener(type: string, listener: unknown) {
+    // Stub: event listener removal not fully implemented
   }
 
   dispatchEvent(event: Event) {

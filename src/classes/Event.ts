@@ -15,6 +15,10 @@ class EventStore {
 
 export class Event {
   eventStore = new EventStore()
+  defaultPrevented = false
+  cancelBubble = false
+  bubbles = false
+  cancelable = false
 
   get target(): Node {
     return this.eventStore.target()
@@ -22,5 +26,17 @@ export class Event {
 
   get type(): EventType {
     return this.eventStore.type()
+  }
+
+  preventDefault() {
+    this.defaultPrevented = true
+  }
+
+  stopPropagation() {
+    this.cancelBubble = true
+  }
+
+  stopImmediatePropagation() {
+    this.cancelBubble = true
   }
 }

@@ -119,10 +119,7 @@ export class Document implements EventTarget {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   createElementNS(namespaceURI: keyof typeof constructors, qualifiedName: string, options?: { is: string }) {
-    const constructor = constructors[namespaceURI][qualifiedName.toUpperCase()]
-    if (!constructor) {
-      throw new Error('Unknown element name: ' + qualifiedName + ' with namespace ' + namespaceURI)
-    }
+    const constructor = constructors[namespaceURI]?.[qualifiedName.toUpperCase()] ?? HTMLElement
 
     const element = new constructor()
     element.elementStore.tagName = () => qualifiedName
@@ -133,10 +130,7 @@ export class Document implements EventTarget {
   }
 
   createElement(localName: string): Element {
-    const constructor = constructors['http://www.w3.org/1999/xhtml'][localName.toUpperCase()]
-    if (!constructor) {
-      throw new Error('Unknown element name: ' + localName)
-    }
+    const constructor = constructors['http://www.w3.org/1999/xhtml'][localName.toUpperCase()] ?? HTMLElement
 
     const element = new constructor()
     element.elementStore.tagName = () => localName
@@ -185,6 +179,10 @@ export class Document implements EventTarget {
     return this.body.querySelectorAll(query)
   }
 
+  querySelector(selectors: string): Element | null {
+    return this.body.querySelector(selectors)
+  }
+
   getElementsByTagNameNS(namespaceURI: string, localName: string) {
     const filter = (element: Element) => {
       return element.tagName.toUpperCase() === localName.toUpperCase() && element.namespaceURI === namespaceURI
@@ -222,6 +220,10 @@ export class Document implements EventTarget {
     }
 
     return new ByTagNameNSCollection(filter)
+  }
+
+  get nodeType() {
+    return NodeTypes.DOCUMENT_NODE
   }
 
   // should be html, but body for now

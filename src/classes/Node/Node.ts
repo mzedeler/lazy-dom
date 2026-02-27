@@ -83,4 +83,23 @@ export abstract class Node<NV = null> {
 
     return node
   }
+
+  contains(other: Node | null): boolean {
+    if (!other) return false
+    let current: Node | undefined = other
+    while (current) {
+      if (current === (this as Node)) return true
+      current = current.parent
+    }
+    return false
+  }
+
+  getRootNode(): Node {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let current: Node = this
+    while (current.parent) {
+      current = current.parent
+    }
+    return current
+  }
 }
