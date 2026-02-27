@@ -1,3 +1,3 @@
-import { Element } from "../Element"
+import { SVGElement } from "./SVGElement"
 
-export class SVGPathElement extends Element {}
+export class SVGPathElement extends SVGElement {}
