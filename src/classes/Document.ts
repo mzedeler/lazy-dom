@@ -36,6 +36,10 @@ export class DocumentStore {
     throw valueNotSetError('body')
   }
 
+  head: () => HTMLElement = () => {
+    throw valueNotSetError('head')
+  }
+
   constructor() {
     this.wasmDocId = nodeOps.createDocument()
   }
@@ -106,6 +110,15 @@ export class Document implements EventTarget {
       body.nodeStore.ownerDocument = () => this
       return body
     }
+
+    this.documentStore.head = () => {
+      const head = new HTMLElement()
+      this.documentStore.head = () => head
+      head.elementStore.tagName = () => 'HEAD'
+      head.nodeStore.ownerDocument = () => this
+      return head
+    }
+
     Object.assign(this, NodeTypes)
   }
 
@@ -224,6 +237,18 @@ export class Document implements EventTarget {
 
   get nodeType() {
     return NodeTypes.DOCUMENT_NODE
+  }
+
+  get location() {
+    return this.defaultView!.location
+  }
+
+  get referrer() {
+    return ''
+  }
+
+  get head(): HTMLElement {
+    return this.documentStore.head()
   }
 
   // should be html, but body for now

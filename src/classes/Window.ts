@@ -1,7 +1,13 @@
 export class Window {
   get location() {
     return {
-      href: 'http://localhost:9009/b'
+      href: 'http://localhost:9009/b',
+      protocol: 'http:',
+      hostname: 'localhost',
+      pathname: '/b',
+      origin: 'http://localhost:9009',
+      search: '',
+      hash: '',
     }
   }
 
