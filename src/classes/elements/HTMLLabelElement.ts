@@ -1,6 +1,6 @@
-import { Element } from "../Element"
+import { HTMLElement } from "./HTMLElement"
 
-export class HTMLLabelElement extends Element {
+export class HTMLLabelElement extends HTMLElement {
   get control() {
     const htmlFor = this.getAttribute('for')
     if (htmlFor) {

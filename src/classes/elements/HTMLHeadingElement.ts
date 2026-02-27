@@ -1,3 +1,3 @@
-import { Element } from "../Element"
+import { HTMLElement } from "./HTMLElement"
 
-export class HTMLHeadingElement extends Element {}
+export class HTMLHeadingElement extends HTMLElement {}

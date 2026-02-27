@@ -1,6 +1,6 @@
-import { Element } from "../Element"
+import { HTMLElement } from "./HTMLElement"
 
-export class HTMLBodyElement extends Element {
+export class HTMLBodyElement extends HTMLElement {
   constructor() {
     super()
     this.elementStore.tagName = () => 'body'

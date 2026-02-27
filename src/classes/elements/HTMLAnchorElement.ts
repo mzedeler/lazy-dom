@@ -1,6 +1,6 @@
-import { Element } from "../Element"
+import { HTMLElement } from "./HTMLElement"
 
-export class HTMLAnchorElement extends Element {
+export class HTMLAnchorElement extends HTMLElement {
   get href() {
     return new URL(this.attributes.getNamedItem('href').value).href
   }

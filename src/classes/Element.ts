@@ -14,6 +14,8 @@ import { CssSelectAdapter } from "../utils/CssSelectAdapter"
 import * as CSSselect from 'css-select'
 import * as nodeOps from "../wasm/nodeOps"
 import * as NodeRegistry from "../wasm/NodeRegistry"
+import { DOMTokenList } from "./DOMTokenList"
+import { DOMStringMap } from "./DOMStringMap"
 
 const adapter = new CssSelectAdapter()
 
@@ -57,24 +59,24 @@ export class Element extends Node implements EventTarget {
     this.elementStore.namespaceURI = () => namespaceURI
   }
 
+  get innerHTML(): string {
+    return this.nodeStore.getChildNodesArray()
+      .map((node: Node): string => {
+        if (node instanceof Element) return node.outerHTML
+        if (node instanceof Text) return node.data
+        return ''
+      })
+      .join('')
+  }
+
   get outerHTML() {
     const attributes = Object
       .values(this.elementStore.attributes().namedNodeMapStore.itemsLookup())
       .map((attr: Attr) => ' ' + attr.localName + '="' + attr.value + '"')
       .join('')
 
-    const content = this.nodeStore.getChildNodesArray()
-      .map((node: Node): string | void => {
-        if (node instanceof Element) {
-          return node.outerHTML
-        } else if (node instanceof Text) {
-          return node.data
-        }
-      })
-      .filter(segment => Boolean(segment))
-      .join('')
     return '<' + this.tagName.toLocaleLowerCase() + attributes + '>'
-      + content
+      + this.innerHTML
       + '</' + this.tagName.toLocaleLowerCase() + '>'
   }
 
@@ -206,5 +208,30 @@ export class Element extends Node implements EventTarget {
 
   querySelector(selectors: string): Element | null {
     return CSSselect.selectOne(selectors, this, { adapter })
+  }
+
+  focus() {}
+
+  blur() {}
+
+  closest(selectors: string): Element | null {
+    let current: Element | null = this
+    while (current) {
+      if (current.matches(selectors)) return current
+      current = current.parentElement
+    }
+    return null
+  }
+
+  get classList() {
+    return new DOMTokenList(this.elementStore)
+  }
+
+  get dataset() {
+    return new DOMStringMap(this.elementStore)
+  }
+
+  get children() {
+    return this.nodeStore.getChildNodesArray().filter(node => node instanceof Element)
   }
 }
