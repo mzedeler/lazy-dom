@@ -33,4 +33,8 @@ export class Text extends Node<string> {
   get nodeValue() {
     return this.textStore.data()
   }
+
+  set nodeValue(value: string) {
+    this.textStore.data = () => value
+  }
 }
