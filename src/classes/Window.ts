@@ -13,9 +13,17 @@ export class Window {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   matchMedia(mediaQueryString: string) {
-    return true
+    return {
+      matches: false,
+      media: mediaQueryString,
+      onchange: null,
+      addListener() {},
+      removeListener() {},
+      addEventListener() {},
+      removeEventListener() {},
+      dispatchEvent() { return true },
+    }
   }
 
   addEventListener() {
