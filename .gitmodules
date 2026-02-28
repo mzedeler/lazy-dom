@@ -1,3 +1,0 @@
-[submodule "test/todoApp/todo-react"]
-	path = test/todoApp/todo-react
-	url = git@github.com:mdn/todo-react
