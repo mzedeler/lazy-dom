@@ -10,6 +10,12 @@ pnpm i
 pnpm dev:watch
 ```
 
+# Testing
+
+```
+pnpm test && pnpm typecheck
+```
+
 # Benchmarks
 (Probably outdated.)
 

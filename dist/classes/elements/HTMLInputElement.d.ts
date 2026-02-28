@@ -1,0 +1,35 @@
+import { HTMLElement } from "./HTMLElement";
+export declare class HTMLInputElement extends HTMLElement {
+    get type(): string;
+    set type(value: string);
+    get name(): string;
+    set name(value: string);
+    get value(): string;
+    set value(val: string);
+    get defaultValue(): string;
+    set defaultValue(val: string);
+    get checked(): boolean;
+    set checked(val: boolean);
+    get defaultChecked(): boolean;
+    set defaultChecked(val: boolean);
+    get disabled(): boolean;
+    set disabled(val: boolean);
+    get readOnly(): boolean;
+    set readOnly(val: boolean);
+    get maxLength(): number;
+    set maxLength(val: number);
+    get size(): number;
+    set size(val: number);
+    get src(): string;
+    set src(val: string);
+    get useMap(): string;
+    set useMap(val: string);
+    get alt(): string;
+    set alt(val: string);
+    get accept(): string;
+    set accept(val: string);
+    get align(): string;
+    set align(val: string);
+    get form(): null;
+    select(): void;
+}

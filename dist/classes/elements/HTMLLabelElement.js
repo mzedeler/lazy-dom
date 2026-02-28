@@ -1,27 +1,23 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HTMLLabelElement = void 0;
-var Element_1 = require("../Element");
-var HTMLLabelElement = /** @class */ (function (_super) {
-    __extends(HTMLLabelElement, _super);
-    function HTMLLabelElement() {
-        return _super !== null && _super.apply(this, arguments) || this;
+const HTMLElement_1 = require("./HTMLElement");
+class HTMLLabelElement extends HTMLElement_1.HTMLElement {
+    get htmlFor() {
+        return this.getAttribute('for') ?? '';
     }
-    return HTMLLabelElement;
-}(Element_1.Element));
+    set htmlFor(value) {
+        this.setAttribute('for', value);
+    }
+    get form() {
+        return null;
+    }
+    get control() {
+        const htmlFor = this.getAttribute('for');
+        if (htmlFor) {
+            return this.ownerDocument.getElementById(htmlFor);
+        }
+        return null;
+    }
+}
 exports.HTMLLabelElement = HTMLLabelElement;

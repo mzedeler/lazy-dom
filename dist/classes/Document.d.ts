@@ -1,0 +1,71 @@
+import { NodeTypes } from "../types/NodeTypes";
+import { Element } from "./Element";
+import { HTMLBodyElement } from "./elements/HTMLBodyElement";
+import { Text } from "./Text";
+import { Comment } from "./Comment";
+import { DocumentFragment } from "./DocumentFragment";
+import { ProcessingInstruction } from "./ProcessingInstruction";
+import { Attr } from "./Attr";
+import { EventTarget } from "../types/EventTarget";
+import { Listener } from "../types/Listener";
+import { Event } from "./Event";
+import { Node } from './Node/Node';
+import { HTMLElement } from "./elements/HTMLElement";
+import { SVGElement } from "./elements/SVGElement";
+import { HTMLHtmlElement } from "./elements/HTMLHtmlElement";
+import { DOMImplementation } from "./DOMImplementation";
+import { Window } from "./Window";
+export declare class DocumentStore {
+    wasmDocId: number;
+    documentElement: () => HTMLHtmlElement;
+    body: () => HTMLBodyElement;
+    head: () => HTMLElement;
+    constructor();
+    disconnect(node: Node): void;
+    connect(node: Node): void;
+    get elements(): Element[];
+}
+export declare class Document implements EventTarget {
+    documentStore: DocumentStore;
+    defaultView: Window | null;
+    readonly implementation: DOMImplementation;
+    debug(): Element[];
+    constructor();
+    get all(): Element[];
+    get body(): HTMLBodyElement;
+    createElementNS(namespaceURI: string | null, qualifiedName: string, options?: {
+        is: string;
+    }): HTMLElement | SVGElement;
+    createElement(localName: string): Element;
+    _disconnect(node: Node): void;
+    createTextNode(data: string): Text;
+    createComment(data: string): Comment;
+    createDocumentFragment(): DocumentFragment;
+    createProcessingInstruction(target: string, data: string): ProcessingInstruction;
+    createAttribute(localName: string): Attr;
+    createAttributeNS(namespaceURI: string | null, qualifiedName: string): Attr;
+    importNode(importedNode: Node, deep?: boolean): Node;
+    private _setOwnerDocument;
+    getElementsByTagName(tagName: string): Element[];
+    getElementById(id: string): Element | null;
+    dispatchEvent(event: Event): void;
+    addEventListener(type: string, listener: Listener): void;
+    removeEventListener(): void;
+    querySelectorAll(query: string): Element[];
+    querySelector(selectors: string): Element | null;
+    getElementsByTagNameNS(namespaceURI: string, localName: string): {
+        filter: (element: Element) => boolean;
+        item(index: number): Element | null;
+        readonly length: number;
+        namedItem(key: string): Element | null;
+    };
+    get nodeType(): NodeTypes;
+    get nodeName(): string;
+    get nodeValue(): any;
+    set nodeValue(_value: any);
+    get attributes(): null;
+    get location(): any;
+    get referrer(): string;
+    get head(): HTMLElement;
+    get documentElement(): HTMLHtmlElement;
+}

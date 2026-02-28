@@ -1,27 +1,92 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HTMLImageElement = void 0;
-var Element_1 = require("../Element");
-var HTMLImageElement = /** @class */ (function (_super) {
-    __extends(HTMLImageElement, _super);
-    function HTMLImageElement() {
-        return _super !== null && _super.apply(this, arguments) || this;
+const HTMLElement_1 = require("./HTMLElement");
+class HTMLImageElement extends HTMLElement_1.HTMLElement {
+    get src() {
+        return this.getAttribute('src') ?? '';
     }
-    return HTMLImageElement;
-}(Element_1.Element));
+    set src(value) {
+        this.setAttribute('src', value);
+    }
+    get alt() {
+        return this.getAttribute('alt') ?? '';
+    }
+    set alt(value) {
+        this.setAttribute('alt', value);
+    }
+    get name() {
+        return this.getAttribute('name') ?? '';
+    }
+    set name(value) {
+        this.setAttribute('name', value);
+    }
+    get width() {
+        const val = this.getAttribute('width');
+        return val !== null ? parseInt(val, 10) : 0;
+    }
+    set width(value) {
+        this.setAttribute('width', String(value));
+    }
+    get height() {
+        const val = this.getAttribute('height');
+        return val !== null ? parseInt(val, 10) : 0;
+    }
+    set height(value) {
+        this.setAttribute('height', String(value));
+    }
+    get align() {
+        return this.getAttribute('align') ?? '';
+    }
+    set align(value) {
+        this.setAttribute('align', value);
+    }
+    get longDesc() {
+        return this.getAttribute('longdesc') ?? '';
+    }
+    set longDesc(value) {
+        this.setAttribute('longdesc', value);
+    }
+    get isMap() {
+        return this.hasAttribute('ismap');
+    }
+    set isMap(value) {
+        if (value)
+            this.setAttribute('ismap', '');
+        else
+            this.removeAttribute('ismap');
+    }
+    get useMap() {
+        return this.getAttribute('usemap') ?? '';
+    }
+    set useMap(value) {
+        this.setAttribute('usemap', value);
+    }
+    get border() {
+        return this.getAttribute('border') ?? '';
+    }
+    set border(value) {
+        this.setAttribute('border', value);
+    }
+    get hspace() {
+        const val = this.getAttribute('hspace');
+        return val !== null ? parseInt(val, 10) : 0;
+    }
+    set hspace(value) {
+        this.setAttribute('hspace', String(value));
+    }
+    get vspace() {
+        const val = this.getAttribute('vspace');
+        return val !== null ? parseInt(val, 10) : 0;
+    }
+    set vspace(value) {
+        this.setAttribute('vspace', String(value));
+    }
+    get lowSrc() {
+        return this.getAttribute('lowsrc') ?? '';
+    }
+    set lowSrc(value) {
+        this.setAttribute('lowsrc', value);
+    }
+}
 exports.HTMLImageElement = HTMLImageElement;

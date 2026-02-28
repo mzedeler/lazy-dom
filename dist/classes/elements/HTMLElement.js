@@ -1,27 +1,56 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HTMLElement = void 0;
-var Element_1 = require("../Element");
-var HTMLElement = /** @class */ (function (_super) {
-    __extends(HTMLElement, _super);
-    function HTMLElement() {
-        return _super !== null && _super.apply(this, arguments) || this;
+const Element_1 = require("../Element");
+class HTMLElement extends Element_1.Element {
+    get id() {
+        return this.getAttribute('id') ?? '';
     }
-    return HTMLElement;
-}(Element_1.Element));
+    set id(value) {
+        this.setAttribute('id', value);
+    }
+    get title() {
+        return this.getAttribute('title') ?? '';
+    }
+    set title(value) {
+        this.setAttribute('title', value);
+    }
+    get lang() {
+        return this.getAttribute('lang') ?? '';
+    }
+    set lang(value) {
+        this.setAttribute('lang', value);
+    }
+    get dir() {
+        return this.getAttribute('dir') ?? '';
+    }
+    set dir(value) {
+        this.setAttribute('dir', value);
+    }
+    get className() {
+        return this.getAttribute('class') ?? '';
+    }
+    set className(value) {
+        this.setAttribute('class', value);
+    }
+    get tabIndex() {
+        const val = this.getAttribute('tabindex');
+        return val !== null ? parseInt(val, 10) : -1;
+    }
+    set tabIndex(value) {
+        this.setAttribute('tabindex', String(value));
+    }
+    get accessKey() {
+        return this.getAttribute('accesskey') ?? '';
+    }
+    set accessKey(value) {
+        this.setAttribute('accesskey', value);
+    }
+    get draggable() {
+        return this.getAttribute('draggable') === 'true';
+    }
+    set draggable(value) {
+        this.setAttribute('draggable', String(value));
+    }
+}
 exports.HTMLElement = HTMLElement;

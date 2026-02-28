@@ -1,223 +1,471 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Element = void 0;
-var NodeTypes_1 = require("../types/NodeTypes");
-var valueNotSetError_1 = require("../utils/valueNotSetError");
-var Text_1 = require("./Text");
-var Node_1 = require("./Node");
-var PointerEvent_1 = require("./PointerEvent");
-var Attr_1 = require("./Attr");
-var NamedNodeMap_1 = require("./NamedNodeMap");
-var ElementStore = /** @class */ (function () {
-    function ElementStore() {
-        this.eventListeners = function () { return ({}); };
-        this.tagName = function () {
-            throw (0, valueNotSetError_1.default)('tagName');
-        };
-        this.childNodes = function () { return []; };
-        this.style = function () { return ({}); };
-        this.attributes = function () { return new NamedNodeMap_1.NamedNodeMap(); };
+const NodeTypes_1 = require("../types/NodeTypes");
+const valueNotSetError_1 = __importDefault(require("../utils/valueNotSetError"));
+const Text_1 = require("./Text");
+const Node_1 = require("./Node/Node");
+const PointerEvent_1 = require("./PointerEvent");
+const Attr_1 = require("./Attr");
+const NamedNodeMap_1 = require("./NamedNodeMap");
+const CssSelectAdapter_1 = require("../utils/CssSelectAdapter");
+const CSSselect = __importStar(require("css-select"));
+const nodeOps = __importStar(require("../wasm/nodeOps"));
+const NodeRegistry = __importStar(require("../wasm/NodeRegistry"));
+const DOMTokenList_1 = require("./DOMTokenList");
+const DOMStringMap_1 = require("./DOMStringMap");
+const DOMException_1 = require("./DOMException");
+const adapter = new CssSelectAdapter_1.CssSelectAdapter();
+class ElementStore {
+    eventListeners = () => ({});
+    tagName = () => {
+        throw (0, valueNotSetError_1.default)('tagName');
+    };
+    style = () => ({});
+    attributes = () => new NamedNodeMap_1.NamedNodeMap();
+    namespaceURI = () => null;
+}
+const isEventTarget = (node) => Boolean(node && node.addEventListener && node.dispatchEvent);
+class Element extends Node_1.Node {
+    elementStore = new ElementStore();
+    constructor() {
+        super(NodeTypes_1.NodeTypes.ELEMENT_NODE);
     }
-    return ElementStore;
-}());
-var isEventTarget = function (node) {
-    return Boolean(node.addEventListener && node.dispatchEvent);
-};
-var Element = /** @class */ (function (_super) {
-    __extends(Element, _super);
-    function Element() {
-        var _this = _super.call(this) || this;
-        _this.elementStore = new ElementStore();
-        _this.nodeStore.nodeType = function () { return NodeTypes_1.NodeTypes.ELEMENT_NODE; };
-        return _this;
+    get ownerDocument() {
+        return this.nodeStore.ownerDocument();
     }
-    Object.defineProperty(Element.prototype, "ownerDocument", {
-        get: function () {
-            return this.nodeStore.ownerDocument();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Element.prototype, "tagName", {
-        get: function () {
-            return this.elementStore.tagName().toUpperCase();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Element.prototype, "outerHTML", {
-        get: function () {
-            var attributes = Object
-                .values(this.elementStore.attributes().namedNodeMapStore.itemsLookup())
-                .map(function (attr) { return ' ' + attr.localName + '="' + attr.value + '"'; })
-                .join('');
-            var content = this.childNodes
-                .map(function (node) {
-                if (node instanceof Element) {
-                    return node.outerHTML;
-                }
-                else if (node instanceof Text_1.Text) {
-                    return node.data;
-                }
-            })
-                .filter(function (segment) { return Boolean(segment); })
-                .join('');
-            return '<' + this.tagName.toLocaleLowerCase() + attributes + '>'
-                + content
-                + '</' + this.tagName.toLocaleLowerCase() + '>';
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Element.prototype, "childNodes", {
-        get: function () {
-            return this.elementStore.childNodes();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Element.prototype, "style", {
-        get: function () {
-            return this.elementStore.style();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Element.prototype, "textContent", {
-        get: function () {
-            return this.elementStore.childNodes().filter(function (childNode) { return childNode instanceof Text_1.Text; }).join('');
-        },
-        set: function (data) {
-            var ownerDocumentFuture = this.nodeStore.ownerDocument;
-            this.elementStore.childNodes = function () { return data.length === 0 ? [] : [
-                ownerDocumentFuture().createTextNode(data)
-            ]; };
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Element.prototype, "attributes", {
-        get: function () {
-            return this.elementStore.attributes();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Element.prototype.setAttribute = function (localName, value) {
-        var _this = this;
-        var previousAttributesFuture = this.elementStore.attributes;
-        this.elementStore.attributes = function () {
-            var previousAttributes = previousAttributesFuture();
-            var attr = new Attr_1.Attr(_this, localName, value);
+    get tagName() {
+        return this.elementStore.tagName().toUpperCase();
+    }
+    get nodeName() {
+        return this.tagName;
+    }
+    get namespaceURI() {
+        return this.elementStore.namespaceURI();
+    }
+    set namespaceURI(namespaceURI) {
+        this.elementStore.namespaceURI = () => namespaceURI;
+    }
+    get innerHTML() {
+        return this.nodeStore.getChildNodesArray()
+            .map((node) => {
+            if (node instanceof Element)
+                return node.outerHTML;
+            if (node instanceof Text_1.Text)
+                return node.data;
+            return '';
+        })
+            .join('');
+    }
+    set innerHTML(html) {
+        // Clear all existing children
+        nodeOps.clearChildren(this.wasmId);
+        // If non-empty, set as text content (no HTML parsing)
+        if (html.length) {
+            const ownerDocument = this.nodeStore.ownerDocument();
+            const textNode = ownerDocument.createTextNode(html);
+            nodeOps.setParentId(textNode.wasmId, this.wasmId);
+            nodeOps.appendChild(this.wasmId, textNode.wasmId);
+        }
+    }
+    get outerHTML() {
+        const attributes = Object
+            .values(this.elementStore.attributes().namedNodeMapStore.itemsLookup())
+            .map((attr) => ' ' + attr.localName + '="' + attr.value + '"')
+            .join('');
+        return '<' + this.tagName.toLocaleLowerCase() + attributes + '>'
+            + this.innerHTML
+            + '</' + this.tagName.toLocaleLowerCase() + '>';
+    }
+    get style() {
+        return this.elementStore.style();
+    }
+    get nodeValue() {
+        return null;
+    }
+    set nodeValue(_value) {
+        // Setting nodeValue on an Element has no effect per spec
+    }
+    get textContent() {
+        const children = this.nodeStore.getChildNodesArray();
+        const fragments = [];
+        for (const value of children) {
+            if (value instanceof Text_1.Text) {
+                fragments.push(value.nodeValue);
+            }
+        }
+        return fragments.join('');
+    }
+    set textContent(data) {
+        // Clear all existing children from WASM
+        nodeOps.clearChildren(this.wasmId);
+        if (data.length) {
+            const ownerDocument = this.nodeStore.ownerDocument();
+            const textNode = ownerDocument.createTextNode(data);
+            nodeOps.setParentId(textNode.wasmId, this.wasmId);
+            nodeOps.appendChild(this.wasmId, textNode.wasmId);
+        }
+    }
+    get attributes() {
+        const result = this.elementStore.attributes();
+        this.elementStore.attributes = () => result;
+        return result;
+    }
+    setAttribute(localName, value) {
+        const previousAttributesFuture = this.elementStore.attributes;
+        this.elementStore.attributes = () => {
+            const previousAttributes = previousAttributesFuture();
+            const attr = new Attr_1.Attr(this, localName, value);
             previousAttributes.setNamedItem(attr);
             return previousAttributes;
         };
         return;
-    };
-    Element.prototype.removeChild = function (node) {
-        node.nodeStore.parent = function () { return undefined; };
-        // Validation: node not child: throw NotFoundError DOMException
-        var previousChildNodesFuture = this.elementStore.childNodes;
-        this.elementStore.childNodes = function () {
-            return previousChildNodesFuture().filter(function (childNode) { return childNode !== node; });
+    }
+    removeAttribute(qualifiedName) {
+        const previousAttributesFuture = this.elementStore.attributes;
+        this.elementStore.attributes = () => {
+            const previousAttributes = previousAttributesFuture();
+            previousAttributes.removeNamedItem(qualifiedName);
+            return previousAttributes;
         };
-        this.ownerDocument.documentStore.disconnect(node);
-        return node;
-    };
-    Element.prototype.appendChild = function (node) {
-        var _this = this;
-        node.nodeStore.parent = function () { return _this; };
-        var previousChildNodesFuture = this.elementStore.childNodes;
-        this.elementStore.childNodes = function () {
-            var childNodes = previousChildNodesFuture();
-            childNodes.push(node);
-            return childNodes;
-        };
-        this.ownerDocument.documentStore.connect(node);
-        return node;
-    };
-    Object.defineProperty(Element.prototype, "addEventListener", {
-        get: function () {
-            var _this = this;
-            return function (type, listener) {
-                if (!listener) {
-                    return;
+    }
+    get addEventListener() {
+        return (type, listener) => {
+            if (!listener) {
+                return;
+            }
+            const previousEventListenersFuture = this.elementStore.eventListeners;
+            this.elementStore.eventListeners = () => {
+                const previousEventListeners = previousEventListenersFuture();
+                let queue = previousEventListeners[type];
+                if (!queue) {
+                    queue = [];
                 }
-                var previousEventListenersFuture = _this.elementStore.eventListeners;
-                _this.elementStore.eventListeners = function () {
-                    var previousEventListeners = previousEventListenersFuture();
-                    var queue = previousEventListeners[type];
-                    if (!queue) {
-                        queue = [];
-                    }
-                    queue.push(listener);
-                    previousEventListeners[type] = queue;
-                    return previousEventListeners;
-                };
+                queue.push(listener);
+                previousEventListeners[type] = queue;
+                return previousEventListeners;
             };
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Element.prototype.dispatchEvent = function (event) {
-        var listeners = this.elementStore.eventListeners();
-        var queue = listeners[event.type];
+        };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    removeEventListener(type, listener) {
+        // Stub: event listener removal not fully implemented
+    }
+    dispatchEvent(event) {
+        const listeners = this.elementStore.eventListeners();
+        const queue = listeners[event.type];
         if (queue && queue.length) {
-            queue.forEach(function (listener) { return listener(event); });
+            queue.forEach(listener => listener(event));
         }
         else {
-            var parent_1 = this.nodeStore.parent();
-            if (isEventTarget(parent_1)) {
-                parent_1.dispatchEvent(event);
+            const parentId = nodeOps.getParentId(this.wasmId);
+            const parent = parentId ? NodeRegistry.getNode(parentId) : undefined;
+            if (isEventTarget(parent)) {
+                parent.dispatchEvent(event);
             }
         }
-    };
-    Element.prototype.click = function () {
-        var _this = this;
-        var event = new PointerEvent_1.PointerEvent();
-        event.eventStore.type = function () { return 'click'; };
-        event.eventStore.target = function () { return _this; };
+    }
+    click() {
+        const event = new PointerEvent_1.PointerEvent();
+        event.eventStore.type = () => 'click';
+        event.eventStore.target = () => this;
         this.dispatchEvent(event);
-    };
-    Element.prototype.matches = function () {
-        return false;
-    };
-    Element.prototype.hasAttribute = function (name) {
-        return this
-            .elementStore
-            .attributes()
-            .getNamedItem(name) !== undefined;
-    };
-    Element.prototype.getAttribute = function (qualifiedName) {
-        var _a;
-        return ((_a = this
-            .elementStore
-            .attributes()
-            .getNamedItem(qualifiedName)) === null || _a === void 0 ? void 0 : _a.value) || null;
-    };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    Element.prototype.querySelector = function (query) {
-        throw new Error('unsupported method');
-    };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    Element.prototype.querySelectorAll = function (query) {
-        return this.ownerDocument.all;
-    };
-    return Element;
-}(Node_1.Node));
+    }
+    get hidden() {
+        return this.hasAttribute('hidden');
+    }
+    hasAttribute(name) {
+        return this.attributes.getNamedItem(name) !== null;
+    }
+    getAttributeNames() {
+        return Object.keys(this.attributes.namedNodeMapStore.itemsLookup());
+    }
+    getAttribute(qualifiedName) {
+        return this.attributes.getNamedItem(qualifiedName)?.value ?? null;
+    }
+    getAttributeNode(qualifiedName) {
+        return this.attributes.getNamedItem(qualifiedName) ?? null;
+    }
+    setAttributeNode(attr) {
+        // INUSE_ATTRIBUTE_ERR: attr is already owned by a different element
+        if (attr.ownerElement !== null && attr.ownerElement !== this) {
+            throw new DOMException_1.DOMException("The attribute is already in use by another element.", 'InUseAttributeError', DOMException_1.DOMException.INUSE_ATTRIBUTE_ERR);
+        }
+        const previousAttributesFuture = this.elementStore.attributes;
+        let oldAttr = null;
+        this.elementStore.attributes = () => {
+            const previousAttributes = previousAttributesFuture();
+            oldAttr = previousAttributes.setNamedItem(attr);
+            attr.ownerElement = this;
+            return previousAttributes;
+        };
+        // Force evaluation to get the old attr
+        this.elementStore.attributes();
+        return oldAttr;
+    }
+    removeAttributeNode(attr) {
+        const current = this.attributes.getNamedItem(attr.name);
+        if (current !== attr) {
+            throw new DOMException_1.DOMException("The attribute is not found on this element.", 'NotFoundError', DOMException_1.DOMException.NOT_FOUND_ERR);
+        }
+        this.removeAttribute(attr.name);
+        attr.ownerElement = null;
+        return attr;
+    }
+    hasAttributes() {
+        return this.attributes.length > 0;
+    }
+    get localName() {
+        const tagName = this.elementStore.tagName();
+        const colonIndex = tagName.indexOf(':');
+        if (colonIndex >= 0) {
+            return tagName.substring(colonIndex + 1);
+        }
+        return tagName;
+    }
+    get prefix() {
+        const tagName = this.elementStore.tagName();
+        const colonIndex = tagName.indexOf(':');
+        if (colonIndex >= 0) {
+            return tagName.substring(0, colonIndex);
+        }
+        return null;
+    }
+    setAttributeNS(namespaceURI, qualifiedName, value) {
+        // Parse prefix:localName
+        let prefix = null;
+        let localName = qualifiedName;
+        const colonIndex = qualifiedName.indexOf(':');
+        if (colonIndex >= 0) {
+            prefix = qualifiedName.substring(0, colonIndex);
+            localName = qualifiedName.substring(colonIndex + 1);
+        }
+        // NAMESPACE_ERR checks
+        if (prefix !== null && namespaceURI === null) {
+            throw new DOMException_1.DOMException("Namespace is null but prefix is not null.", 'NamespaceError', DOMException_1.DOMException.NAMESPACE_ERR);
+        }
+        if (prefix === 'xml' && namespaceURI !== 'http://www.w3.org/XML/1998/namespace') {
+            throw new DOMException_1.DOMException("Prefix 'xml' requires namespace 'http://www.w3.org/XML/1998/namespace'.", 'NamespaceError', DOMException_1.DOMException.NAMESPACE_ERR);
+        }
+        if (qualifiedName === 'xmlns' && namespaceURI !== 'http://www.w3.org/2000/xmlns/') {
+            throw new DOMException_1.DOMException("'xmlns' requires namespace 'http://www.w3.org/2000/xmlns/'.", 'NamespaceError', DOMException_1.DOMException.NAMESPACE_ERR);
+        }
+        if (prefix === 'xmlns' && namespaceURI !== 'http://www.w3.org/2000/xmlns/') {
+            throw new DOMException_1.DOMException("Prefix 'xmlns' requires namespace 'http://www.w3.org/2000/xmlns/'.", 'NamespaceError', DOMException_1.DOMException.NAMESPACE_ERR);
+        }
+        const attr = new Attr_1.Attr(this, localName, value, namespaceURI, prefix);
+        const previousAttributesFuture = this.elementStore.attributes;
+        this.elementStore.attributes = () => {
+            const previousAttributes = previousAttributesFuture();
+            previousAttributes.setNamedItemNS(attr);
+            return previousAttributes;
+        };
+    }
+    getAttributeNS(namespaceURI, localName) {
+        const attr = this.attributes.getNamedItemNS(namespaceURI, localName);
+        return attr ? attr.value : null;
+    }
+    getAttributeNodeNS(namespaceURI, localName) {
+        return this.attributes.getNamedItemNS(namespaceURI, localName);
+    }
+    removeAttributeNS(namespaceURI, localName) {
+        const previousAttributesFuture = this.elementStore.attributes;
+        this.elementStore.attributes = () => {
+            const previousAttributes = previousAttributesFuture();
+            previousAttributes.removeNamedItemNS(namespaceURI, localName);
+            return previousAttributes;
+        };
+    }
+    hasAttributeNS(namespaceURI, localName) {
+        return this.attributes.getNamedItemNS(namespaceURI, localName) !== null;
+    }
+    setAttributeNodeNS(attr) {
+        if (attr.ownerElement !== null && attr.ownerElement !== this) {
+            throw new DOMException_1.DOMException("The attribute is already in use by another element.", 'InUseAttributeError', DOMException_1.DOMException.INUSE_ATTRIBUTE_ERR);
+        }
+        const previousAttributesFuture = this.elementStore.attributes;
+        let oldAttr = null;
+        this.elementStore.attributes = () => {
+            const previousAttributes = previousAttributesFuture();
+            oldAttr = previousAttributes.setNamedItemNS(attr);
+            attr.ownerElement = this;
+            return previousAttributes;
+        };
+        this.elementStore.attributes();
+        return oldAttr;
+    }
+    getElementsByTagNameNS(namespaceURI, localName) {
+        const matchAllNS = namespaceURI === '*';
+        const matchAllName = localName === '*';
+        const results = [];
+        const walk = (node) => {
+            const children = node.childNodes;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child instanceof Element) {
+                    const nsMatch = matchAllNS || child.namespaceURI === namespaceURI;
+                    const nameMatch = matchAllName || child.localName === localName;
+                    if (nsMatch && nameMatch) {
+                        results.push(child);
+                    }
+                    walk(child);
+                }
+            }
+        };
+        walk(this);
+        return results;
+    }
+    getElementsByTagName(tagName) {
+        const upperName = tagName.toUpperCase();
+        const matchAll = tagName === '*';
+        const results = [];
+        const walk = (node) => {
+            const children = node.childNodes;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child instanceof Element) {
+                    if (matchAll || child.tagName === upperName) {
+                        results.push(child);
+                    }
+                    walk(child);
+                }
+            }
+        };
+        walk(this);
+        return results;
+    }
+    querySelectorAll(query) {
+        return CSSselect.selectAll(query, this, { adapter });
+    }
+    matches(selectors) {
+        return CSSselect.is(this, selectors, { adapter });
+    }
+    querySelector(selectors) {
+        return CSSselect.selectOne(selectors, this, { adapter });
+    }
+    append(...nodes) {
+        for (const node of nodes) {
+            if (typeof node === 'string') {
+                this.appendChild(this.ownerDocument.createTextNode(node));
+            }
+            else {
+                this.appendChild(node);
+            }
+        }
+    }
+    prepend(...nodes) {
+        const firstChild = this.firstChild;
+        for (const node of nodes) {
+            const child = typeof node === 'string'
+                ? this.ownerDocument.createTextNode(node)
+                : node;
+            this.insertBefore(child, firstChild);
+        }
+    }
+    after(...nodes) {
+        const parent = this.parentNode;
+        if (!parent)
+            return;
+        const nextSib = this.nextSibling;
+        for (const node of nodes) {
+            const child = typeof node === 'string'
+                ? this.ownerDocument.createTextNode(node)
+                : node;
+            parent.insertBefore(child, nextSib);
+        }
+    }
+    before(...nodes) {
+        const parent = this.parentNode;
+        if (!parent)
+            return;
+        for (const node of nodes) {
+            const child = typeof node === 'string'
+                ? this.ownerDocument.createTextNode(node)
+                : node;
+            parent.insertBefore(child, this);
+        }
+    }
+    replaceWith(...nodes) {
+        const parent = this.parentNode;
+        if (!parent)
+            return;
+        const nextSib = this.nextSibling;
+        parent.removeChild(this);
+        for (const node of nodes) {
+            const child = typeof node === 'string'
+                ? this.ownerDocument.createTextNode(node)
+                : node;
+            parent.insertBefore(child, nextSib);
+        }
+    }
+    getBoundingClientRect() {
+        return { top: 0, right: 0, bottom: 0, left: 0, width: 0, height: 0, x: 0, y: 0, toJSON() { return {}; } };
+    }
+    getClientRects() {
+        return [];
+    }
+    focus() { }
+    blur() { }
+    closest(selectors) {
+        let current = this;
+        while (current) {
+            if (current.matches(selectors))
+                return current;
+            current = current.parentElement;
+        }
+        return null;
+    }
+    get classList() {
+        return new DOMTokenList_1.DOMTokenList(this.elementStore);
+    }
+    get dataset() {
+        return new DOMStringMap_1.DOMStringMap(this.elementStore);
+    }
+    get children() {
+        return this.nodeStore.getChildNodesArray().filter(node => node instanceof Element);
+    }
+    _cloneNodeShallow() {
+        const tagName = this.elementStore.tagName();
+        const ns = this.elementStore.namespaceURI();
+        const clone = ns
+            ? this.ownerDocument.createElementNS(ns, tagName)
+            : this.ownerDocument.createElement(tagName);
+        // Copy attributes preserving namespace info
+        for (const attr of this.attributes) {
+            if (attr.namespaceURI) {
+                clone.setAttributeNS(attr.namespaceURI, attr.name, attr.value);
+            }
+            else {
+                clone.setAttribute(attr.name, attr.value);
+            }
+        }
+        return clone;
+    }
+}
 exports.Element = Element;

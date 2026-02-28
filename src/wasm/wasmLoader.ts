@@ -45,8 +45,10 @@ export interface WasmExports extends ASUtil {
 function findWasmPath(): string {
   // Try multiple potential locations
   const candidates = [
-    resolve(__dirname, "../../build/wasm/lazy-dom.wasm"),
-    resolve(process.cwd(), "build/wasm/lazy-dom.wasm"),
+    resolve(__dirname, "../../build/wasm/lazy-dom.wasm"),      // from src/wasm/ (dev via tsx)
+    resolve(__dirname, "../build/wasm/lazy-dom.wasm"),          // from dist/wasm/ (compiled)
+    resolve(process.cwd(), "build/wasm/lazy-dom.wasm"),         // cwd fallback
+    resolve(process.cwd(), "node_modules/lazy-dom/build/wasm/lazy-dom.wasm"),
   ];
   for (const candidate of candidates) {
     try {
@@ -62,7 +64,7 @@ function findWasmPath(): string {
 const wasmPath = findWasmPath();
 const wasmBuffer = readFileSync(wasmPath);
 
-const { exports } = instantiateSync<WasmExports>(wasmBuffer, {
+const wasmInstance = instantiateSync<WasmExports>(wasmBuffer, {
   env: {
     abort(msgPtr: number, filePtr: number, line: number, column: number) {
       const msg = msgPtr ? wasm.__getString(msgPtr) : "unknown";
@@ -72,4 +74,4 @@ const { exports } = instantiateSync<WasmExports>(wasmBuffer, {
   },
 });
 
-export const wasm: WasmExports = exports;
+export const wasm: WasmExports = wasmInstance.exports;

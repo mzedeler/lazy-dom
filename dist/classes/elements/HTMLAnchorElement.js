@@ -1,76 +1,158 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HTMLAnchorElement = void 0;
-var Element_1 = require("../Element");
-var HTMLAnchorElement = /** @class */ (function (_super) {
-    __extends(HTMLAnchorElement, _super);
-    function HTMLAnchorElement() {
-        return _super !== null && _super.apply(this, arguments) || this;
+const HTMLElement_1 = require("./HTMLElement");
+class HTMLAnchorElement extends HTMLElement_1.HTMLElement {
+    get href() {
+        const val = this.getAttribute('href');
+        if (!val)
+            return '';
+        try {
+            return new URL(val).href;
+        }
+        catch {
+            return val;
+        }
     }
-    Object.defineProperty(HTMLAnchorElement.prototype, "href", {
-        get: function () {
-            return new URL(this.attributes.getNamedItem('href').value).href;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(HTMLAnchorElement.prototype, "pathname", {
-        get: function () {
-            return new URL(this.attributes.getNamedItem('href').value).href;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(HTMLAnchorElement.prototype, "protocol", {
-        get: function () {
-            return new URL(this.attributes.getNamedItem('href').value).protocol;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(HTMLAnchorElement.prototype, "host", {
-        get: function () {
-            return new URL(this.attributes.getNamedItem('href').value).host;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(HTMLAnchorElement.prototype, "search", {
-        get: function () {
-            return new URL(this.attributes.getNamedItem('href').value).search;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(HTMLAnchorElement.prototype, "hash", {
-        get: function () {
-            return new URL(this.attributes.getNamedItem('href').value).hash;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(HTMLAnchorElement.prototype, "hostname", {
-        get: function () {
-            return new URL(this.attributes.getNamedItem('href').value).hostname;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    return HTMLAnchorElement;
-}(Element_1.Element));
+    set href(value) {
+        this.setAttribute('href', value);
+    }
+    get pathname() {
+        const val = this.getAttribute('href');
+        if (!val)
+            return '';
+        try {
+            return new URL(val).pathname;
+        }
+        catch {
+            return '';
+        }
+    }
+    get protocol() {
+        const val = this.getAttribute('href');
+        if (!val)
+            return ':';
+        try {
+            return new URL(val).protocol;
+        }
+        catch {
+            return ':';
+        }
+    }
+    get host() {
+        const val = this.getAttribute('href');
+        if (!val)
+            return '';
+        try {
+            return new URL(val).host;
+        }
+        catch {
+            return '';
+        }
+    }
+    get search() {
+        const val = this.getAttribute('href');
+        if (!val)
+            return '';
+        try {
+            return new URL(val).search;
+        }
+        catch {
+            return '';
+        }
+    }
+    get hash() {
+        const val = this.getAttribute('href');
+        if (!val)
+            return '';
+        try {
+            return new URL(val).hash;
+        }
+        catch {
+            return '';
+        }
+    }
+    get hostname() {
+        const val = this.getAttribute('href');
+        if (!val)
+            return '';
+        try {
+            return new URL(val).hostname;
+        }
+        catch {
+            return '';
+        }
+    }
+    get port() {
+        const val = this.getAttribute('href');
+        if (!val)
+            return '';
+        try {
+            return new URL(val).port;
+        }
+        catch {
+            return '';
+        }
+    }
+    get charset() {
+        return this.getAttribute('charset') ?? '';
+    }
+    set charset(value) {
+        this.setAttribute('charset', value);
+    }
+    get coords() {
+        return this.getAttribute('coords') ?? '';
+    }
+    set coords(value) {
+        this.setAttribute('coords', value);
+    }
+    get hreflang() {
+        return this.getAttribute('hreflang') ?? '';
+    }
+    set hreflang(value) {
+        this.setAttribute('hreflang', value);
+    }
+    get name() {
+        return this.getAttribute('name') ?? '';
+    }
+    set name(value) {
+        this.setAttribute('name', value);
+    }
+    get rel() {
+        return this.getAttribute('rel') ?? '';
+    }
+    set rel(value) {
+        this.setAttribute('rel', value);
+    }
+    get rev() {
+        return this.getAttribute('rev') ?? '';
+    }
+    set rev(value) {
+        this.setAttribute('rev', value);
+    }
+    get shape() {
+        return this.getAttribute('shape') ?? '';
+    }
+    set shape(value) {
+        this.setAttribute('shape', value);
+    }
+    get target() {
+        return this.getAttribute('target') ?? '';
+    }
+    set target(value) {
+        this.setAttribute('target', value);
+    }
+    get type() {
+        return this.getAttribute('type') ?? '';
+    }
+    set type(value) {
+        this.setAttribute('type', value);
+    }
+    get text() {
+        return this.textContent;
+    }
+    toString() {
+        return this.href;
+    }
+}
 exports.HTMLAnchorElement = HTMLAnchorElement;

@@ -1,0 +1,32 @@
+import { HTMLElement } from "./HTMLElement";
+export declare class HTMLTableCellElement extends HTMLElement {
+    get cellIndex(): number;
+    get abbr(): string;
+    set abbr(value: string);
+    get align(): string;
+    set align(value: string);
+    get axis(): string;
+    set axis(value: string);
+    get bgColor(): string;
+    set bgColor(value: string);
+    get ch(): string;
+    set ch(value: string);
+    get chOff(): string;
+    set chOff(value: string);
+    get colSpan(): number;
+    set colSpan(value: number);
+    get headers(): string;
+    set headers(value: string);
+    get height(): string;
+    set height(value: string);
+    get noWrap(): boolean;
+    set noWrap(value: boolean);
+    get rowSpan(): number;
+    set rowSpan(value: number);
+    get scope(): string;
+    set scope(value: string);
+    get vAlign(): string;
+    set vAlign(value: string);
+    get width(): string;
+    set width(value: string);
+}

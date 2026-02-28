@@ -1,57 +1,60 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Text = void 0;
-var NodeTypes_1 = require("../types/NodeTypes");
-var valueNotSetError_1 = require("../utils/valueNotSetError");
-var Node_1 = require("./Node");
-var TextStore = /** @class */ (function () {
-    function TextStore() {
-        this.data = function () {
-            throw (0, valueNotSetError_1.default)('data');
-        };
+const NodeTypes_1 = require("../types/NodeTypes");
+const valueNotSetError_1 = __importDefault(require("../utils/valueNotSetError"));
+const CharacterData_1 = require("./CharacterData");
+class TextStore {
+    data = () => {
+        throw (0, valueNotSetError_1.default)('data');
+    };
+}
+class Text extends CharacterData_1.CharacterData {
+    textStore = new TextStore();
+    nodeName = '#text';
+    constructor() {
+        super(NodeTypes_1.NodeTypes.TEXT_NODE);
     }
-    return TextStore;
-}());
-var Text = /** @class */ (function (_super) {
-    __extends(Text, _super);
-    function Text() {
-        var _this = _super.call(this) || this;
-        _this.textStore = new TextStore();
-        _this.nodeStore.nodeType = function () { return NodeTypes_1.NodeTypes.TEXT_NODE; };
-        return _this;
+    get textContent() {
+        return this.textStore.data();
     }
-    Object.defineProperty(Text.prototype, "textContent", {
-        get: function () {
-            return this.textStore.data();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Text.prototype, "data", {
-        get: function () {
-            return this.textStore.data();
-        },
-        set: function (data) {
-            this.textStore.data = function () { return data; };
-        },
-        enumerable: false,
-        configurable: true
-    });
-    return Text;
-}(Node_1.Node));
+    get data() {
+        return this.textStore.data();
+    }
+    set data(data) {
+        this.textStore.data = () => data;
+    }
+    get nodeValue() {
+        return this.textStore.data();
+    }
+    set nodeValue(value) {
+        this.textStore.data = () => value;
+    }
+    _cloneNodeShallow() {
+        return this.ownerDocument.createTextNode(this.data);
+    }
+    splitText(offset) {
+        if (offset < 0 || offset > this.data.length) {
+            throw new Error('INDEX_SIZE_ERR');
+        }
+        const newData = this.data.substring(offset);
+        this.data = this.data.substring(0, offset);
+        const newText = this.ownerDocument.createTextNode(newData);
+        // Insert after this node in the parent
+        const parent = this.parentNode;
+        if (parent) {
+            const nextSib = this.nextSibling;
+            if (nextSib) {
+                parent.insertBefore(newText, nextSib);
+            }
+            else {
+                parent.appendChild(newText);
+            }
+        }
+        return newText;
+    }
+}
 exports.Text = Text;

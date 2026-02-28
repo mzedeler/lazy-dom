@@ -1,0 +1,32 @@
+import { HTMLElement } from "./HTMLElement";
+export declare class HTMLTableElement extends HTMLElement {
+    get caption(): null;
+    get tHead(): null;
+    get tFoot(): null;
+    get align(): string;
+    set align(value: string);
+    get bgColor(): string;
+    set bgColor(value: string);
+    get border(): string;
+    set border(value: string);
+    get cellPadding(): string;
+    set cellPadding(value: string);
+    get cellSpacing(): string;
+    set cellSpacing(value: string);
+    get frame(): string;
+    set frame(value: string);
+    get rules(): string;
+    set rules(value: string);
+    get summary(): string;
+    set summary(value: string);
+    get width(): string;
+    set width(value: string);
+    createTHead(): null;
+    deleteTHead(): void;
+    createTFoot(): null;
+    deleteTFoot(): void;
+    createCaption(): null;
+    deleteCaption(): void;
+    insertRow(): null;
+    deleteRow(): void;
+}

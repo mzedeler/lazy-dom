@@ -1,36 +1,38 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Event = void 0;
-var valueNotSetError_1 = require("../utils/valueNotSetError");
-var EventStore = /** @class */ (function () {
-    function EventStore() {
-        this.type = function () {
-            throw (0, valueNotSetError_1.default)('type');
-        };
-        this.target = function () {
-            throw (0, valueNotSetError_1.default)('target');
-        };
+const valueNotSetError_1 = __importDefault(require("../utils/valueNotSetError"));
+class EventStore {
+    type = () => {
+        throw (0, valueNotSetError_1.default)('type');
+    };
+    target = () => {
+        throw (0, valueNotSetError_1.default)('target');
+    };
+}
+class Event {
+    eventStore = new EventStore();
+    defaultPrevented = false;
+    cancelBubble = false;
+    bubbles = false;
+    cancelable = false;
+    get target() {
+        return this.eventStore.target();
     }
-    return EventStore;
-}());
-var Event = /** @class */ (function () {
-    function Event() {
-        this.eventStore = new EventStore();
+    get type() {
+        return this.eventStore.type();
     }
-    Object.defineProperty(Event.prototype, "target", {
-        get: function () {
-            return this.eventStore.target();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(Event.prototype, "type", {
-        get: function () {
-            return this.eventStore.type();
-        },
-        enumerable: false,
-        configurable: true
-    });
-    return Event;
-}());
+    preventDefault() {
+        this.defaultPrevented = true;
+    }
+    stopPropagation() {
+        this.cancelBubble = true;
+    }
+    stopImmediatePropagation() {
+        this.cancelBubble = true;
+    }
+}
 exports.Event = Event;

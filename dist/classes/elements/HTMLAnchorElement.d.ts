@@ -1,0 +1,32 @@
+import { HTMLElement } from "./HTMLElement";
+export declare class HTMLAnchorElement extends HTMLElement {
+    get href(): string;
+    set href(value: string);
+    get pathname(): string;
+    get protocol(): string;
+    get host(): string;
+    get search(): string;
+    get hash(): string;
+    get hostname(): string;
+    get port(): string;
+    get charset(): string;
+    set charset(value: string);
+    get coords(): string;
+    set coords(value: string);
+    get hreflang(): string;
+    set hreflang(value: string);
+    get name(): string;
+    set name(value: string);
+    get rel(): string;
+    set rel(value: string);
+    get rev(): string;
+    set rev(value: string);
+    get shape(): string;
+    set shape(value: string);
+    get target(): string;
+    set target(value: string);
+    get type(): string;
+    set type(value: string);
+    get text(): string;
+    toString(): string;
+}
