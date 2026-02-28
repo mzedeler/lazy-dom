@@ -4,3 +4,4 @@ node_modules
 build/wasm/
 pro
 jsdom
+.claude
