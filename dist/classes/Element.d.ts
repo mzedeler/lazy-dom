@@ -27,7 +27,7 @@ export declare class Element extends Node implements EventTarget {
     get outerHTML(): string;
     get style(): Record<string, unknown>;
     get nodeValue(): null;
-    set nodeValue(_value: any);
+    set nodeValue(_value: string | null);
     get textContent(): string;
     set textContent(data: string);
     get attributes(): NamedNodeMap;

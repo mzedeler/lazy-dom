@@ -1,6 +1,6 @@
 import { NodeTypes } from "../types/NodeTypes";
 import { Node } from "./Node/Node";
-export declare abstract class CharacterData extends Node<string> {
+export declare abstract class CharacterData extends Node {
     constructor(nodeType: NodeTypes);
     abstract get data(): string;
     abstract set data(data: string);

@@ -1,7 +1,7 @@
 import { NodeTypes } from "../types/NodeTypes"
 import { Node } from "./Node/Node"
 
-export class ProcessingInstruction extends Node<string> {
+export class ProcessingInstruction extends Node {
   readonly target: string
 
   constructor(target: string, data: string) {
@@ -15,7 +15,7 @@ export class ProcessingInstruction extends Node<string> {
   }
 
   get data(): string {
-    return this.nodeStore.nodeValue()
+    return this.nodeStore.nodeValue() ?? ''
   }
 
   set data(data: string) {

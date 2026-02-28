@@ -226,8 +226,7 @@ class Node {
         while (i < children.length) {
             const child = children[i];
             if (child.nodeType === NodeTypes_1.NodeTypes.TEXT_NODE) {
-                const textChild = child;
-                if (textChild.data === '') {
+                if (child.nodeValue === '') {
                     this.removeChild(child);
                     children.splice(i, 1);
                     continue;
@@ -235,8 +234,8 @@ class Node {
                 // Merge consecutive text nodes
                 while (i + 1 < children.length && children[i + 1].nodeType === NodeTypes_1.NodeTypes.TEXT_NODE) {
                     const nextText = children[i + 1];
-                    textChild.data = textChild.data + nextText.data;
-                    this.removeChild(children[i + 1]);
+                    child.nodeValue = (child.nodeValue ?? '') + (nextText.nodeValue ?? '');
+                    this.removeChild(nextText);
                     children.splice(i + 1, 1);
                 }
             }

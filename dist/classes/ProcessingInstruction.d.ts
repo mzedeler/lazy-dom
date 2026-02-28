@@ -1,5 +1,5 @@
 import { Node } from "./Node/Node";
-export declare class ProcessingInstruction extends Node<string> {
+export declare class ProcessingInstruction extends Node {
     readonly target: string;
     constructor(target: string, data: string);
     get nodeName(): string;

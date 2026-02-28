@@ -3,10 +3,10 @@ import { Document } from "../Document";
 import { Element } from "../Element";
 import { NodeStore } from "./NodeStore";
 import { ChildNodeList } from "./ChildNodeList";
-export declare abstract class Node<NV = null> {
+export declare abstract class Node {
     wasmId: number;
-    nodeStore: NodeStore<NV>;
-    readonly _childNodes: ChildNodeList<NV>;
+    nodeStore: NodeStore;
+    readonly _childNodes: ChildNodeList;
     readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE;
     readonly ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE;
     readonly TEXT_NODE = NodeTypes.TEXT_NODE;
@@ -17,7 +17,7 @@ export declare abstract class Node<NV = null> {
     readonly DOCUMENT_FRAGMENT_NODE = NodeTypes.DOCUMENT_FRAGMENT_NODE;
     constructor(nodeType: NodeTypes);
     dump(): string;
-    get childNodes(): ChildNodeList<NV>;
+    get childNodes(): ChildNodeList;
     get nodeType(): NodeTypes;
     get ownerDocument(): Document;
     get parent(): Node | null;
@@ -29,11 +29,11 @@ export declare abstract class Node<NV = null> {
     get previousSibling(): Node | null;
     hasChildNodes(): boolean;
     get isConnected(): boolean;
-    get nodeValue(): NV;
-    set nodeValue(nodeValue: NV);
+    get nodeValue(): string | null;
+    set nodeValue(nodeValue: string | null);
     removeChild(node: Node): Node;
     insertBefore(newNode: Node, referenceNode: Node | null): Node;
-    appendChild(node: Node): Node<null>;
+    appendChild(node: Node): Node;
     replaceChild(newChild: Node, oldChild: Node): Node;
     cloneNode(deep?: boolean): Node;
     protected _cloneNodeShallow(): Node;

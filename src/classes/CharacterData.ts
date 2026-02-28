@@ -2,7 +2,7 @@ import { NodeTypes } from "../types/NodeTypes"
 import { Node } from "./Node/Node"
 import { DOMException } from "./DOMException"
 
-export abstract class CharacterData extends Node<string> {
+export abstract class CharacterData extends Node {
   constructor(nodeType: NodeTypes) {
     super(nodeType)
   }

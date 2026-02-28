@@ -2,10 +2,11 @@ import { NodeList } from "../NodeList";
 import { Node } from "./Node";
 import { NodeStore } from "./NodeStore";
 
-export class ChildNodeList<NV> extends NodeList {
-  nodeStore: NodeStore<NV>;
+export class ChildNodeList extends NodeList {
+  [index: number]: Node | undefined;
+  nodeStore: NodeStore;
 
-  constructor(nodeStore: NodeStore<NV>) {
+  constructor(nodeStore: NodeStore) {
     super();
     this.nodeStore = nodeStore;
 

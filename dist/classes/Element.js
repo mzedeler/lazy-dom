@@ -361,13 +361,14 @@ class Element extends Node_1.Node {
         return results;
     }
     querySelectorAll(query) {
-        return CSSselect.selectAll(query, this, { adapter });
+        return CSSselect.selectAll(query, this, { adapter }).filter((node) => node instanceof Element);
     }
     matches(selectors) {
         return CSSselect.is(this, selectors, { adapter });
     }
     querySelector(selectors) {
-        return CSSselect.selectOne(selectors, this, { adapter });
+        const result = CSSselect.selectOne(selectors, this, { adapter });
+        return result instanceof Element ? result : null;
     }
     append(...nodes) {
         for (const node of nodes) {

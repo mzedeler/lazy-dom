@@ -4,7 +4,7 @@
     "module": "CommonJS",
     "outDir": "./dist",
     "rootDir": "./src",
-    "declaration": false
+    "declaration": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["assembly", "**/*.test.ts", "pro"]

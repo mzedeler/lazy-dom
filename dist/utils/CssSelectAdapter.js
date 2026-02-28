@@ -1,109 +1,109 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CssSelectAdapter = void 0;
+const CssSelectTypes_1 = require("../types/CssSelectTypes");
 const NodeTypes_1 = require("../types/NodeTypes");
 class CssSelectAdapter {
     isTag(node) {
-        return node.nodeType === NodeTypes_1.NodeTypes.ELEMENT_NODE;
+        return (0, CssSelectTypes_1.isCssElement)(node);
     }
     getChildren(node) {
         return Array.from(node.childNodes);
     }
-    getParent(element) {
-        return element.parentNode;
+    getParent(node) {
+        const parent = node.parentNode;
+        return (0, CssSelectTypes_1.isCssNode)(parent) ? parent : null;
     }
-    // Hackish version based on css-select-browser-adapter
+    getNodeParent(node) {
+        if ('parentNode' in node) {
+            const parent = node.parentNode;
+            return (0, CssSelectTypes_1.isCssNode)(parent) ? parent : null;
+        }
+        return null;
+    }
     removeSubsets(inputNodes) {
         const nodes = [...inputNodes];
-        let idx = nodes.length, node, ancestor, replace;
-        // Check if each node (or one of its ancestors) is already contained in the
-        // array.
+        let idx = nodes.length;
         while (--idx > -1) {
-            node = ancestor = nodes[idx];
-            // Temporarily remove the node under consideration
+            const node = nodes[idx];
             nodes[idx] = null;
-            replace = true;
+            let replace = true;
+            let ancestor = node;
             while (ancestor) {
                 if (nodes.indexOf(ancestor) > -1) {
                     replace = false;
                     nodes.splice(idx, 1);
                     break;
                 }
-                ancestor = this.getParent(ancestor);
+                const parent = this.getNodeParent(ancestor);
+                if (!parent)
+                    break;
+                ancestor = parent;
             }
-            // If the node has been found to be unique, re-insert it.
             if (replace) {
                 nodes[idx] = node;
             }
         }
-        return nodes;
+        return nodes.filter((n) => n !== null);
     }
-    existsOne(test, nodes) {
-        const iterator = nodes.values();
-        for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
-            if (value && test(value)) {
+    existsOne(test, elems) {
+        for (const node of elems) {
+            if (this.isTag(node) && test(node)) {
                 return true;
             }
         }
         return false;
     }
     getSiblings(node) {
-        const parent = this.getParent(node);
+        const parent = this.getNodeParent(node);
         return parent ? this.getChildren(parent) : [node];
     }
-    getAttributeValue(element, attributeName) {
-        const attribute = element.attributes.getNamedItem(attributeName);
-        if (attribute) {
-            return typeof attribute === "string" ? attribute : attribute.value;
-        }
+    getAttributeValue(elem, name) {
+        return elem.getAttribute(name) ?? undefined;
     }
-    hasAttrib(element, attributeName) {
-        return element.attributes.getNamedItem(attributeName) !== null;
+    hasAttrib(elem, name) {
+        return elem.hasAttribute(name);
     }
-    getName(element) {
-        return element.tagName?.toLocaleLowerCase() ?? '';
+    getName(elem) {
+        return elem.tagName.toLocaleLowerCase();
     }
-    findOne(test, nodes) {
-        let node = null;
-        for (let i = 0, l = nodes.length; i < l && !node; i++) {
-            if (test(nodes[i])) {
-                node = nodes[i];
-            }
-            else {
-                const childs = this.getChildren(nodes[i]);
-                if (childs && childs.length > 0) {
-                    node = this.findOne(test, childs);
+    findOne(test, elems) {
+        for (const node of elems) {
+            if (this.isTag(node)) {
+                if (test(node))
+                    return node;
+                const children = this.getChildren(node);
+                if (children.length > 0) {
+                    const result = this.findOne(test, children);
+                    if (result)
+                        return result;
                 }
             }
         }
-        return node;
+        return null;
     }
     findAll(test, nodes) {
         let result = [];
-        for (let i = 0, j = nodes.length; i < j; i++) {
-            if (!this.isTag(nodes[i])) {
+        for (const node of nodes) {
+            if (!this.isTag(node))
                 continue;
-            }
-            if (test(nodes[i])) {
-                result.push(nodes[i]);
-            }
-            const children = this.getChildren(nodes[i]);
-            if (children) {
+            if (test(node))
+                result.push(node);
+            const children = this.getChildren(node);
+            if (children.length) {
                 result = result.concat(this.findAll(test, children));
             }
         }
         return result;
     }
-    getText(input) {
-        if (Array.isArray(input)) {
-            return input.map(this.getText).join('');
+    getText(node) {
+        if (this.isTag(node)) {
+            return this.getChildren(node).map(child => this.getText(child)).join('');
         }
-        if (this.isTag(input)) {
-            return this.getText(this.getChildren(input));
+        if (node.nodeType === NodeTypes_1.NodeTypes.TEXT_NODE) {
+            return node.nodeValue ?? '';
         }
-        if (input.nodeType === NodeTypes_1.NodeTypes.TEXT_NODE) {
-            return input.nodeValue; // we just checked above
-        }
+        return '';
     }
 }
 exports.CssSelectAdapter = CssSelectAdapter;

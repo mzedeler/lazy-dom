@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "description": "",
   "main": "dist/lazyDom.js",
+  "types": "./dist/lazyDom.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/lazyDom.d.ts",
       "default": "./dist/lazyDom.js"
     },
     "./register": "./dist/register.js"
@@ -14,7 +16,7 @@
     "benchmark": "pnpm build:wasm && tsx benchmark/benchmark.ts",
     "benchmark:optimizing-stores": "nodemon -e ts --exec pnpm exec tsx experiments/optimizingStores/optimizingStores.ts",
     "build:wasm": "asc assembly/index.ts --outFile build/wasm/lazy-dom.wasm --optimize --exportRuntime",
-    "build": "pnpm build:wasm && tsc -p tsconfig.build.json --noCheck",
+    "build": "pnpm build:wasm && tsc -p tsconfig.build.json",
     "build:watch": "pnpm exec tsc --watch ./src/lazyDom.ts --outDir dist",
     "dev:watch": "nodemon --config nodemon.dev.json",
     "dev": "pnpm benchmark && pnpm test",

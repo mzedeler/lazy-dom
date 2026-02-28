@@ -102,7 +102,7 @@ export class Element extends Node implements EventTarget {
     return null
   }
 
-  set nodeValue(_value: any) {
+  set nodeValue(_value: string | null) {
     // Setting nodeValue on an Element has no effect per spec
   }
 
@@ -419,8 +419,10 @@ export class Element extends Node implements EventTarget {
     return results
   }
 
-  querySelectorAll(query: string) {
-    return CSSselect.selectAll(query, this, { adapter })
+  querySelectorAll(query: string): Element[] {
+    return CSSselect.selectAll(query, this, { adapter }).filter(
+      (node): node is Element => node instanceof Element
+    )
   }
 
   matches(selectors: string): boolean {
@@ -428,7 +430,8 @@ export class Element extends Node implements EventTarget {
   }
 
   querySelector(selectors: string): Element | null {
-    return CSSselect.selectOne(selectors, this, { adapter })
+    const result = CSSselect.selectOne(selectors, this, { adapter })
+    return result instanceof Element ? result : null
   }
 
   append(...nodes: (Node | string)[]) {

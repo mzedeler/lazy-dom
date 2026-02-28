@@ -1,131 +1,119 @@
-import { Element } from "../classes/Element";
-import { Node } from "../classes/Node/Node";
-import { NodeTypes } from "../types/NodeTypes";
-import { NodeList } from "../classes/NodeList";
+import { CssNode, CssElement, isCssNode, isCssElement } from "../types/CssSelectTypes"
+import { NodeTypes } from "../types/NodeTypes"
 
-type NodeTest = (node: Node) => boolean
+type Predicate<T> = (value: T) => boolean
 
 export class CssSelectAdapter {
-  isTag(node: Node): node is Element {
-    return node.nodeType === NodeTypes.ELEMENT_NODE
+  isTag(node: CssNode): node is CssElement {
+    return isCssElement(node)
   }
 
-  getChildren(node: Node): Node[] {
-    return Array.from(node.childNodes as Iterable<Node>)
+  getChildren(node: CssNode): CssNode[] {
+    return Array.from(node.childNodes)
   }
 
-  getParent(element: Node): Node | null {
-    return element.parentNode
+  getParent(node: CssElement): CssNode | null {
+    const parent = node.parentNode
+    return isCssNode(parent) ? parent : null
   }
 
-  // Hackish version based on css-select-browser-adapter
-  removeSubsets(inputNodes: Node[]): Node[] {
-    const nodes: Array<Node | null> = [...inputNodes]
-    let idx = nodes.length, node, ancestor, replace;
-  
-    // Check if each node (or one of its ancestors) is already contained in the
-    // array.
-    while(--idx > -1) {
-      node = ancestor = nodes[idx];
-  
-      // Temporarily remove the node under consideration
-      nodes[idx] = null;
-      replace = true;
-  
-      while(ancestor) {
-        if(nodes.indexOf(ancestor) > -1) {
-          replace = false;
-          nodes.splice(idx, 1);
-          break;
+  private getNodeParent(node: CssNode): CssNode | null {
+    if ('parentNode' in node) {
+      const parent = node.parentNode
+      return isCssNode(parent) ? parent : null
+    }
+    return null
+  }
+
+  removeSubsets(inputNodes: CssNode[]): CssNode[] {
+    const nodes: Array<CssNode | null> = [...inputNodes]
+    let idx = nodes.length
+
+    while (--idx > -1) {
+      const node = nodes[idx]
+      nodes[idx] = null
+      let replace = true
+      let ancestor = node
+
+      while (ancestor) {
+        if (nodes.indexOf(ancestor) > -1) {
+          replace = false
+          nodes.splice(idx, 1)
+          break
         }
-        ancestor = this.getParent(ancestor)
+        const parent = this.getNodeParent(ancestor)
+        if (!parent) break
+        ancestor = parent
       }
-  
-      // If the node has been found to be unique, re-insert it.
-      if(replace) {
-        nodes[idx] = node;
+
+      if (replace) {
+        nodes[idx] = node
       }
     }
 
-    return nodes as Node[];
+    return nodes.filter((n): n is CssNode => n !== null)
   }
 
-  existsOne(test: NodeTest, nodes: NodeList): boolean {
-    const iterator = nodes.values()
-    for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
-      if (value && test(value)) {
+  existsOne(test: Predicate<CssElement>, elems: CssNode[]): boolean {
+    for (const node of elems) {
+      if (this.isTag(node) && test(node)) {
         return true
       }
     }
-
     return false
   }
 
-  getSiblings(node: Node): Node[] {
-    const parent = this.getParent(node)
+  getSiblings(node: CssNode): CssNode[] {
+    const parent = this.getNodeParent(node)
     return parent ? this.getChildren(parent) : [node]
   }
 
-  getAttributeValue(element: Element, attributeName: string): string | undefined {
-    const attribute = element.attributes.getNamedItem(attributeName)
-    if (attribute) {
-			return typeof attribute === "string" ? attribute : attribute.value;
-		}
-	}
-
-  hasAttrib(element: Element, attributeName: string): boolean {
-    return element.attributes.getNamedItem(attributeName) !== null
+  getAttributeValue(elem: CssElement, name: string): string | undefined {
+    return elem.getAttribute(name) ?? undefined
   }
 
-  getName(element: Element): string {
-    return element.tagName?.toLocaleLowerCase() ?? ''
+  hasAttrib(elem: CssElement, name: string): boolean {
+    return elem.hasAttribute(name)
   }
 
-  findOne(test: NodeTest, nodes: Node[]): Node | null | undefined {
-		let node = null;
-
-		for(let i = 0, l = nodes.length; i < l && !node; i++){
-			if(test(nodes[i])){
-				node = nodes[i];
-			} else {
-				const childs = this.getChildren(nodes[i]);
-				if(childs && childs.length > 0){
-					node = this.findOne(test, childs);
-				}
-			}
-		}
-
-		return node;
+  getName(elem: CssElement): string {
+    return elem.tagName.toLocaleLowerCase()
   }
 
-  findAll(test: NodeTest, nodes: Node[]): Node[] {
-		let result: Node[] = [];
-		for(let i = 0, j = nodes.length; i < j; i++){
-			if(!this.isTag(nodes[i])) {
-        continue;
+  findOne(test: Predicate<CssElement>, elems: CssNode[]): CssElement | null {
+    for (const node of elems) {
+      if (this.isTag(node)) {
+        if (test(node)) return node
+        const children = this.getChildren(node)
+        if (children.length > 0) {
+          const result = this.findOne(test, children)
+          if (result) return result
+        }
       }
-			if(test(nodes[i])) {
-        result.push(nodes[i]);
-      }
-			const children = this.getChildren(nodes[i]);
-			if(children) {
-        result = result.concat(this.findAll(test, children));
-      }
-		}
-		return result;
+    }
+    return null
   }
 
-  getText(input: Node[] | Node): string | undefined {
-    if (Array.isArray(input)) {
-      return input.map(this.getText).join('')
+  findAll(test: Predicate<CssElement>, nodes: CssNode[]): CssElement[] {
+    let result: CssElement[] = []
+    for (const node of nodes) {
+      if (!this.isTag(node)) continue
+      if (test(node)) result.push(node)
+      const children = this.getChildren(node)
+      if (children.length) {
+        result = result.concat(this.findAll(test, children))
+      }
     }
+    return result
+  }
 
-    if (this.isTag(input)) {
-      return this.getText(this.getChildren(input))
+  getText(node: CssNode): string {
+    if (this.isTag(node)) {
+      return this.getChildren(node).map(child => this.getText(child)).join('')
     }
-
-    if (input.nodeType === NodeTypes.TEXT_NODE) {
-      return input.nodeValue! // we just checked above
+    if (node.nodeType === NodeTypes.TEXT_NODE) {
+      return node.nodeValue ?? ''
     }
+    return ''
   }
 }

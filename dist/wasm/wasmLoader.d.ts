@@ -1,5 +1,6 @@
 import { ASUtil } from "@assemblyscript/loader";
 export interface WasmExports extends ASUtil {
+    [key: string]: unknown;
     createNode(nodeType: number): number;
     destroyNode(nodeId: number): void;
     getNodeType(nodeId: number): number;
@@ -13,6 +14,7 @@ export interface WasmExports extends ASUtil {
     getChildCount(nodeId: number): number;
     getChildId(nodeId: number, index: number): number;
     getChildIds(nodeId: number): number;
+    insertBefore(parentId: number, newChildId: number, refChildId: number): void;
     hasNode(nodeId: number): boolean;
     createDocument(): number;
     destroyDocument(docId: number): void;

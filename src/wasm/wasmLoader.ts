@@ -6,6 +6,8 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 export interface WasmExports extends ASUtil {
+  [key: string]: unknown;
+
   // Node lifecycle
   createNode(nodeType: number): number;
   destroyNode(nodeId: number): void;
@@ -25,6 +27,7 @@ export interface WasmExports extends ASUtil {
   getChildId(nodeId: number, index: number): number;
   getChildIds(nodeId: number): number; // returns pointer to StaticArray<u32>
 
+  insertBefore(parentId: number, newChildId: number, refChildId: number): void;
   hasNode(nodeId: number): boolean;
 
   // Document registry

@@ -18,10 +18,10 @@ function getDocumentFragment() {
   return DocumentFragment
 }
 
-export abstract class Node<NV = null> {
+export abstract class Node {
   wasmId: number
-  nodeStore: NodeStore<NV>
-  readonly _childNodes: ChildNodeList<NV>
+  nodeStore: NodeStore
+  readonly _childNodes: ChildNodeList
 
   readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
   readonly ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE
@@ -35,8 +35,8 @@ export abstract class Node<NV = null> {
   constructor(nodeType: NodeTypes) {
     this.wasmId = nodeOps.createNode(nodeType)
     NodeRegistry.register(this.wasmId, this)
-    this.nodeStore = new NodeStore<NV>(this.wasmId)
-    this._childNodes = new ChildNodeList<NV>(this.nodeStore)
+    this.nodeStore = new NodeStore(this.wasmId)
+    this._childNodes = new ChildNodeList(this.nodeStore)
   }
 
   dump(): string {
@@ -106,11 +106,11 @@ export abstract class Node<NV = null> {
     return this.parentNode !== null ? this.parentNode.isConnected : false
   }
 
-  get nodeValue(): NV {
+  get nodeValue(): string | null {
     return this.nodeStore.nodeValue()
   }
 
-  set nodeValue(nodeValue: NV) {
+  set nodeValue(nodeValue: string | null) {
     this.nodeStore.nodeValue = () => nodeValue
   }
 
@@ -251,17 +251,16 @@ export abstract class Node<NV = null> {
     while (i < children.length) {
       const child = children[i]
       if (child.nodeType === NodeTypes.TEXT_NODE) {
-        const textChild = child as any
-        if (textChild.data === '') {
+        if (child.nodeValue === '') {
           this.removeChild(child)
           children.splice(i, 1)
           continue
         }
         // Merge consecutive text nodes
         while (i + 1 < children.length && children[i + 1].nodeType === NodeTypes.TEXT_NODE) {
-          const nextText = children[i + 1] as any
-          textChild.data = textChild.data + nextText.data
-          this.removeChild(children[i + 1])
+          const nextText = children[i + 1]
+          child.nodeValue = (child.nodeValue ?? '') + (nextText.nodeValue ?? '')
+          this.removeChild(nextText)
           children.splice(i + 1, 1)
         }
       } else if (child.nodeType === NodeTypes.ELEMENT_NODE) {

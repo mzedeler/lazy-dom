@@ -14,7 +14,7 @@ class ProcessingInstruction extends Node_1.Node {
         return this.target;
     }
     get data() {
-        return this.nodeStore.nodeValue();
+        return this.nodeStore.nodeValue() ?? '';
     }
     set data(data) {
         this.nodeStore.nodeValue = () => data;
