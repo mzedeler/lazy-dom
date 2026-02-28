@@ -178,6 +178,78 @@ describe('level1/core', () => {
       // Original: level1/core.js - documentinvalidcharacterexceptioncreatepi
       // Needs: createProcessingInstruction with error handling
     })
+
+    // --- Regression: document tree structure (Bug #6) ---
+    it('documentElement is an HTML element', () => {
+      expect(document.documentElement).to.exist
+      expect(document.documentElement.tagName).to.equal('HTML')
+    })
+
+    it('body is a child of documentElement', () => {
+      expect(document.body.parentNode).to.equal(document.documentElement)
+    })
+
+    it('head is a child of documentElement', () => {
+      expect(document.head.parentNode).to.equal(document.documentElement)
+    })
+
+    it('documentElement contains both head and body', () => {
+      const children = document.documentElement.childNodes
+      expect(children.length).to.equal(2)
+      expect(children[0]).to.equal(document.head)
+      expect(children[1]).to.equal(document.body)
+    })
+
+    // --- Regression: document queries search entire tree (Bug #7) ---
+    it('getElementsByTagName finds elements appended to head', () => {
+      const meta = document.createElement('meta')
+      document.head.appendChild(meta)
+      const results = document.getElementsByTagName('meta')
+      expect(results.length).to.be.greaterThan(0)
+      document.head.removeChild(meta)
+    })
+
+    it('querySelectorAll finds elements appended to head', () => {
+      const link = document.createElement('link')
+      link.setAttribute('id', 'test-link')
+      document.head.appendChild(link)
+      const results = document.querySelectorAll('#test-link')
+      expect(results.length).to.equal(1)
+      document.head.removeChild(link)
+    })
+
+    it('querySelector finds elements appended to head', () => {
+      const style = document.createElement('style')
+      style.setAttribute('id', 'test-style')
+      document.head.appendChild(style)
+      const found = document.querySelector('#test-style')
+      expect(found).to.equal(style)
+      document.head.removeChild(style)
+    })
+
+    it('getElementsByTagName still finds elements in body', () => {
+      const div = document.createElement('div')
+      document.body.appendChild(div)
+      const results = document.getElementsByTagName('div')
+      expect(results.length).to.be.greaterThan(0)
+    })
+
+    // --- Regression: cloneNode on DocumentFragment (Bug #3) ---
+    it('clones a DocumentFragment (shallow)', () => {
+      const frag = document.createDocumentFragment()
+      frag.appendChild(document.createElement('div'))
+      const clone = frag.cloneNode(false)
+      expect(clone.nodeType).to.equal(11)
+      expect(clone.childNodes.length).to.equal(0)
+    })
+
+    it('clones a DocumentFragment (deep)', () => {
+      const frag = document.createDocumentFragment()
+      frag.appendChild(document.createElement('div'))
+      frag.appendChild(document.createElement('span'))
+      const clone = frag.cloneNode(true)
+      expect(clone.childNodes.length).to.equal(2)
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -426,6 +498,32 @@ describe('level1/core', () => {
       attr.value = 'test'
       const old = el.setAttributeNode(attr)
       expect(old).to.be.null
+    })
+
+    // --- Regression: innerHTML setter (Bug #10) ---
+    it('innerHTML setter clears children when set to empty string', () => {
+      const div = document.createElement('div')
+      div.appendChild(document.createElement('span'))
+      div.appendChild(document.createTextNode('text'))
+      expect(div.childNodes.length).to.equal(2)
+      div.innerHTML = ''
+      expect(div.childNodes.length).to.equal(0)
+      expect(div.innerHTML).to.equal('')
+    })
+
+    it('innerHTML setter sets text content when set to a string', () => {
+      const div = document.createElement('div')
+      div.innerHTML = 'hello'
+      expect(div.innerHTML).to.equal('hello')
+      expect(div.childNodes.length).to.equal(1)
+    })
+
+    it('innerHTML setter replaces existing children', () => {
+      const div = document.createElement('div')
+      div.appendChild(document.createElement('span'))
+      div.innerHTML = 'replaced'
+      expect(div.innerHTML).to.equal('replaced')
+      expect(div.childNodes.length).to.equal(1)
     })
   })
 
@@ -999,6 +1097,60 @@ describe('level1/core', () => {
       // Original: level1/core.js - nodeattributenodevalue
       // Uses getAttributeNode on a parsed XML fixture
     })
+
+    // --- Regression: appendChild hierarchy check (Bug #1) ---
+    it('allows re-parenting a child from one parent to another', () => {
+      const parent1 = document.createElement('div')
+      const parent2 = document.createElement('div')
+      const child = document.createElement('span')
+      parent1.appendChild(child)
+      parent2.appendChild(child)
+      expect(parent2.childNodes.length).to.equal(1)
+      expect(parent1.childNodes.length).to.equal(0)
+    })
+
+    it('throws HIERARCHY_REQUEST_ERR when inserting an ancestor as child', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      parent.appendChild(child)
+      expect(() => child.appendChild(parent)).to.throw()
+    })
+
+    it('throws HIERARCHY_REQUEST_ERR when inserting self', () => {
+      const el = document.createElement('div')
+      expect(() => el.appendChild(el)).to.throw()
+    })
+
+    it('allows re-parenting via insertBefore', () => {
+      const parent1 = document.createElement('div')
+      const parent2 = document.createElement('div')
+      const child = document.createElement('span')
+      const ref = document.createElement('p')
+      parent1.appendChild(child)
+      parent2.appendChild(ref)
+      parent2.insertBefore(child, ref)
+      expect(parent2.childNodes.length).to.equal(2)
+      expect(parent1.childNodes.length).to.equal(0)
+    })
+
+    // --- Regression: getRootNode (Bug #8) ---
+    it('getRootNode returns document for elements connected to body', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      expect(el.getRootNode()).to.equal(document)
+    })
+
+    it('getRootNode returns document for elements connected to head', () => {
+      const el = document.createElement('meta')
+      document.head.appendChild(el)
+      expect(el.getRootNode()).to.equal(document)
+      document.head.removeChild(el)
+    })
+
+    it('getRootNode returns the element itself for disconnected elements', () => {
+      const el = document.createElement('div')
+      expect(el.getRootNode()).to.equal(el)
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -1292,6 +1444,29 @@ describe('level1/core', () => {
       expect((text as any).substringData(0, 5)).to.equal('hello')
       expect((text as any).substringData(6, 5)).to.equal('world')
     })
+
+    // --- Regression: DOMException has numeric code (Bug #5) ---
+    it('substringData throws DOMException with numeric code for invalid offset', () => {
+      const text = document.createTextNode('hello')
+      try {
+        ;(text as any).substringData(100, 1)
+        expect.fail('should have thrown')
+      } catch (e: any) {
+        expect(e.name).to.equal('IndexSizeError')
+        expect(e.code).to.be.a('number')
+        expect(e.code).to.equal(1)
+      }
+    })
+
+    it('deleteData throws DOMException with numeric code for invalid offset', () => {
+      const text = document.createTextNode('hello')
+      try {
+        ;(text as any).deleteData(100, 1)
+        expect.fail('should have thrown')
+      } catch (e: any) {
+        expect(e.code).to.be.a('number')
+      }
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -1386,6 +1561,15 @@ describe('level1/core', () => {
     it('processinginstructiongettarget - PI.target returns the target', () => {
       const pi = document.createProcessingInstruction('xml-stylesheet', 'type="text/xsl"')
       expect(pi.target).to.equal('xml-stylesheet')
+    })
+
+    // --- Regression: cloneNode on ProcessingInstruction (Bug #3) ---
+    it('clones a ProcessingInstruction', () => {
+      const pi = document.createProcessingInstruction('xml-stylesheet', 'href="style.css"')
+      const clone = pi.cloneNode(false)
+      expect(clone.nodeType).to.equal(7)
+      expect((clone as any).target).to.equal('xml-stylesheet')
+      expect((clone as any).data).to.equal('href="style.css"')
     })
   })
 

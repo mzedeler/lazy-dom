@@ -1,13 +1,23 @@
 export class Window {
+  private _location: Record<string, string> = {
+    href: 'http://localhost:9009/b',
+    protocol: 'http:',
+    hostname: 'localhost',
+    pathname: '/b',
+    origin: 'http://localhost:9009',
+    search: '',
+    hash: '',
+  }
+
   get location() {
-    return {
-      href: 'http://localhost:9009/b',
-      protocol: 'http:',
-      hostname: 'localhost',
-      pathname: '/b',
-      origin: 'http://localhost:9009',
-      search: '',
-      hash: '',
+    return this._location
+  }
+
+  set location(value: any) {
+    if (typeof value === 'string') {
+      this._location.href = value
+    } else {
+      Object.assign(this._location, value)
     }
   }
 

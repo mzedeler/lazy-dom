@@ -78,7 +78,7 @@ export class CssSelectAdapter {
   }
 
   getName(element: Element): string {
-    return element.tagName.toLocaleLowerCase()
+    return element.tagName?.toLocaleLowerCase() ?? ''
   }
 
   findOne(test: NodeTest, nodes: Node[]): Node | null | undefined {

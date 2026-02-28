@@ -70,6 +70,19 @@ export class Element extends Node implements EventTarget {
       .join('')
   }
 
+  set innerHTML(html: string) {
+    // Clear all existing children
+    nodeOps.clearChildren(this.wasmId)
+
+    // If non-empty, set as text content (no HTML parsing)
+    if (html.length) {
+      const ownerDocument = this.nodeStore.ownerDocument()
+      const textNode = ownerDocument.createTextNode(html)
+      nodeOps.setParentId(textNode.wasmId, this.wasmId)
+      nodeOps.appendChild(this.wasmId, textNode.wasmId)
+    }
+  }
+
   get outerHTML() {
     const attributes = Object
       .values(this.elementStore.attributes().namedNodeMapStore.itemsLookup())
@@ -416,6 +429,70 @@ export class Element extends Node implements EventTarget {
 
   querySelector(selectors: string): Element | null {
     return CSSselect.selectOne(selectors, this, { adapter })
+  }
+
+  append(...nodes: (Node | string)[]) {
+    for (const node of nodes) {
+      if (typeof node === 'string') {
+        this.appendChild(this.ownerDocument.createTextNode(node))
+      } else {
+        this.appendChild(node)
+      }
+    }
+  }
+
+  prepend(...nodes: (Node | string)[]) {
+    const firstChild = this.firstChild
+    for (const node of nodes) {
+      const child = typeof node === 'string'
+        ? this.ownerDocument.createTextNode(node)
+        : node
+      this.insertBefore(child, firstChild)
+    }
+  }
+
+  after(...nodes: (Node | string)[]) {
+    const parent = this.parentNode
+    if (!parent) return
+    const nextSib = this.nextSibling
+    for (const node of nodes) {
+      const child = typeof node === 'string'
+        ? this.ownerDocument.createTextNode(node)
+        : node
+      parent.insertBefore(child, nextSib)
+    }
+  }
+
+  before(...nodes: (Node | string)[]) {
+    const parent = this.parentNode
+    if (!parent) return
+    for (const node of nodes) {
+      const child = typeof node === 'string'
+        ? this.ownerDocument.createTextNode(node)
+        : node
+      parent.insertBefore(child, this)
+    }
+  }
+
+  replaceWith(...nodes: (Node | string)[]) {
+    const parent = this.parentNode
+    if (!parent) return
+    const nextSib = this.nextSibling
+    parent.removeChild(this)
+    for (const node of nodes) {
+      const child = typeof node === 'string'
+        ? this.ownerDocument.createTextNode(node)
+        : node
+      parent.insertBefore(child, nextSib)
+    }
+  }
+
+  getBoundingClientRect() {
+    return { top: 0, right: 0, bottom: 0, left: 0, width: 0, height: 0, x: 0, y: 0, toJSON() { return {} } }
+  }
+
+  getClientRects() {
+    return []
   }
 
   focus() {}

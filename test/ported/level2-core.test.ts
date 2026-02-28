@@ -111,6 +111,20 @@ describe('level2/core', () => {
       expect(el.namespaceURI).to.equal(null)
     })
 
+    // --- Regression: cloneNode preserves namespace attributes (Bug #4) ---
+    it('preserves namespaceURI on cloned element', () => {
+      const el = document.createElementNS('http://www.w3.org/1999/xhtml', 'div')
+      const clone = el.cloneNode(false) as Element
+      expect(clone.namespaceURI).to.equal('http://www.w3.org/1999/xhtml')
+    })
+
+    it('preserves namespaced attributes on deep clone', () => {
+      const el = document.createElementNS('http://www.w3.org/1999/xhtml', 'div')
+      el.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:lang', 'en')
+      const clone = el.cloneNode(true) as Element
+      expect(clone.getAttributeNS('http://www.w3.org/XML/1998/namespace', 'lang')).to.equal('en')
+    })
+
     // Skipped: tests using parsed fixtures
     it.skip('namespaceURI02 [requires parsed XML fixture]', () => {})
     it.skip('namespaceURI04 [requires parsed XML fixture]', () => {})

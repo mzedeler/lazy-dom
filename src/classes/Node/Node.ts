@@ -281,6 +281,13 @@ export abstract class Node<NV = null> {
     return false
   }
 
+  remove(): void {
+    const parent = this.parent
+    if (parent) {
+      parent.removeChild(this)
+    }
+  }
+
   getRootNode(): Node | Document {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let current: Node = this

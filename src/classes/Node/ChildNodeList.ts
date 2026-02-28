@@ -13,11 +13,20 @@ export class ChildNodeList<NV> extends NodeList {
       get(target, prop, receiver) {
         if (typeof prop === 'string') {
           const index = Number(prop);
-          if (!isNaN(index)) {
+          if (!isNaN(index) && index >= 0) {
             return target.nodeStore.getChildNode(index);
           }
         }
         return Reflect.get(target, prop, receiver);
+      },
+      has(target, prop) {
+        if (typeof prop === 'string') {
+          const index = Number(prop);
+          if (!isNaN(index) && index >= 0) {
+            return index < target.nodeStore.getChildCount();
+          }
+        }
+        return Reflect.has(target, prop);
       },
     });
   }
