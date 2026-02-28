@@ -1,6 +1,6 @@
 import { HTMLElement } from "./HTMLElement"
 
-export class HTMLDivElement extends HTMLElement {
+export class HTMLTableCaptionElement extends HTMLElement {
   get align() {
     return this.getAttribute('align') ?? ''
   }

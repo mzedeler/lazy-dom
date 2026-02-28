@@ -14,7 +14,7 @@ export class CssSelectAdapter {
     return Array.from(node.childNodes as Iterable<Node>)
   }
 
-  getParent(element: Node): Node | undefined {
+  getParent(element: Node): Node | null {
     return element.parentNode
   }
 
@@ -74,7 +74,7 @@ export class CssSelectAdapter {
 	}
 
   hasAttrib(element: Element, attributeName: string): boolean {
-    return typeof element.attributes.getNamedItem(attributeName) !== 'undefined'
+    return element.attributes.getNamedItem(attributeName) !== null
   }
 
   getName(element: Element): string {

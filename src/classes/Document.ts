@@ -4,6 +4,10 @@ import valueNotSetError from "../utils/valueNotSetError"
 import { Element } from "./Element"
 import { HTMLBodyElement } from "./elements/HTMLBodyElement"
 import { Text } from "./Text"
+import { Comment } from "./Comment"
+import { DocumentFragment } from "./DocumentFragment"
+import { ProcessingInstruction } from "./ProcessingInstruction"
+import { Attr } from "./Attr"
 import { EventTarget } from "../types/EventTarget"
 import { Listener } from "../types/Listener"
 import { Event } from "./Event"
@@ -24,7 +28,39 @@ import { HTMLElement } from "./elements/HTMLElement"
 import { SVGPathElement } from "./elements/SVGPathElement"
 import { SVGElement } from "./elements/SVGElement"
 import { HTMLLIElement } from "./elements/HTMLLIElement"
+import { HTMLAreaElement } from "./elements/HTMLAreaElement"
+import { HTMLBRElement } from "./elements/HTMLBRElement"
+import { HTMLBaseElement } from "./elements/HTMLBaseElement"
+import { HTMLDListElement } from "./elements/HTMLDListElement"
+import { HTMLFieldSetElement } from "./elements/HTMLFieldSetElement"
+import { HTMLHRElement } from "./elements/HTMLHRElement"
+import { HTMLHtmlElement } from "./elements/HTMLHtmlElement"
+import { HTMLIFrameElement } from "./elements/HTMLIFrameElement"
+import { HTMLLegendElement } from "./elements/HTMLLegendElement"
+import { HTMLLinkElement } from "./elements/HTMLLinkElement"
+import { HTMLMapElement } from "./elements/HTMLMapElement"
+import { HTMLMetaElement } from "./elements/HTMLMetaElement"
+import { HTMLModElement } from "./elements/HTMLModElement"
+import { HTMLOListElement } from "./elements/HTMLOListElement"
+import { HTMLObjectElement } from "./elements/HTMLObjectElement"
+import { HTMLOptGroupElement } from "./elements/HTMLOptGroupElement"
+import { HTMLOptionElement } from "./elements/HTMLOptionElement"
+import { HTMLParamElement } from "./elements/HTMLParamElement"
+import { HTMLQuoteElement } from "./elements/HTMLQuoteElement"
+import { HTMLScriptElement } from "./elements/HTMLScriptElement"
+import { HTMLSelectElement } from "./elements/HTMLSelectElement"
+import { HTMLStyleElement } from "./elements/HTMLStyleElement"
+import { HTMLTableElement } from "./elements/HTMLTableElement"
+import { HTMLTableCaptionElement } from "./elements/HTMLTableCaptionElement"
+import { HTMLTableCellElement } from "./elements/HTMLTableCellElement"
+import { HTMLTableColElement } from "./elements/HTMLTableColElement"
+import { HTMLTableRowElement } from "./elements/HTMLTableRowElement"
+import { HTMLTableSectionElement } from "./elements/HTMLTableSectionElement"
+import { HTMLTextAreaElement } from "./elements/HTMLTextAreaElement"
+import { HTMLTitleElement } from "./elements/HTMLTitleElement"
 import { HTMLCollection } from "./HTMLCollection"
+import { DOMImplementation } from "./DOMImplementation"
+import { DOMException } from "./DOMException"
 import { Window } from "./Window"
 import * as nodeOps from "../wasm/nodeOps"
 import * as NodeRegistry from "../wasm/NodeRegistry"
@@ -88,6 +124,45 @@ const constructors: Record<string, Record<string, Constructor>> = {
     PRE: HTMLPreElement,
     P: HTMLParagraphElement,
     CODE: HTMLElement,
+    AREA: HTMLAreaElement,
+    BR: HTMLBRElement,
+    BASE: HTMLBaseElement,
+    DL: HTMLDListElement,
+    FIELDSET: HTMLFieldSetElement,
+    HR: HTMLHRElement,
+    HTML: HTMLHtmlElement,
+    IFRAME: HTMLIFrameElement,
+    LEGEND: HTMLLegendElement,
+    LINK: HTMLLinkElement,
+    MAP: HTMLMapElement,
+    META: HTMLMetaElement,
+    INS: HTMLModElement,
+    DEL: HTMLModElement,
+    OL: HTMLOListElement,
+    OBJECT: HTMLObjectElement,
+    OPTGROUP: HTMLOptGroupElement,
+    OPTION: HTMLOptionElement,
+    PARAM: HTMLParamElement,
+    BLOCKQUOTE: HTMLQuoteElement,
+    Q: HTMLQuoteElement,
+    SCRIPT: HTMLScriptElement,
+    SELECT: HTMLSelectElement,
+    STYLE: HTMLStyleElement,
+    TABLE: HTMLTableElement,
+    CAPTION: HTMLTableCaptionElement,
+    TD: HTMLTableCellElement,
+    TH: HTMLTableCellElement,
+    COL: HTMLTableColElement,
+    COLGROUP: HTMLTableColElement,
+    TR: HTMLTableRowElement,
+    THEAD: HTMLTableSectionElement,
+    TBODY: HTMLTableSectionElement,
+    TFOOT: HTMLTableSectionElement,
+    TEXTAREA: HTMLTextAreaElement,
+    TITLE: HTMLTitleElement,
+    CANVAS: HTMLElement,
+    BODY: HTMLBodyElement,
+    HEAD: HTMLElement,
   },
   'http://www.w3.org/2000/svg': {
     PATH: SVGPathElement,
@@ -98,6 +173,7 @@ const constructors: Record<string, Record<string, Constructor>> = {
 export class Document implements EventTarget {
   documentStore = new DocumentStore()
   defaultView: Window | null = null
+  readonly implementation = new DOMImplementation()
 
   debug() {
     return this.documentStore.elements
@@ -131,8 +207,33 @@ export class Document implements EventTarget {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  createElementNS(namespaceURI: keyof typeof constructors, qualifiedName: string, options?: { is: string }) {
-    const constructor = constructors[namespaceURI]?.[qualifiedName.toUpperCase()] ?? HTMLElement
+  createElementNS(namespaceURI: string | null, qualifiedName: string, options?: { is: string }) {
+    // Parse prefix:localName
+    let prefix: string | null = null
+    let localName = qualifiedName
+    const colonIndex = qualifiedName.indexOf(':')
+    if (colonIndex >= 0) {
+      prefix = qualifiedName.substring(0, colonIndex)
+      localName = qualifiedName.substring(colonIndex + 1)
+    }
+
+    // NAMESPACE_ERR checks
+    if (prefix !== null && namespaceURI === null) {
+      throw new DOMException(
+        "Namespace is null but prefix is not null.",
+        'NamespaceError',
+        DOMException.NAMESPACE_ERR
+      )
+    }
+    if (prefix === 'xml' && namespaceURI !== 'http://www.w3.org/XML/1998/namespace') {
+      throw new DOMException(
+        "Prefix 'xml' requires namespace 'http://www.w3.org/XML/1998/namespace'.",
+        'NamespaceError',
+        DOMException.NAMESPACE_ERR
+      )
+    }
+
+    const constructor = (namespaceURI ? constructors[namespaceURI]?.[localName.toUpperCase()] : null) ?? HTMLElement
 
     const element = new constructor()
     element.elementStore.tagName = () => qualifiedName
@@ -163,6 +264,88 @@ export class Document implements EventTarget {
     textNode.nodeStore.ownerDocument = () => this
     textNode.textStore.data = () => data
     return textNode
+  }
+
+  createComment(data: string): Comment {
+    const comment = new Comment(data)
+    comment.nodeStore.ownerDocument = () => this
+    return comment
+  }
+
+  createDocumentFragment(): DocumentFragment {
+    const fragment = new DocumentFragment()
+    fragment.nodeStore.ownerDocument = () => this
+    return fragment
+  }
+
+  createProcessingInstruction(target: string, data: string): ProcessingInstruction {
+    const pi = new ProcessingInstruction(target, data)
+    pi.nodeStore.ownerDocument = () => this
+    return pi
+  }
+
+  createAttribute(localName: string): Attr {
+    return new Attr(null, localName, '')
+  }
+
+  createAttributeNS(namespaceURI: string | null, qualifiedName: string): Attr {
+    let prefix: string | null = null
+    let localName = qualifiedName
+    const colonIndex = qualifiedName.indexOf(':')
+    if (colonIndex >= 0) {
+      prefix = qualifiedName.substring(0, colonIndex)
+      localName = qualifiedName.substring(colonIndex + 1)
+    }
+
+    // NAMESPACE_ERR checks
+    if (prefix !== null && namespaceURI === null) {
+      throw new DOMException(
+        "Namespace is null but prefix is not null.",
+        'NamespaceError',
+        DOMException.NAMESPACE_ERR
+      )
+    }
+    if (prefix === 'xml' && namespaceURI !== 'http://www.w3.org/XML/1998/namespace') {
+      throw new DOMException(
+        "Prefix 'xml' requires namespace 'http://www.w3.org/XML/1998/namespace'.",
+        'NamespaceError',
+        DOMException.NAMESPACE_ERR
+      )
+    }
+    if (qualifiedName === 'xmlns' && namespaceURI !== 'http://www.w3.org/2000/xmlns/') {
+      throw new DOMException(
+        "'xmlns' requires namespace 'http://www.w3.org/2000/xmlns/'.",
+        'NamespaceError',
+        DOMException.NAMESPACE_ERR
+      )
+    }
+    if (prefix === 'xmlns' && namespaceURI !== 'http://www.w3.org/2000/xmlns/') {
+      throw new DOMException(
+        "Prefix 'xmlns' requires namespace 'http://www.w3.org/2000/xmlns/'.",
+        'NamespaceError',
+        DOMException.NAMESPACE_ERR
+      )
+    }
+
+    return new Attr(null, localName, '', namespaceURI, prefix)
+  }
+
+  importNode(importedNode: Node, deep: boolean = false): Node {
+    const clone = importedNode.cloneNode(deep)
+    this._setOwnerDocument(clone)
+    return clone
+  }
+
+  private _setOwnerDocument(node: Node) {
+    node.nodeStore.ownerDocument = () => this
+    const children = node.nodeStore.getChildNodesArray()
+    for (const child of children) {
+      this._setOwnerDocument(child)
+    }
+  }
+
+  getElementsByTagName(tagName: string): Element[] {
+    return this.body.getElementsByTagName(tagName)
   }
 
   getElementById(id: string): Element | null {
@@ -237,6 +420,22 @@ export class Document implements EventTarget {
 
   get nodeType() {
     return NodeTypes.DOCUMENT_NODE
+  }
+
+  get nodeName() {
+    return '#document'
+  }
+
+  get nodeValue() {
+    return null
+  }
+
+  set nodeValue(_value: any) {
+    // Setting nodeValue on Document has no effect per spec
+  }
+
+  get attributes() {
+    return null
   }
 
   get location() {

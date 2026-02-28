@@ -9,16 +9,14 @@ describe('level1/core', () => {
   // Attr
   // ---------------------------------------------------------------------------
   describe('Attr', () => {
-    it.skip('attrcreatetextnode - modify attr.value and verify value and nodeValue [requires Attr.nodeValue]', () => {
+    it('attrcreatetextnode - modify attr.value and verify value and nodeValue', () => {
       const el = document.createElement('div')
       el.setAttribute('class', 'original')
       const attr = el.attributes.getNamedItem('class')!
-      expect(attr).to.not.be.undefined
+      expect(attr).to.not.be.null
       attr.value = 'updated'
       expect(attr.value).to.equal('updated')
-      // Attr in lazy-dom does not have a nodeValue property; this documents the gap.
-      // In a spec-compliant DOM, attr.nodeValue should equal attr.value.
-      expect((attr as any).nodeValue).to.equal('updated')
+      expect(attr.nodeValue).to.equal('updated')
     })
 
     it('attrcreatetextnode2 - modify attr via nodeValue setter', () => {
@@ -31,14 +29,12 @@ describe('level1/core', () => {
       expect((attr as any).nodeValue).to.equal('updated-via-nodeValue')
     })
 
-    it.skip('attreffectivevalue - getAttribute returns effective value via getNamedItem nodeValue [requires Attr.nodeValue]', () => {
+    it('attreffectivevalue - getAttribute returns effective value via getNamedItem nodeValue', () => {
       const el = document.createElement('div')
       el.setAttribute('title', 'hello')
       const attr = el.attributes.getNamedItem('title')!
-      expect(attr).to.not.be.undefined
-      // In a spec-compliant DOM, attr.nodeValue equals attr.value.
-      // lazy-dom Attr does not expose nodeValue; this documents the gap.
-      expect((attr as any).nodeValue).to.equal('hello')
+      expect(attr).to.not.be.null
+      expect(attr.nodeValue).to.equal('hello')
     })
 
     it('attrname - attr.name returns the attribute name', () => {
@@ -66,24 +62,35 @@ describe('level1/core', () => {
       expect(attr.specified).to.be.true
     })
 
-    it.skip('attrnextsiblingnull [requires Attr.nextSibling]', () => {
-      // Original: level1/core.js - attrnextsiblingnull
-      // Needs: Attr.nextSibling property
+    it('attrnextsiblingnull - attr.nextSibling is null', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      const attr = el.attributes.getNamedItem('class')!
+      expect(attr.nextSibling).to.be.null
     })
 
-    it.skip('attrparentnodenull [requires Attr.parentNode]', () => {
-      // Original: level1/core.js - attrparentnodenull
-      // Needs: Attr.parentNode property
+    it('attrparentnodenull - attr.parentNode is null', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      const attr = el.attributes.getNamedItem('class')!
+      expect(attr.parentNode).to.be.null
     })
 
-    it.skip('attrprevioussiblingnull [requires Attr.previousSibling]', () => {
-      // Original: level1/core.js - attrprevioussiblingnull
-      // Needs: Attr.previousSibling property
+    it('attrprevioussiblingnull - attr.previousSibling is null', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      const attr = el.attributes.getNamedItem('class')!
+      expect(attr.previousSibling).to.be.null
     })
 
-    it.skip('attrcreatedocumentfragment [requires createDocumentFragment, NamedNodeMap.item]', () => {
-      // Original: level1/core.js - attrcreatedocumentfragment
-      // Needs: createDocumentFragment, NamedNodeMap.item(index)
+    it('attrcreatedocumentfragment - attributes work on elements within a fragment', () => {
+      const frag = document.createDocumentFragment()
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      frag.appendChild(el)
+      const attr = el.attributes.item(0)
+      expect(attr).to.not.be.null
+      expect(attr!.name).to.equal('class')
     })
   })
 
@@ -111,24 +118,34 @@ describe('level1/core', () => {
       expect(text.nodeValue).to.equal('hello world')
     })
 
-    it.skip('documentcreateattribute [requires createAttribute]', () => {
-      // Original: level1/core.js - documentcreateattribute
-      // Needs: document.createAttribute()
+    it('documentcreateattribute - createAttribute creates an Attr node', () => {
+      const attr = document.createAttribute('class')
+      expect(attr.name).to.equal('class')
+      expect(attr.value).to.equal('')
+      expect(attr.specified).to.be.true
     })
 
-    it.skip('documentcreatecomment [requires createComment]', () => {
-      // Original: level1/core.js - documentcreatecomment
-      // Needs: document.createComment()
+    it('documentcreatecomment - createComment creates a comment node', () => {
+      const comment = document.createComment('this is a comment')
+      expect(comment.nodeType).to.equal(8)
+      expect(comment.data).to.equal('this is a comment')
+      expect(comment.nodeName).to.equal('#comment')
     })
 
-    it.skip('documentcreatedocumentfragment [requires createDocumentFragment]', () => {
-      // Original: level1/core.js - documentcreatedocumentfragment
-      // Needs: document.createDocumentFragment()
+    it('documentcreatedocumentfragment - createDocumentFragment creates a fragment', () => {
+      const frag = document.createDocumentFragment()
+      expect(frag.nodeType).to.equal(11)
+      expect(frag.nodeName).to.equal('#document-fragment')
+      expect(frag.nodeValue).to.be.null
+      expect(frag.childNodes.length).to.equal(0)
     })
 
-    it.skip('documentcreateprocessinginstruction [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - documentcreateprocessinginstruction
-      // Needs: document.createProcessingInstruction()
+    it('documentcreateprocessinginstruction - creates PI node', () => {
+      const pi = document.createProcessingInstruction('xml-stylesheet', 'type="text/xsl"')
+      expect(pi.nodeType).to.equal(7)
+      expect(pi.target).to.equal('xml-stylesheet')
+      expect(pi.data).to.equal('type="text/xsl"')
+      expect(pi.nodeName).to.equal('xml-stylesheet')
     })
 
     it.skip('documentgetdoctype [requires doctype]', () => {
@@ -141,9 +158,10 @@ describe('level1/core', () => {
       // Needs: document.doctype
     })
 
-    it.skip('documentgetimplementation [requires DOMImplementation]', () => {
-      // Original: level1/core.js - documentgetimplementation
-      // Needs: document.implementation / DOMImplementation
+    it('documentgetimplementation - document.implementation exists', () => {
+      const impl = document.implementation
+      expect(impl).to.not.equal(null)
+      expect(impl).to.not.equal(undefined)
     })
 
     it.skip('documentinvalidcharacterexceptioncreateattribute [requires createAttribute error handling]', () => {
@@ -167,34 +185,52 @@ describe('level1/core', () => {
   // ---------------------------------------------------------------------------
   describe('Element', () => {
     // --- Document method tests (skipped) ---
-    it.skip('documentgetelementsbytagnamelength [requires getElementsByTagName]', () => {
-      // Original: level1/core.js - documentgetelementsbytagnamelength
-      // Needs: document.getElementsByTagName()
+    it('documentgetelementsbytagnamelength - getElementsByTagName returns correct count', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      parent.appendChild(document.createElement('span'))
+      parent.appendChild(document.createElement('span'))
+      parent.appendChild(document.createElement('p'))
+      const spans = document.getElementsByTagName('span')
+      expect(spans.length).to.equal(2)
     })
 
-    it.skip('documentgetelementsbytagnametotallength [requires getElementsByTagName]', () => {
-      // Original: level1/core.js - documentgetelementsbytagnametotallength
-      // Needs: document.getElementsByTagName()
+    it('documentgetelementsbytagnametotallength - getElementsByTagName("*") returns all', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      parent.appendChild(document.createElement('span'))
+      parent.appendChild(document.createElement('p'))
+      const all = document.getElementsByTagName('*')
+      expect(all.length).to.be.greaterThanOrEqual(2)
     })
 
-    it.skip('documentgetelementsbytagnamevalue [requires getElementsByTagName]', () => {
-      // Original: level1/core.js - documentgetelementsbytagnamevalue
-      // Needs: document.getElementsByTagName()
+    it('documentgetelementsbytagnamevalue - getElementsByTagName returns matching elements', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const span = document.createElement('span')
+      span.setAttribute('id', 'test-span')
+      parent.appendChild(span)
+      const found = document.getElementsByTagName('span')
+      let hasMatch = false
+      for (let i = 0; i < found.length; i++) {
+        if (found[i].getAttribute('id') === 'test-span') hasMatch = true
+      }
+      expect(hasMatch).to.be.true
     })
 
-    it.skip('domimplementationfeaturenoversion [requires DOMImplementation]', () => {
-      // Original: level1/core.js - domimplementationfeaturenoversion
-      // Needs: DOMImplementation.hasFeature()
+    it('domimplementationfeaturenoversion - hasFeature with no version returns true', () => {
+      const impl = document.implementation
+      expect(impl.hasFeature('XML')).to.equal(true)
     })
 
-    it.skip('domimplementationfeaturenull [requires DOMImplementation]', () => {
-      // Original: level1/core.js - domimplementationfeaturenull
-      // Needs: DOMImplementation.hasFeature()
+    it('domimplementationfeaturenull - hasFeature with null version returns true', () => {
+      const impl = document.implementation
+      expect(impl.hasFeature('XML', null)).to.equal(true)
     })
 
-    it.skip('domimplementationfeaturexml [requires DOMImplementation]', () => {
-      // Original: level1/core.js - domimplementationfeaturexml
-      // Needs: DOMImplementation.hasFeature()
+    it('domimplementationfeaturexml - hasFeature with XML returns true', () => {
+      const impl = document.implementation
+      expect(impl.hasFeature('XML', '1.0')).to.equal(true)
     })
 
     // --- Element attribute tests (active) ---
@@ -244,7 +280,7 @@ describe('level1/core', () => {
       expect(el.tagName).to.equal('DIV')
     })
 
-    it.skip('elementremoveattribute - removeAttribute causes getAttribute to return null [requires removeAttribute fix]', () => {
+    it('elementremoveattribute - removeAttribute causes getAttribute to return null', () => {
       const el = document.createElement('div')
       el.setAttribute('class', 'test')
       expect(el.getAttribute('class')).to.equal('test')
@@ -253,29 +289,53 @@ describe('level1/core', () => {
     })
 
     // --- Element tests (skipped) ---
-    it.skip('elementcreatenewattribute [requires createAttribute, setAttributeNode]', () => {
-      // Original: level1/core.js - elementcreatenewattribute
-      // Needs: createAttribute, setAttributeNode
+    it('elementcreatenewattribute - createAttribute + setAttributeNode adds attribute', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttribute('class')
+      attr.value = 'myclass'
+      el.setAttributeNode(attr)
+      expect(el.getAttribute('class')).to.equal('myclass')
     })
 
-    it.skip('elementgetelementsbytagname [requires getElementsByTagName]', () => {
-      // Original: level1/core.js - elementgetelementsbytagname
-      // Needs: element.getElementsByTagName()
+    it('elementgetelementsbytagname - element.getElementsByTagName returns matching descendants', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      parent.appendChild(document.createElement('span'))
+      parent.appendChild(document.createElement('span'))
+      parent.appendChild(document.createElement('p'))
+      const spans = parent.getElementsByTagName('span')
+      expect(spans.length).to.equal(2)
     })
 
-    it.skip('elementgetelementsbytagnameaccessnodelist [requires getElementsByTagName, firstChild, nextSibling]', () => {
-      // Original: level1/core.js - elementgetelementsbytagnameaccessnodelist
-      // Needs: getElementsByTagName, firstChild, nextSibling
+    it('elementgetelementsbytagnameaccessnodelist - results can be navigated', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const span1 = document.createElement('span')
+      span1.setAttribute('id', 's1')
+      const span2 = document.createElement('span')
+      span2.setAttribute('id', 's2')
+      parent.appendChild(span1)
+      parent.appendChild(span2)
+      const spans = parent.getElementsByTagName('span')
+      expect(spans[0].getAttribute('id')).to.equal('s1')
+      expect(spans[1].getAttribute('id')).to.equal('s2')
     })
 
-    it.skip('elementgetelementsbytagnamenomatch [requires getElementsByTagName]', () => {
-      // Original: level1/core.js - elementgetelementsbytagnamenomatch
-      // Needs: element.getElementsByTagName()
+    it('elementgetelementsbytagnamenomatch - returns empty for no matches', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      parent.appendChild(document.createElement('span'))
+      const result = parent.getElementsByTagName('table')
+      expect(result.length).to.equal(0)
     })
 
-    it.skip('elementgetelementsbytagnamespecialvalue [requires getElementsByTagName]', () => {
-      // Original: level1/core.js - elementgetelementsbytagnamespecialvalue
-      // Needs: element.getElementsByTagName("*")
+    it('elementgetelementsbytagnamespecialvalue - "*" matches all descendants', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      parent.appendChild(document.createElement('span'))
+      parent.appendChild(document.createElement('p'))
+      const all = parent.getElementsByTagName('*')
+      expect(all.length).to.equal(2)
     })
 
     it.skip('elementgettagname - tests documentElement.tagName on XML root', () => {
@@ -283,9 +343,13 @@ describe('level1/core', () => {
       // Skipped because this tests the XML root element tagName from a parsed fixture
     })
 
-    it.skip('elementinuseattributeerr [requires createAttribute, setAttributeNode, error handling]', () => {
-      // Original: level1/core.js - elementinuseattributeerr
-      // Needs: createAttribute, setAttributeNode, INUSE_ATTRIBUTE_ERR
+    it('elementinuseattributeerr - setAttributeNode with attr owned by another throws', () => {
+      const el1 = document.createElement('div')
+      const el2 = document.createElement('span')
+      const attr = document.createAttribute('class')
+      attr.value = 'test'
+      el1.setAttributeNode(attr)
+      expect(() => el2.setAttributeNode(attr)).to.throw()
     })
 
     it.skip('elementinvalidcharacterexception [requires setAttribute error handling]', () => {
@@ -293,44 +357,75 @@ describe('level1/core', () => {
       // Needs: setAttribute INVALID_CHARACTER_ERR for invalid names
     })
 
-    it.skip('elementnormalize [requires normalize]', () => {
-      // Original: level1/core.js - elementnormalize
-      // Needs: element.normalize()
+    it('elementnormalize - normalize merges adjacent text nodes', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      el.appendChild(document.createTextNode('hello'))
+      el.appendChild(document.createTextNode(' world'))
+      expect(el.childNodes.length).to.equal(2)
+      el.normalize()
+      expect(el.childNodes.length).to.equal(1)
+      expect(el.textContent).to.equal('hello world')
     })
 
-    it.skip('elementnotfounderr [requires removeAttributeNode, error handling]', () => {
-      // Original: level1/core.js - elementnotfounderr
-      // Needs: removeAttributeNode, NOT_FOUND_ERR
+    it('elementnotfounderr - removeAttributeNode with wrong attr throws', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttribute('class')
+      attr.value = 'test'
+      expect(() => el.removeAttributeNode(attr)).to.throw()
     })
 
-    it.skip('elementremoveattributeaftercreate [requires createAttribute, setAttributeNode, removeAttributeNode]', () => {
-      // Original: level1/core.js - elementremoveattributeaftercreate
-      // Needs: createAttribute, setAttributeNode, removeAttributeNode
+    it('elementremoveattributeaftercreate - removeAttributeNode on created attr', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttribute('title')
+      attr.value = 'test'
+      el.setAttributeNode(attr)
+      expect(el.hasAttribute('title')).to.be.true
+      el.removeAttributeNode(attr)
+      expect(el.hasAttribute('title')).to.be.false
     })
 
-    it.skip('elementremoveattributenode [requires getAttributeNode, removeAttributeNode]', () => {
-      // Original: level1/core.js - elementremoveattributenode
-      // Needs: removeAttributeNode
+    it('elementremoveattributenode - removeAttributeNode removes the attr', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      const attr = el.getAttributeNode('class')!
+      el.removeAttributeNode(attr)
+      expect(el.getAttribute('class')).to.be.null
     })
 
-    it.skip('elementreplaceattributewithself [requires setAttributeNode]', () => {
-      // Original: level1/core.js - elementreplaceattributewithself
-      // Needs: setAttributeNode
+    it('elementreplaceattributewithself - setAttributeNode with same attr is no-op', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      const attr = el.getAttributeNode('class')!
+      const old = el.setAttributeNode(attr)
+      expect(old).to.equal(attr)
+      expect(el.getAttribute('class')).to.equal('test')
     })
 
-    it.skip('elementreplaceexistingattribute [requires createAttribute, setAttributeNode]', () => {
-      // Original: level1/core.js - elementreplaceexistingattribute
-      // Needs: createAttribute, setAttributeNode
+    it('elementreplaceexistingattribute - setAttributeNode replaces existing attr', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'first')
+      const attr = document.createAttribute('class')
+      attr.value = 'second'
+      el.setAttributeNode(attr)
+      expect(el.getAttribute('class')).to.equal('second')
     })
 
-    it.skip('elementreplaceexistingattributegevalue [requires createAttribute, setAttributeNode]', () => {
-      // Original: level1/core.js - elementreplaceexistingattributegevalue
-      // Needs: createAttribute, setAttributeNode
+    it('elementreplaceexistingattributegevalue - replaced attr value is correct', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'first')
+      const attr = document.createAttribute('class')
+      attr.value = 'replaced'
+      el.setAttributeNode(attr)
+      expect(el.getAttribute('class')).to.equal('replaced')
     })
 
-    it.skip('elementsetattributenodenull [requires setAttributeNode]', () => {
-      // Original: level1/core.js - elementsetattributenodenull
-      // Needs: setAttributeNode
+    it('elementsetattributenodenull - setAttributeNode returns null for new attr', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttribute('class')
+      attr.value = 'test'
+      const old = el.setAttributeNode(attr)
+      expect(old).to.be.null
     })
   })
 
@@ -348,18 +443,9 @@ describe('level1/core', () => {
       expect(el.nodeType).to.equal(1)
     })
 
-    it('nodeelementnodevalue - element nodeValue should be null (lazy-dom throws)', () => {
-      // DOM spec says element.nodeValue should return null.
-      // lazy-dom uses a lazy thunk that throws for unset nodeValue on Elements.
-      // This test documents the gap.
+    it('nodeelementnodevalue - element nodeValue is null', () => {
       const el = document.createElement('div')
-      try {
-        const val = el.nodeValue
-        expect(val).to.be.null
-      } catch {
-        // lazy-dom throws because nodeValue thunk is not set for elements.
-        // This is a known deviation from the spec.
-      }
+      expect(el.nodeValue).to.be.null
     })
 
     it('nodetextnodename - text node nodeName equals #text', () => {
@@ -383,99 +469,94 @@ describe('level1/core', () => {
 
     it('nodevalue01 - element nodeValue is null, setting it has no effect', () => {
       const el = document.createElement('div')
-      try {
-        const val = el.nodeValue
-        expect(val).to.be.null
-      } catch {
-        // lazy-dom throws for element nodeValue; known deviation
-      }
-      // Setting nodeValue on an element should have no effect per spec
-      try {
-        el.nodeValue = null as any
-      } catch {
-        // May throw in lazy-dom
-      }
+      expect(el.nodeValue).to.be.null
+      el.nodeValue = null as any
+      expect(el.nodeValue).to.be.null
     })
 
     // --- Skipped node type tests ---
-    it.skip('nodedocumentnodename [requires document.nodeName]', () => {
-      // Original: level1/core.js - nodedocumentnodename
-      // Needs: document.nodeName === '#document'
+    it('nodedocumentnodename - document.nodeName is #document', () => {
+      expect(document.nodeName).to.equal('#document')
     })
 
-    it.skip('nodedocumentnodevalue [requires document.nodeValue]', () => {
-      // Original: level1/core.js - nodedocumentnodevalue
-      // Needs: document.nodeValue
+    it('nodedocumentnodevalue - document.nodeValue is null', () => {
+      expect(document.nodeValue).to.be.null
     })
 
-    it.skip('nodedocumentfragmentnodename [requires createDocumentFragment]', () => {
-      // Original: level1/core.js - nodedocumentfragmentnodename
-      // Needs: createDocumentFragment
+    it('nodedocumentfragmentnodename - fragment.nodeName is #document-fragment', () => {
+      const frag = document.createDocumentFragment()
+      expect(frag.nodeName).to.equal('#document-fragment')
     })
 
-    it.skip('nodedocumentfragmentnodetype [requires createDocumentFragment]', () => {
-      // Original: level1/core.js - nodedocumentfragmentnodetype
-      // Needs: createDocumentFragment
+    it('nodedocumentfragmentnodetype - fragment.nodeType is 11', () => {
+      const frag = document.createDocumentFragment()
+      expect(frag.nodeType).to.equal(11)
     })
 
-    it.skip('nodedocumentfragmentnodevalue [requires createDocumentFragment]', () => {
-      // Original: level1/core.js - nodedocumentfragmentnodevalue
-      // Needs: createDocumentFragment
+    it('nodedocumentfragmentnodevalue - fragment.nodeValue is null', () => {
+      const frag = document.createDocumentFragment()
+      expect(frag.nodeValue).to.be.null
     })
 
-    it.skip('nodecommentnodename [requires createComment]', () => {
-      // Original: level1/core.js - nodecommentnodename
-      // Needs: createComment
+    it('nodecommentnodename - comment.nodeName is #comment', () => {
+      const comment = document.createComment('test')
+      expect(comment.nodeName).to.equal('#comment')
     })
 
-    it.skip('nodecommentnodetype [requires createComment]', () => {
-      // Original: level1/core.js - nodecommentnodetype
-      // Needs: createComment
+    it('nodecommentnodetype - comment.nodeType is 8', () => {
+      const comment = document.createComment('test')
+      expect(comment.nodeType).to.equal(8)
     })
 
-    it.skip('nodecommentnodevalue [requires createComment]', () => {
-      // Original: level1/core.js - nodecommentnodevalue
-      // Needs: createComment
+    it('nodecommentnodevalue - comment.nodeValue equals the data', () => {
+      const comment = document.createComment('some comment text')
+      expect(comment.nodeValue).to.equal('some comment text')
     })
 
-    it.skip('nodecommentnodeattributes [requires createComment]', () => {
-      // Original: level1/core.js - nodecommentnodeattributes
-      // Needs: createComment
+    it('nodecommentnodeattributes - comment has no attributes', () => {
+      const comment = document.createComment('test')
+      // Comments don't have attributes
+      expect((comment as any).attributes).to.not.be.ok
     })
 
-    it.skip('nodedocumentnodeattribute [requires document.attributes]', () => {
-      // Original: level1/core.js - nodedocumentnodeattribute
-      // Needs: document.attributes
+    it('nodedocumentnodeattribute - document.attributes is null or undefined', () => {
+      // JSDOM returns undefined, spec/lazy-dom returns null
+      expect(document.attributes).to.not.be.ok
     })
 
-    it.skip('nodeelementnodeattributes [requires NamedNodeMap.item]', () => {
-      // Original: level1/core.js - nodeelementnodeattributes
-      // Needs: NamedNodeMap.item(index)
+    it('nodeelementnodeattributes - element attributes.item returns Attr', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      const attr = el.attributes.item(0)
+      expect(attr).to.not.be.null
+      expect(attr!.name).to.equal('class')
     })
 
-    it.skip('nodeprocessinginstructionnodename [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - nodeprocessinginstructionnodename
-      // Needs: createProcessingInstruction
+    it('nodeprocessinginstructionnodename - PI.nodeName equals the target', () => {
+      const pi = document.createProcessingInstruction('mytarget', 'data')
+      expect(pi.nodeName).to.equal('mytarget')
     })
 
-    it.skip('nodeprocessinginstructionnodetype [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - nodeprocessinginstructionnodetype
-      // Needs: createProcessingInstruction
+    it('nodeprocessinginstructionnodetype - PI.nodeType is 7', () => {
+      const pi = document.createProcessingInstruction('mytarget', 'data')
+      expect(pi.nodeType).to.equal(7)
     })
 
-    it.skip('nodeprocessinginstructionnodevalue [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - nodeprocessinginstructionnodevalue
-      // Needs: createProcessingInstruction
+    it('nodeprocessinginstructionnodevalue - PI.nodeValue equals the data', () => {
+      const pi = document.createProcessingInstruction('mytarget', 'some data')
+      expect(pi.nodeValue).to.equal('some data')
     })
 
-    it.skip('nodeprocessinginstructionnodeattributes [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - nodeprocessinginstructionnodeattributes
-      // Needs: createProcessingInstruction
+    it('nodeprocessinginstructionnodeattributes - PI has no attributes', () => {
+      const pi = document.createProcessingInstruction('mytarget', 'data')
+      expect(pi.attributes).to.not.be.ok
     })
 
-    it.skip('nodeprocessinginstructionsetnodevalue [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - nodeprocessinginstructionsetnodevalue
-      // Needs: createProcessingInstruction
+    it('nodeprocessinginstructionsetnodevalue - setting PI.nodeValue changes data', () => {
+      const pi = document.createProcessingInstruction('mytarget', 'original')
+      pi.nodeValue = 'updated'
+      expect(pi.nodeValue).to.equal('updated')
+      expect(pi.data).to.equal('updated')
     })
 
     it.skip('nodedocumenttypenodename [requires doctype]', () => {
@@ -493,9 +574,10 @@ describe('level1/core', () => {
       // Needs: doctype
     })
 
-    it.skip('nodevalue02 [requires createComment]', () => {
-      // Original: level1/core.js - nodevalue02
-      // Needs: createComment
+    it('nodevalue02 - comment.nodeValue can be set', () => {
+      const comment = document.createComment('original')
+      comment.nodeValue = 'changed'
+      expect(comment.nodeValue).to.equal('changed')
     })
 
     it.skip('nodevalue04 [requires doctype]', () => {
@@ -503,14 +585,14 @@ describe('level1/core', () => {
       // Needs: doctype
     })
 
-    it.skip('nodevalue05 [requires createDocumentFragment]', () => {
-      // Original: level1/core.js - nodevalue05
-      // Needs: createDocumentFragment
+    it('nodevalue05 - fragment.nodeValue is null', () => {
+      const frag = document.createDocumentFragment()
+      expect(frag.nodeValue).to.be.null
     })
 
-    it.skip('nodevalue09 [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - nodevalue09
-      // Needs: createProcessingInstruction
+    it('nodevalue09 - PI.nodeValue returns data', () => {
+      const pi = document.createProcessingInstruction('target', 'test data')
+      expect(pi.nodeValue).to.equal('test data')
     })
   })
 
@@ -543,7 +625,7 @@ describe('level1/core', () => {
       expect(child.parentNode).to.equal(parent)
     })
 
-    it.skip('nodeparentnodenull - newly created element has no parentNode [requires parentNode to return null]', () => {
+    it('nodeparentnodenull - newly created element has no parentNode', () => {
       const el = document.createElement('div')
       expect(el.parentNode).to.be.null
     })
@@ -611,160 +693,295 @@ describe('level1/core', () => {
     })
 
     // --- Skipped node tree tests ---
-    it.skip('nodegetfirstchild [requires firstChild]', () => {
-      // Original: level1/core.js - nodegetfirstchild
-      // Needs: node.firstChild
+    it('nodegetfirstchild - firstChild returns the first child node', () => {
+      const parent = document.createElement('div')
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      document.body.appendChild(parent)
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      expect(parent.firstChild).to.equal(child1)
     })
 
-    it.skip('nodegetfirstchildnull [requires firstChild]', () => {
-      // Original: level1/core.js - nodegetfirstchildnull
-      // Needs: node.firstChild
+    it('nodegetfirstchildnull - firstChild returns null when no children', () => {
+      const el = document.createElement('div')
+      expect(el.firstChild).to.be.null
     })
 
-    it.skip('nodegetlastchild [requires lastChild]', () => {
-      // Original: level1/core.js - nodegetlastchild
-      // Needs: node.lastChild
+    it('nodegetlastchild - lastChild returns the last child node', () => {
+      const parent = document.createElement('div')
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      document.body.appendChild(parent)
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      expect(parent.lastChild).to.equal(child2)
     })
 
-    it.skip('nodegetlastchildnull [requires lastChild]', () => {
-      // Original: level1/core.js - nodegetlastchildnull
-      // Needs: node.lastChild
+    it('nodegetlastchildnull - lastChild returns null when no children', () => {
+      const el = document.createElement('div')
+      expect(el.lastChild).to.be.null
     })
 
-    it.skip('nodegetnextsibling [requires nextSibling]', () => {
-      // Original: level1/core.js - nodegetnextsibling
-      // Needs: node.nextSibling
+    it('nodegetnextsibling - nextSibling returns the next sibling', () => {
+      const parent = document.createElement('div')
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      document.body.appendChild(parent)
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      expect(child1.nextSibling).to.equal(child2)
     })
 
-    it.skip('nodegetnextsiblingnull [requires nextSibling]', () => {
-      // Original: level1/core.js - nodegetnextsiblingnull
-      // Needs: node.nextSibling
+    it('nodegetnextsiblingnull - nextSibling returns null for last child', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      document.body.appendChild(parent)
+      parent.appendChild(child)
+      expect(child.nextSibling).to.be.null
     })
 
-    it.skip('nodegetprevioussibling [requires previousSibling]', () => {
-      // Original: level1/core.js - nodegetprevioussibling
-      // Needs: node.previousSibling
+    it('nodegetprevioussibling - previousSibling returns the previous sibling', () => {
+      const parent = document.createElement('div')
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      document.body.appendChild(parent)
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      expect(child2.previousSibling).to.equal(child1)
     })
 
-    it.skip('nodegetprevioussiblingnull [requires previousSibling]', () => {
-      // Original: level1/core.js - nodegetprevioussiblingnull
-      // Needs: node.previousSibling
+    it('nodegetprevioussiblingnull - previousSibling returns null for first child', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      document.body.appendChild(parent)
+      parent.appendChild(child)
+      expect(child.previousSibling).to.be.null
     })
 
-    it.skip('nodehaschildnodes [requires hasChildNodes]', () => {
-      // Original: level1/core.js - nodehaschildnodes
-      // Needs: node.hasChildNodes()
+    it('nodehaschildnodes - hasChildNodes returns true when children exist', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      parent.appendChild(document.createElement('span'))
+      expect(parent.hasChildNodes()).to.be.true
     })
 
-    it.skip('nodehaschildnodesfalse [requires hasChildNodes]', () => {
-      // Original: level1/core.js - nodehaschildnodesfalse
-      // Needs: node.hasChildNodes()
+    it('nodehaschildnodesfalse - hasChildNodes returns false when no children', () => {
+      const el = document.createElement('div')
+      expect(el.hasChildNodes()).to.be.false
     })
 
-    it.skip('nodeappendchildchildexists [requires getElementsByTagName to verify]', () => {
-      // Original: level1/core.js - nodeappendchildchildexists
-      // Needs: getElementsByTagName to verify moved child
+    it('nodeappendchildchildexists - appendChild moves existing child to end', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      // Move child1 to end
+      parent.appendChild(child1)
+      expect(parent.childNodes.length).to.equal(2)
+      expect(parent.firstChild).to.equal(child2)
+      expect(parent.lastChild).to.equal(child1)
     })
 
-    it.skip('nodeappendchilddocfragment [requires createDocumentFragment]', () => {
-      // Original: level1/core.js - nodeappendchilddocfragment
-      // Needs: createDocumentFragment
+    it('nodeappendchilddocfragment - appendChild with fragment appends all children', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const frag = document.createDocumentFragment()
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      frag.appendChild(child1)
+      frag.appendChild(child2)
+      parent.appendChild(frag)
+      expect(parent.childNodes.length).to.equal(2)
+      expect(parent.firstChild).to.equal(child1)
+      expect(parent.lastChild).to.equal(child2)
     })
 
-    it.skip('nodeappendchildnodeancestor [requires HIERARCHY_REQUEST_ERR]', () => {
-      // Original: level1/core.js - nodeappendchildnodeancestor
-      // Needs: HIERARCHY_REQUEST_ERR error handling
+    it('nodeappendchildnodeancestor - appendChild with ancestor throws', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      document.body.appendChild(parent)
+      parent.appendChild(child)
+      expect(() => child.appendChild(parent)).to.throw()
     })
 
-    it.skip('nodeinsertbeforedocfragment [requires createDocumentFragment]', () => {
-      // Original: level1/core.js - nodeinsertbeforedocfragment
-      // Needs: createDocumentFragment
+    it('nodeinsertbeforedocfragment - insertBefore with fragment inserts all children', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const existing = document.createElement('em')
+      parent.appendChild(existing)
+      const frag = document.createDocumentFragment()
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      frag.appendChild(child1)
+      frag.appendChild(child2)
+      parent.insertBefore(frag, existing)
+      expect(parent.childNodes.length).to.equal(3)
+      expect(parent.firstChild).to.equal(child1)
+      expect(parent.lastChild).to.equal(existing)
     })
 
-    it.skip('nodeinsertbeforenewchildexists [requires firstChild, nextSibling for verification]', () => {
-      // Original: level1/core.js - nodeinsertbeforenewchildexists
-      // Needs: firstChild, nextSibling
+    it('nodeinsertbeforenewchildexists - insertBefore moves existing child', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      const child3 = document.createElement('em')
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      parent.appendChild(child3)
+      // Move child3 before child1
+      parent.insertBefore(child3, child1)
+      expect(parent.firstChild).to.equal(child3)
+      expect(child3.nextSibling).to.equal(child1)
     })
 
-    it.skip('nodeinsertbeforenodeancestor [requires HIERARCHY_REQUEST_ERR]', () => {
-      // Original: level1/core.js - nodeinsertbeforenodeancestor
-      // Needs: HIERARCHY_REQUEST_ERR error handling
+    it('nodeinsertbeforenodeancestor - insertBefore with ancestor throws', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      document.body.appendChild(parent)
+      parent.appendChild(child)
+      const newNode = document.createElement('em')
+      expect(() => child.insertBefore(parent, newNode)).to.throw()
     })
 
-    it.skip('nodeinsertbeforerefchildnonexistent [requires NOT_FOUND_ERR]', () => {
-      // Original: level1/core.js - nodeinsertbeforerefchildnonexistent
-      // Needs: NOT_FOUND_ERR error handling
+    it('nodeinsertbeforerefchildnonexistent - insertBefore with nonexistent ref throws', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const newNode = document.createElement('span')
+      const fakeRef = document.createElement('p')
+      expect(() => parent.insertBefore(newNode, fakeRef)).to.throw()
     })
 
-    it.skip('nodeinsertbeforerefchildnull [requires lastChild]', () => {
-      // Original: level1/core.js - nodeinsertbeforerefchildnull
-      // This is actually appendChild behavior, but uses lastChild to verify
-      // Needs: node.lastChild
+    it('nodeinsertbeforerefchildnull - insertBefore with null ref appends to end', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      parent.appendChild(child1)
+      parent.insertBefore(child2, null)
+      expect(parent.lastChild).to.equal(child2)
     })
 
-    it.skip('nodecloneattributescopied [requires cloneNode]', () => {
-      // Original: level1/core.js - nodecloneattributescopied
-      // Needs: node.cloneNode()
+    it('nodecloneattributescopied - cloneNode copies attributes', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      el.setAttribute('id', 'myid')
+      const clone = el.cloneNode(false) as any
+      expect(clone.getAttribute('class')).to.equal('test')
+      expect(clone.getAttribute('id')).to.equal('myid')
     })
 
-    it.skip('nodeclonefalsenocopytext [requires cloneNode]', () => {
-      // Original: level1/core.js - nodeclonefalsenocopytext
-      // Needs: node.cloneNode(false)
+    it('nodeclonefalsenocopytext - cloneNode(false) does not copy children', () => {
+      const el = document.createElement('div')
+      el.appendChild(document.createTextNode('hello'))
+      const clone = el.cloneNode(false) as any
+      expect(clone.childNodes.length).to.equal(0)
     })
 
-    it.skip('nodeclonegetparentnull [requires cloneNode]', () => {
-      // Original: level1/core.js - nodeclonegetparentnull
-      // Needs: node.cloneNode()
+    it('nodeclonegetparentnull - clone has null parentNode', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const clone = el.cloneNode(false)
+      expect(clone.parentNode).to.be.null
     })
 
-    it.skip('nodeclonenodefalse [requires cloneNode]', () => {
-      // Original: level1/core.js - nodeclonenodefalse
-      // Needs: node.cloneNode(false)
+    it('nodeclonenodefalse - shallow clone has same tagName', () => {
+      const el = document.createElement('div')
+      const clone = el.cloneNode(false) as any
+      expect(clone.tagName).to.equal('DIV')
     })
 
-    it.skip('nodeclonenodetrue [requires cloneNode]', () => {
-      // Original: level1/core.js - nodeclonenodetrue
-      // Needs: node.cloneNode(true)
+    it('nodeclonenodetrue - deep clone copies children', () => {
+      const el = document.createElement('div')
+      const child = document.createElement('span')
+      el.appendChild(child)
+      const clone = el.cloneNode(true) as any
+      expect(clone.childNodes.length).to.equal(1)
+      expect(clone.firstChild.tagName).to.equal('SPAN')
+      expect(clone.firstChild).to.not.equal(child)
     })
 
-    it.skip('nodeclonetruecopytext [requires cloneNode]', () => {
-      // Original: level1/core.js - nodeclonetruecopytext
-      // Needs: node.cloneNode(true)
+    it('nodeclonetruecopytext - deep clone copies text nodes', () => {
+      const el = document.createElement('div')
+      el.appendChild(document.createTextNode('hello'))
+      const clone = el.cloneNode(true) as any
+      expect(clone.textContent).to.equal('hello')
     })
 
-    it.skip('nodereplacechild [requires replaceChild]', () => {
-      // Original: level1/core.js - nodereplacechild
-      // Needs: node.replaceChild()
+    it('nodereplacechild - replaceChild replaces the old child', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const oldChild = document.createElement('span')
+      parent.appendChild(oldChild)
+      const newChild = document.createElement('p')
+      parent.replaceChild(newChild, oldChild)
+      expect(parent.childNodes.length).to.equal(1)
+      expect(parent.firstChild).to.equal(newChild)
     })
 
-    it.skip('nodereplacechildnewchildexists [requires replaceChild]', () => {
-      // Original: level1/core.js - nodereplacechildnewchildexists
-      // Needs: node.replaceChild()
+    it('nodereplacechildnewchildexists - replaceChild moves existing child', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      const child3 = document.createElement('em')
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      parent.appendChild(child3)
+      parent.replaceChild(child1, child3)
+      expect(parent.childNodes.length).to.equal(2)
+      expect(parent.lastChild).to.equal(child1)
     })
 
-    it.skip('nodereplacechildnodeancestor [requires replaceChild]', () => {
-      // Original: level1/core.js - nodereplacechildnodeancestor
-      // Needs: node.replaceChild()
+    it('nodereplacechildnodeancestor - replaceChild with ancestor throws', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      document.body.appendChild(parent)
+      parent.appendChild(child)
+      expect(() => child.replaceChild(parent, child)).to.throw()
     })
 
-    it.skip('nodereplacechildnodename [requires replaceChild]', () => {
-      // Original: level1/core.js - nodereplacechildnodename
-      // Needs: node.replaceChild()
+    it('nodereplacechildnodename - replaceChild returns the old child', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const oldChild = document.createElement('span')
+      parent.appendChild(oldChild)
+      const newChild = document.createElement('p')
+      const returned = parent.replaceChild(newChild, oldChild)
+      expect(returned.nodeName).to.equal('SPAN')
     })
 
-    it.skip('nodereplacechildoldchildnonexistent [requires replaceChild]', () => {
-      // Original: level1/core.js - nodereplacechildoldchildnonexistent
-      // Needs: node.replaceChild()
+    it('nodereplacechildoldchildnonexistent - replaceChild with nonexistent child throws', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const newChild = document.createElement('span')
+      const notChild = document.createElement('p')
+      expect(() => parent.replaceChild(newChild, notChild)).to.throw()
     })
 
-    it.skip('noderemovechildnode [requires firstChild, nextSibling for verification]', () => {
-      // Original: level1/core.js - noderemovechildnode
-      // Needs: firstChild, nextSibling to navigate after removal
+    it('noderemovechildnode - removeChild removes node; siblings update', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const child1 = document.createElement('span')
+      const child2 = document.createElement('p')
+      const child3 = document.createElement('em')
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      parent.appendChild(child3)
+      parent.removeChild(child2)
+      expect(parent.childNodes.length).to.equal(2)
+      expect(parent.firstChild).to.equal(child1)
+      expect(child1.nextSibling).to.equal(child3)
     })
 
-    it.skip('noderemovechildoldchildnonexistent [requires NOT_FOUND_ERR]', () => {
-      // Original: level1/core.js - noderemovechildoldchildnonexistent
-      // Needs: NOT_FOUND_ERR error handling
+    it('noderemovechildoldchildnonexistent - removeChild with nonexistent child throws', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const notChild = document.createElement('span')
+      expect(() => parent.removeChild(notChild)).to.throw()
     })
 
     // --- Skipped node attribute tests ---
@@ -804,16 +1021,13 @@ describe('level1/core', () => {
       expect(el.attributes.length).to.equal(3)
     })
 
-    it('namednodemapreturnnull - getNamedItem for nonexistent returns undefined', () => {
-      // Note: DOM spec says getNamedItem should return null for nonexistent.
-      // lazy-dom returns undefined (property lookup on Record). This documents the gap.
+    it('namednodemapreturnnull - getNamedItem for nonexistent returns null', () => {
       const el = document.createElement('div')
       const result = el.attributes.getNamedItem('nonexistent')
-      // Spec expects null; lazy-dom returns undefined
-      expect(result).to.not.be.ok
+      expect(result).to.be.null
     })
 
-    it.skip('namednodemapremovenameditem - removeNamedItem removes the attribute [requires removeNamedItem fix]', () => {
+    it('namednodemapremovenameditem - removeNamedItem removes the attribute', () => {
       const el = document.createElement('div')
       el.setAttribute('class', 'test')
       expect(el.attributes.getNamedItem('class')).to.not.be.null
@@ -821,59 +1035,89 @@ describe('level1/core', () => {
       expect(el.attributes.getNamedItem('class')).to.be.null
     })
 
-    it.skip('namednodemapsetnameditemwithnewvalue [requires createAttribute]', () => {
-      // Original: level1/core.js - namednodemapsetnameditemwithnewvalue
-      // Needs: document.createAttribute() to create standalone Attr
+    it('namednodemapsetnameditemwithnewvalue - setNamedItem with createAttribute', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttribute('title')
+      attr.value = 'new title'
+      el.attributes.setNamedItem(attr)
+      expect(el.getAttribute('title')).to.equal('new title')
     })
 
-    it.skip('namednodemapchildnoderange [requires NamedNodeMap.item]', () => {
-      // Original: level1/core.js - namednodemapchildnoderange
-      // Needs: NamedNodeMap.item(index)
+    it('namednodemapchildnoderange - item() returns null for out-of-range index', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      expect(el.attributes.item(0)).to.not.be.null
+      expect(el.attributes.item(1)).to.be.null
     })
 
-    it.skip('namednodemapreturnattrnode [requires NamedNodeMap.item]', () => {
-      // Original: level1/core.js - namednodemapreturnattrnode
-      // Needs: NamedNodeMap.item(index)
+    it('namednodemapreturnattrnode - item() returns Attr with correct name', () => {
+      const el = document.createElement('div')
+      el.setAttribute('title', 'a title')
+      const attr = el.attributes.item(0)
+      expect(attr).to.not.be.null
+      expect(attr!.name).to.equal('title')
     })
 
-    it.skip('namednodemapreturnfirstitem [requires NamedNodeMap.item]', () => {
-      // Original: level1/core.js - namednodemapreturnfirstitem
-      // Needs: NamedNodeMap.item(index)
+    it('namednodemapreturnfirstitem - item(0) returns first attribute', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      el.setAttribute('title', 'a title')
+      const first = el.attributes.item(0)
+      expect(first).to.not.be.null
+      expect(first!.name).to.equal('class')
     })
 
-    it.skip('namednodemapreturnlastitem [requires NamedNodeMap.item]', () => {
-      // Original: level1/core.js - namednodemapreturnlastitem
-      // Needs: NamedNodeMap.item(index)
+    it('namednodemapreturnlastitem - item(length-1) returns last attribute', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      el.setAttribute('title', 'a title')
+      const last = el.attributes.item(el.attributes.length - 1)
+      expect(last).to.not.be.null
+      expect(last!.name).to.equal('title')
     })
 
-    it.skip('namednodemapsetnameditem [requires createAttribute]', () => {
-      // Original: level1/core.js - namednodemapsetnameditem
-      // Needs: document.createAttribute()
+    it('namednodemapsetnameditem - setNamedItem adds attribute', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttribute('class')
+      attr.value = 'test'
+      el.attributes.setNamedItem(attr)
+      expect(el.attributes.getNamedItem('class')).to.not.be.null
+      expect(el.attributes.getNamedItem('class')!.value).to.equal('test')
     })
 
-    it.skip('namednodemapsetnameditemreturnvalue [requires createAttribute]', () => {
-      // Original: level1/core.js - namednodemapsetnameditemreturnvalue
-      // Needs: document.createAttribute()
+    it('namednodemapsetnameditemreturnvalue - setNamedItem returns null for new attr', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttribute('title')
+      attr.value = 'test'
+      const result = el.attributes.setNamedItem(attr)
+      expect(result).to.be.null
     })
 
-    it.skip('namednodemapsetnameditemthatexists [requires createAttribute]', () => {
-      // Original: level1/core.js - namednodemapsetnameditemthatexists
-      // Needs: document.createAttribute()
+    it('namednodemapsetnameditemthatexists - setNamedItem returns old attr when replacing', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'old')
+      const attr = document.createAttribute('class')
+      attr.value = 'new'
+      const old = el.attributes.setNamedItem(attr)
+      expect(old).to.not.be.null
+      expect(old!.value).to.equal('old')
+      expect(el.getAttribute('class')).to.equal('new')
     })
 
-    it.skip('namednodemapinuseattributeerr [requires createAttribute, INUSE_ATTRIBUTE_ERR]', () => {
-      // Original: level1/core.js - namednodemapinuseattributeerr
-      // Needs: createAttribute, INUSE_ATTRIBUTE_ERR
+    it.skip('namednodemapinuseattributeerr [requires INUSE_ATTRIBUTE_ERR on NamedNodeMap]', () => {
+      // NamedNodeMap.setNamedItem does not check INUSE (Element.setAttributeNode does)
     })
 
     it.skip('namednodemapnotfounderr [requires NOT_FOUND_ERR on removeNamedItem]', () => {
-      // Original: level1/core.js - namednodemapnotfounderr
-      // Needs: NOT_FOUND_ERR error handling
+      // NamedNodeMap.removeNamedItem doesn't throw for missing items
     })
 
-    it.skip('namednodemapremovenameditemreturnnodevalue [requires removeNamedItem return value]', () => {
-      // Original: level1/core.js - namednodemapremovenameditemreturnnodevalue
-      // Needs: removeNamedItem to return the removed Attr node
+    it('namednodemapremovenameditemreturnnodevalue - removeNamedItem returns the removed attr', () => {
+      const el = document.createElement('div')
+      el.setAttribute('title', 'a title')
+      const removed = el.attributes.removeNamedItem('title')
+      expect(removed).to.not.be.null
+      expect(removed!.nodeValue).to.equal('a title')
     })
   })
 
@@ -881,159 +1125,172 @@ describe('level1/core', () => {
   // CharacterData
   // ---------------------------------------------------------------------------
   describe('CharacterData', () => {
-    it.skip('characterdataappenddata [requires CharacterData.appendData]', () => {
-      // Original: level1/core.js - characterdataappenddata
-      // Needs: CharacterData.appendData()
+    it('characterdataappenddata - appendData appends to text node', () => {
+      const text = document.createTextNode('hello')
+      ;(text as any).appendData(' world')
+      expect(text.data).to.equal('hello world')
     })
 
-    it.skip('characterdataappenddatagetdata [requires CharacterData.appendData]', () => {
-      // Original: level1/core.js - characterdataappenddatagetdata
-      // Needs: CharacterData.appendData()
+    it('characterdataappenddatagetdata - appendData result accessible via data', () => {
+      const text = document.createTextNode('abc')
+      ;(text as any).appendData('def')
+      expect(text.data).to.equal('abcdef')
+      expect((text as any).length).to.equal(6)
     })
 
-    it.skip('characterdataappenddatanomodificationallowederr [requires CharacterData.appendData]', () => {
-      // Original: level1/core.js - characterdataappenddatanomodificationallowederr
-      // Needs: CharacterData.appendData()
+    it.skip('characterdataappenddatanomodificationallowederr - readonly text node', () => {
+      // Readonly nodes not supported
     })
 
-    it.skip('characterdatadeletedatabegining [requires CharacterData.deleteData]', () => {
-      // Original: level1/core.js - characterdatadeletedatabegining
-      // Needs: CharacterData.deleteData()
+    it('characterdatadeletedatabegining - deleteData from beginning', () => {
+      const text = document.createTextNode('hello world')
+      ;(text as any).deleteData(0, 5)
+      expect(text.data).to.equal(' world')
     })
 
-    it.skip('characterdatadeletedataend [requires CharacterData.deleteData]', () => {
-      // Original: level1/core.js - characterdatadeletedataend
-      // Needs: CharacterData.deleteData()
+    it('characterdatadeletedataend - deleteData from end', () => {
+      const text = document.createTextNode('hello world')
+      ;(text as any).deleteData(5, 6)
+      expect(text.data).to.equal('hello')
     })
 
-    it.skip('characterdatadeletedataexceedslength [requires CharacterData.deleteData]', () => {
-      // Original: level1/core.js - characterdatadeletedataexceedslength
-      // Needs: CharacterData.deleteData()
+    it('characterdatadeletedataexceedslength - deleteData count exceeds length', () => {
+      const text = document.createTextNode('hello')
+      ;(text as any).deleteData(2, 100)
+      expect(text.data).to.equal('he')
     })
 
-    it.skip('characterdatadeletedatagetlengthanddata [requires CharacterData.deleteData]', () => {
-      // Original: level1/core.js - characterdatadeletedatagetlengthanddata
-      // Needs: CharacterData.deleteData()
+    it('characterdatadeletedatagetlengthanddata - deleteData updates length', () => {
+      const text = document.createTextNode('hello world')
+      ;(text as any).deleteData(0, 6)
+      expect(text.data).to.equal('world')
+      expect((text as any).length).to.equal(5)
     })
 
-    it.skip('characterdatadeletedatamiddle [requires CharacterData.deleteData]', () => {
-      // Original: level1/core.js - characterdatadeletedatamiddle
-      // Needs: CharacterData.deleteData()
+    it('characterdatadeletedatamiddle - deleteData from middle', () => {
+      const text = document.createTextNode('hello world')
+      ;(text as any).deleteData(5, 1)
+      expect(text.data).to.equal('helloworld')
     })
 
-    it.skip('characterdatadeletedatanomodificationallowederr [requires CharacterData.deleteData]', () => {
-      // Original: level1/core.js - characterdatadeletedatanomodificationallowederr
-      // Needs: CharacterData.deleteData()
+    it.skip('characterdatadeletedatanomodificationallowederr - readonly text node', () => {
+      // Readonly nodes not supported
     })
 
-    it.skip('characterdatagetdata [requires CharacterData]', () => {
-      // Original: level1/core.js - characterdatagetdata
-      // Needs: CharacterData interface
+    it('characterdatagetdata - text.data returns the text content', () => {
+      const text = document.createTextNode('some text data')
+      expect(text.data).to.equal('some text data')
     })
 
-    it.skip('characterdatagetlength [requires CharacterData.length]', () => {
-      // Original: level1/core.js - characterdatagetlength
-      // Needs: CharacterData.length
+    it('characterdatagetlength - text.length returns string length', () => {
+      const text = document.createTextNode('hello')
+      expect((text as any).length).to.equal(5)
     })
 
-    it.skip('characterdataindexsizeerrdeletedataoffsetgreater [requires CharacterData.deleteData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrdeletedataoffsetgreater
-      // Needs: CharacterData.deleteData() with error handling
+    it('characterdataindexsizeerrdeletedataoffsetgreater - deleteData throws for offset > length', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).deleteData(10, 1)).to.throw()
     })
 
-    it.skip('characterdataindexsizeerrdeletedataoffsetnegative [requires CharacterData.deleteData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrdeletedataoffsetnegative
-      // Needs: CharacterData.deleteData() with error handling
+    it('characterdataindexsizeerrdeletedataoffsetnegative - deleteData throws for negative offset', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).deleteData(-1, 1)).to.throw()
     })
 
-    it.skip('characterdataindexsizeerrinsertdataoffsetgreater [requires CharacterData.insertData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrinsertdataoffsetgreater
-      // Needs: CharacterData.insertData() with error handling
+    it('characterdataindexsizeerrinsertdataoffsetgreater - insertData throws for offset > length', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).insertData(10, 'x')).to.throw()
     })
 
-    it.skip('characterdataindexsizeerrinsertdataoffsetnegative [requires CharacterData.insertData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrinsertdataoffsetnegative
-      // Needs: CharacterData.insertData() with error handling
+    it('characterdataindexsizeerrinsertdataoffsetnegative - insertData throws for negative offset', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).insertData(-1, 'x')).to.throw()
     })
 
-    it.skip('characterdataindexsizeerrreplacedataoffsetgreater [requires CharacterData.replaceData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrreplacedataoffsetgreater
-      // Needs: CharacterData.replaceData() with error handling
+    it('characterdataindexsizeerrreplacedataoffsetgreater - replaceData throws for offset > length', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).replaceData(10, 1, 'x')).to.throw()
     })
 
-    it.skip('characterdataindexsizeerrreplacedataoffsetnegative [requires CharacterData.replaceData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrreplacedataoffsetnegative
-      // Needs: CharacterData.replaceData() with error handling
+    it('characterdataindexsizeerrreplacedataoffsetnegative - replaceData throws for negative offset', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).replaceData(-1, 1, 'x')).to.throw()
     })
 
-    it.skip('characterdataindexsizeerrsubstringcountnegative [requires CharacterData.substringData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrsubstringcountnegative
-      // Needs: CharacterData.substringData() with error handling
+    it.skip('characterdataindexsizeerrsubstringcountnegative - negative count treated as unsigned', () => {
+      // DOM spec treats count as unsigned long; negative values don't throw
     })
 
-    it.skip('characterdataindexsizeerrsubstringoffsetgreater [requires CharacterData.substringData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrsubstringoffsetgreater
-      // Needs: CharacterData.substringData() with error handling
+    it('characterdataindexsizeerrsubstringoffsetgreater - substringData throws for offset > length', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).substringData(10, 1)).to.throw()
     })
 
-    it.skip('characterdataindexsizeerrsubstringnegativeoffset [requires CharacterData.substringData]', () => {
-      // Original: level1/core.js - characterdataindexsizeerrsubstringnegativeoffset
-      // Needs: CharacterData.substringData() with error handling
+    it('characterdataindexsizeerrsubstringnegativeoffset - substringData throws for negative offset', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).substringData(-1, 1)).to.throw()
     })
 
-    it.skip('characterdatainsertdatabeginning [requires CharacterData.insertData]', () => {
-      // Original: level1/core.js - characterdatainsertdatabeginning
-      // Needs: CharacterData.insertData()
+    it('characterdatainsertdatabeginning - insertData at beginning', () => {
+      const text = document.createTextNode('world')
+      ;(text as any).insertData(0, 'hello ')
+      expect(text.data).to.equal('hello world')
     })
 
-    it.skip('characterdatainsertdataend [requires CharacterData.insertData]', () => {
-      // Original: level1/core.js - characterdatainsertdataend
-      // Needs: CharacterData.insertData()
+    it('characterdatainsertdataend - insertData at end', () => {
+      const text = document.createTextNode('hello')
+      ;(text as any).insertData(5, ' world')
+      expect(text.data).to.equal('hello world')
     })
 
-    it.skip('characterdatainsertdatamiddle [requires CharacterData.insertData]', () => {
-      // Original: level1/core.js - characterdatainsertdatamiddle
-      // Needs: CharacterData.insertData()
+    it('characterdatainsertdatamiddle - insertData in middle', () => {
+      const text = document.createTextNode('helloworld')
+      ;(text as any).insertData(5, ' ')
+      expect(text.data).to.equal('hello world')
     })
 
-    it.skip('characterdatainsertdatanomodificationallowederr [requires CharacterData.insertData]', () => {
-      // Original: level1/core.js - characterdatainsertdatanomodificationallowederr
-      // Needs: CharacterData.insertData()
+    it.skip('characterdatainsertdatanomodificationallowederr - readonly text node', () => {
+      // Readonly nodes not supported
     })
 
-    it.skip('characterdatareplacedatabegining [requires CharacterData.replaceData]', () => {
-      // Original: level1/core.js - characterdatareplacedatabegining
-      // Needs: CharacterData.replaceData()
+    it('characterdatareplacedatabegining - replaceData at beginning', () => {
+      const text = document.createTextNode('hello world')
+      ;(text as any).replaceData(0, 5, 'hi')
+      expect(text.data).to.equal('hi world')
     })
 
-    it.skip('characterdatareplacedataend [requires CharacterData.replaceData]', () => {
-      // Original: level1/core.js - characterdatareplacedataend
-      // Needs: CharacterData.replaceData()
+    it('characterdatareplacedataend - replaceData at end', () => {
+      const text = document.createTextNode('hello world')
+      ;(text as any).replaceData(6, 5, 'earth')
+      expect(text.data).to.equal('hello earth')
     })
 
-    it.skip('characterdatareplacedataexceedslengthofarg [requires CharacterData.replaceData]', () => {
-      // Original: level1/core.js - characterdatareplacedataexceedslengthofarg
-      // Needs: CharacterData.replaceData()
+    it('characterdatareplacedataexceedslengthofarg - replaceData with shorter replacement', () => {
+      const text = document.createTextNode('hello world')
+      ;(text as any).replaceData(0, 11, 'hi')
+      expect(text.data).to.equal('hi')
     })
 
-    it.skip('characterdatareplacedataexceedslengthofdata [requires CharacterData.replaceData]', () => {
-      // Original: level1/core.js - characterdatareplacedataexceedslengthofdata
-      // Needs: CharacterData.replaceData()
+    it('characterdatareplacedataexceedslengthofdata - replaceData count exceeds remaining', () => {
+      const text = document.createTextNode('hello')
+      ;(text as any).replaceData(3, 100, 'xyz')
+      expect(text.data).to.equal('helxyz')
     })
 
-    it.skip('characterdatareplacedatamiddle [requires CharacterData.replaceData]', () => {
-      // Original: level1/core.js - characterdatareplacedatamiddle
-      // Needs: CharacterData.replaceData()
+    it('characterdatareplacedatamiddle - replaceData in middle', () => {
+      const text = document.createTextNode('hello world')
+      ;(text as any).replaceData(5, 1, '-')
+      expect(text.data).to.equal('hello-world')
     })
 
-    it.skip('characterdatareplacedatanomodificationallowederr [requires CharacterData.replaceData]', () => {
-      // Original: level1/core.js - characterdatareplacedatanomodificationallowederr
-      // Needs: CharacterData.replaceData()
+    it.skip('characterdatareplacedatanomodificationallowederr - readonly text node', () => {
+      // Readonly nodes not supported
     })
 
-    it.skip('characterdatasubstringvalue [requires CharacterData.substringData]', () => {
-      // Original: level1/core.js - characterdatasubstringvalue
-      // Needs: CharacterData.substringData()
+    it('characterdatasubstringvalue - substringData returns substring', () => {
+      const text = document.createTextNode('hello world')
+      expect((text as any).substringData(0, 5)).to.equal('hello')
+      expect((text as any).substringData(6, 5)).to.equal('world')
     })
   })
 
@@ -1041,49 +1298,69 @@ describe('level1/core', () => {
   // Text
   // ---------------------------------------------------------------------------
   describe('Text', () => {
-    it.skip('textsplittextone [requires splitText]', () => {
-      // Original: level1/core.js - textsplittextone
-      // Needs: Text.splitText()
+    it('textsplittextone - splitText splits at offset, original has first part', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const text = document.createTextNode('hello world')
+      parent.appendChild(text)
+      const newText = (text as any).splitText(5)
+      expect(text.data).to.equal('hello')
+      expect(newText.data).to.equal(' world')
     })
 
-    it.skip('textsplittexttwo [requires splitText]', () => {
-      // Original: level1/core.js - textsplittexttwo
-      // Needs: Text.splitText()
+    it('textsplittexttwo - splitText new node is next sibling', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const text = document.createTextNode('hello world')
+      parent.appendChild(text)
+      const newText = (text as any).splitText(5)
+      expect(text.nextSibling).to.equal(newText)
     })
 
-    it.skip('textsplittextthree [requires splitText]', () => {
-      // Original: level1/core.js - textsplittextthree
-      // Needs: Text.splitText()
+    it('textsplittextthree - splitText at 0 empties original', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const text = document.createTextNode('hello')
+      parent.appendChild(text)
+      const newText = (text as any).splitText(0)
+      expect(text.data).to.equal('')
+      expect(newText.data).to.equal('hello')
     })
 
-    it.skip('textsplittextfour [requires splitText]', () => {
-      // Original: level1/core.js - textsplittextfour
-      // Needs: Text.splitText()
+    it('textsplittextfour - splitText at end creates empty new node', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const text = document.createTextNode('hello')
+      parent.appendChild(text)
+      const newText = (text as any).splitText(5)
+      expect(text.data).to.equal('hello')
+      expect(newText.data).to.equal('')
     })
 
-    it.skip('textsplittextnomodificationallowederr [requires splitText]', () => {
-      // Original: level1/core.js - textsplittextnomodificationallowederr
-      // Needs: Text.splitText()
+    it.skip('textsplittextnomodificationallowederr - readonly text node', () => {
+      // Readonly nodes not supported
     })
 
-    it.skip('textsplittextnomodificationallowederralikeee [requires splitText]', () => {
-      // Original: level1/core.js - textsplittextnomodificationallowederralikeee
-      // Needs: Text.splitText()
+    it.skip('textsplittextnomodificationallowederralikeee - readonly text node', () => {
+      // Readonly nodes not supported
     })
 
-    it.skip('textwithnomarkup [requires firstChild]', () => {
-      // Original: level1/core.js - textwithnomarkup
-      // Needs: firstChild to access text content
+    it('textwithnomarkup - text node data accessible via firstChild', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      el.appendChild(document.createTextNode('some text'))
+      expect(el.firstChild).to.not.be.null
+      expect((el.firstChild as any).data).to.equal('some text')
     })
 
-    it.skip('textindexsizeerrnegativeoffset [requires splitText]', () => {
-      // Original: level1/core.js - textindexsizeerrnegativeoffset
-      // Needs: Text.splitText() with error handling
+    it('textindexsizeerrnegativeoffset - splitText throws for negative offset', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).splitText(-1)).to.throw()
     })
 
-    it.skip('textindexsizeerroffsetoutofbounds [requires splitText]', () => {
-      // Original: level1/core.js - textindexsizeerroffsetoutofbounds
-      // Needs: Text.splitText() with error handling
+    it('textindexsizeerroffsetoutofbounds - splitText throws for offset > length', () => {
+      const text = document.createTextNode('hello')
+      expect(() => (text as any).splitText(10)).to.throw()
     })
   })
 
@@ -1091,9 +1368,9 @@ describe('level1/core', () => {
   // Comment
   // ---------------------------------------------------------------------------
   describe('Comment', () => {
-    it.skip('commentgetcomment [requires createComment]', () => {
-      // Original: level1/core.js - commentgetcomment
-      // Needs: document.createComment()
+    it('commentgetcomment - comment.data returns the comment text', () => {
+      const comment = document.createComment('This is a comment')
+      expect(comment.data).to.equal('This is a comment')
     })
   })
 
@@ -1101,14 +1378,14 @@ describe('level1/core', () => {
   // Processing instructions
   // ---------------------------------------------------------------------------
   describe('Processing instructions', () => {
-    it.skip('processinginstructiongetdata [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - processinginstructiongetdata
-      // Needs: document.createProcessingInstruction()
+    it('processinginstructiongetdata - PI.data returns the data', () => {
+      const pi = document.createProcessingInstruction('xml-stylesheet', 'type="text/xsl"')
+      expect(pi.data).to.equal('type="text/xsl"')
     })
 
-    it.skip('processinginstructiongettarget [requires createProcessingInstruction]', () => {
-      // Original: level1/core.js - processinginstructiongettarget
-      // Needs: document.createProcessingInstruction()
+    it('processinginstructiongettarget - PI.target returns the target', () => {
+      const pi = document.createProcessingInstruction('xml-stylesheet', 'type="text/xsl"')
+      expect(pi.target).to.equal('xml-stylesheet')
     })
   })
 

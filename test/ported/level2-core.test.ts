@@ -41,11 +41,7 @@ describe('level2/core', () => {
       expect(el.hasAttribute('title')).to.equal(false)
     })
 
-    // Known bug: removeAttribute does not interact correctly with the lazy
-    // setAttribute thunk chain. removeAttribute mutates the evaluated NamedNodeMap
-    // instance, but subsequent hasAttribute re-evaluates the thunk chain which
-    // re-applies the setAttribute.
-    it.skip('hasAttribute04: returns false after attribute is removed [known bug in lazy thunk chain]', () => {
+    it('hasAttribute04: returns false after attribute is removed', () => {
       const el = document.createElement('div')
       el.setAttribute('title', 'some value')
       el.removeAttribute('title')
@@ -53,16 +49,42 @@ describe('level2/core', () => {
       expect(el.hasAttribute('title')).to.equal(false)
     })
 
-    // Skipped: requires hasAttributeNS
-    it.skip('hasAttributeNS01 [requires hasAttributeNS]', () => {})
-    it.skip('hasAttributeNS02 [requires hasAttributeNS]', () => {})
-    it.skip('hasAttributeNS03 [requires hasAttributeNS]', () => {})
-    it.skip('hasAttributeNS05 [requires hasAttributeNS]', () => {})
-    it.skip('hasAttributeNS06 [requires hasAttributeNS]', () => {})
+    it('hasAttributeNS01 - returns true for existing namespaced attribute', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      expect(el.hasAttributeNS('http://www.nist.gov', 'domestic')).to.equal(true)
+    })
 
-    // Skipped: requires hasAttributes
-    it.skip('hasAttributes01 [requires hasAttributes]', () => {})
-    it.skip('hasAttributes02 [requires hasAttributes]', () => {})
+    it('hasAttributeNS02 - returns false for nonexistent namespaced attribute', () => {
+      const el = document.createElement('div')
+      expect(el.hasAttributeNS('http://www.nist.gov', 'domestic')).to.equal(false)
+    })
+
+    it('hasAttributeNS03 - returns false after removing namespaced attribute', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      el.removeAttributeNS('http://www.nist.gov', 'domestic')
+      expect(el.hasAttributeNS('http://www.nist.gov', 'domestic')).to.equal(false)
+    })
+
+    it('hasAttributeNS05 - returns false for wrong namespace', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      expect(el.hasAttributeNS('http://www.other.gov', 'domestic')).to.equal(false)
+    })
+
+    it.skip('hasAttributeNS06 [requires parsed XML fixture]', () => {})
+
+    it('hasAttributes01: returns true when element has attributes', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      expect(el.hasAttributes()).to.equal(true)
+    })
+
+    it('hasAttributes02: returns false when element has no attributes', () => {
+      const el = document.createElement('div')
+      expect(el.hasAttributes()).to.equal(false)
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -159,13 +181,68 @@ describe('level2/core', () => {
   // ---------------------------------------------------------------------------
   // createAttributeNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('createAttributeNS [requires createAttributeNS]', () => {
-    it.skip('createAttributeNS01', () => {})
-    it.skip('createAttributeNS02', () => {})
-    it.skip('createAttributeNS03', () => {})
-    it.skip('createAttributeNS04', () => {})
-    it.skip('createAttributeNS05', () => {})
-    it.skip('createAttributeNS06', () => {})
+  describe('createAttributeNS', () => {
+    it('createAttributeNS01 - creates attr with correct properties', () => {
+      const attr = document.createAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:lang')
+      expect(attr.nodeName).to.equal('xml:lang')
+      expect(attr.name).to.equal('xml:lang')
+      expect(attr.namespaceURI).to.equal('http://www.w3.org/XML/1998/namespace')
+      expect(attr.prefix).to.equal('xml')
+      expect(attr.localName).to.equal('lang')
+      expect(attr.value).to.equal('')
+    })
+
+    it('createAttributeNS02 - creates attr without prefix', () => {
+      const attr = document.createAttributeNS('http://www.example.com', 'test')
+      expect(attr.nodeName).to.equal('test')
+      expect(attr.namespaceURI).to.equal('http://www.example.com')
+      expect(attr.prefix).to.equal(null)
+      expect(attr.localName).to.equal('test')
+    })
+
+    it('createAttributeNS03 - throws NAMESPACE_ERR for prefix with null namespace', () => {
+      let threw = false
+      try {
+        document.createAttributeNS(null, 'foo:bar')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14) // NAMESPACE_ERR
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('createAttributeNS04 - throws NAMESPACE_ERR for xml prefix with wrong namespace', () => {
+      let threw = false
+      try {
+        document.createAttributeNS('http://www.wrong.com', 'xml:lang')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('createAttributeNS05 - xmlns qualified name requires xmlns namespace', () => {
+      let threw = false
+      try {
+        document.createAttributeNS('http://www.wrong.com', 'xmlns')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('createAttributeNS06 - xmlns prefix requires xmlns namespace', () => {
+      let threw = false
+      try {
+        document.createAttributeNS('http://www.wrong.com', 'xmlns:foo')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -203,36 +280,144 @@ describe('level2/core', () => {
       expect(el.namespaceURI).to.equal('http://www.w3.org/1999/xhtml')
     })
 
-    // Skipped: error handling variants
-    it.skip('createElementNS01 [requires NAMESPACE_ERR]', () => {})
-    it.skip('createElementNS02 [requires NAMESPACE_ERR]', () => {})
-    it.skip('createElementNS03 [requires NAMESPACE_ERR]', () => {})
-    it.skip('createElementNS04 [requires NAMESPACE_ERR]', () => {})
-    it.skip('createElementNS05 [requires INVALID_CHARACTER_ERR]', () => {})
-    it.skip('createElementNS06 [requires NAMESPACE_ERR]', () => {})
+    it('createElementNS01 - creates element with correct namespace properties', () => {
+      const el = document.createElementNS('http://www.w3.org/DOM/Test/level2', 'XML:XML')
+      expect(el.nodeName).to.equal('XML:XML')
+      expect(el.namespaceURI).to.equal('http://www.w3.org/DOM/Test/level2')
+      expect(el.localName).to.equal('XML')
+      expect(el.prefix).to.equal('XML')
+      expect(el.tagName).to.equal('XML:XML')
+    })
+
+    it('createElementNS02 - throws NAMESPACE_ERR for prefix with null namespace', () => {
+      let threw = false
+      try {
+        document.createElementNS(null, 'prefix:localName')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it.skip('createElementNS03 [requires INVALID_CHARACTER_ERR validation]', () => {})
+
+    it('createElementNS04 - throws NAMESPACE_ERR for xml prefix with wrong namespace', () => {
+      let threw = false
+      try {
+        document.createElementNS('http://www.w3.org/XML/1998/namespaces', 'xml:element1')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it.skip('createElementNS05 [requires INVALID_CHARACTER_ERR validation]', () => {})
+    it.skip('createElementNS06 [requires DOMImplementation.createDocument]', () => {})
   })
 
   // ---------------------------------------------------------------------------
   // documentcreateattributeNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('documentcreateattributeNS [requires createAttributeNS]', () => {
-    it.skip('documentcreateattributeNS01', () => {})
-    it.skip('documentcreateattributeNS02', () => {})
-    it.skip('documentcreateattributeNS03', () => {})
-    it.skip('documentcreateattributeNS04', () => {})
-    it.skip('documentcreateattributeNS05', () => {})
-    it.skip('documentcreateattributeNS06', () => {})
-    it.skip('documentcreateattributeNS07', () => {})
+  describe('documentcreateattributeNS', () => {
+    it('documentcreateattributeNS01 - creates attr with namespace properties', () => {
+      const attr = document.createAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns')
+      expect(attr.name).to.equal('xmlns')
+      expect(attr.namespaceURI).to.equal('http://www.w3.org/2000/xmlns/')
+    })
+
+    it('documentcreateattributeNS02 - throws NAMESPACE_ERR for prefix with null namespace', () => {
+      let threw = false
+      try {
+        document.createAttributeNS(null, 'prefix:local')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('documentcreateattributeNS03 - creates attr with prefix and localName', () => {
+      const attr = document.createAttributeNS('http://www.example.com', 'ns:test')
+      expect(attr.prefix).to.equal('ns')
+      expect(attr.localName).to.equal('test')
+      expect(attr.name).to.equal('ns:test')
+    })
+
+    it('documentcreateattributeNS04 - creates attr without prefix', () => {
+      const attr = document.createAttributeNS('http://www.example.com', 'test')
+      expect(attr.prefix).to.equal(null)
+      expect(attr.localName).to.equal('test')
+      expect(attr.namespaceURI).to.equal('http://www.example.com')
+    })
+
+    it('documentcreateattributeNS05 - throws NAMESPACE_ERR for xml prefix with wrong namespace', () => {
+      let threw = false
+      try {
+        document.createAttributeNS('http://www.wrong.com', 'xml:attr')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('documentcreateattributeNS06 - creates xml-prefixed attr with correct namespace', () => {
+      const attr = document.createAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:lang')
+      expect(attr.prefix).to.equal('xml')
+      expect(attr.localName).to.equal('lang')
+      expect(attr.namespaceURI).to.equal('http://www.w3.org/XML/1998/namespace')
+    })
+
+    it('documentcreateattributeNS07 - throws NAMESPACE_ERR for xmlns prefix with wrong namespace', () => {
+      let threw = false
+      try {
+        document.createAttributeNS('http://www.wrong.com', 'xmlns:foo')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // documentcreateelementNS (skipped error handling)
   // ---------------------------------------------------------------------------
-  describe('documentcreateelementNS [error handling requires NAMESPACE_ERR]', () => {
-    it.skip('documentcreateelementNS01 [requires NAMESPACE_ERR]', () => {})
-    it.skip('documentcreateelementNS02 [requires NAMESPACE_ERR]', () => {})
-    it.skip('documentcreateelementNS03 [requires NAMESPACE_ERR]', () => {})
-    it.skip('documentcreateelementNS04 [requires NAMESPACE_ERR]', () => {})
+  describe('documentcreateelementNS', () => {
+    it('documentcreateelementNS01 - creates element with full namespace properties', () => {
+      const el = document.createElementNS('http://www.w3.org/DOM/Test/level2', 'XML:XML')
+      expect(el.nodeName).to.equal('XML:XML')
+      expect(el.namespaceURI).to.equal('http://www.w3.org/DOM/Test/level2')
+      expect(el.localName).to.equal('XML')
+      expect(el.prefix).to.equal('XML')
+      expect(el.tagName).to.equal('XML:XML')
+    })
+
+    it.skip('documentcreateelementNS02 [requires INVALID_CHARACTER_ERR validation]', () => {})
+
+    it('documentcreateelementNS03 - throws NAMESPACE_ERR for prefix with null namespace', () => {
+      let threw = false
+      try {
+        document.createElementNS(null, 'null:xml')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('documentcreateelementNS04 - throws NAMESPACE_ERR for xml prefix with wrong namespace', () => {
+      let threw = false
+      try {
+        document.createElementNS('http://www.w3.org/XML/1998/namespaces', 'xml:element1')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -267,16 +452,80 @@ describe('level2/core', () => {
   // ---------------------------------------------------------------------------
   // documentimportnode (all skipped)
   // ---------------------------------------------------------------------------
-  describe('documentimportnode [requires importNode]', () => {
-    it.skip('documentimportnode01', () => {})
-    it.skip('documentimportnode02', () => {})
-    it.skip('documentimportnode03', () => {})
-    it.skip('documentimportnode04', () => {})
-    it.skip('documentimportnode05', () => {})
-    it.skip('documentimportnode06', () => {})
-    it.skip('documentimportnode07', () => {})
-    it.skip('documentimportnode08', () => {})
-    it.skip('documentimportnode09', () => {})
+  describe('documentimportnode', () => {
+    it('documentimportnode01 - imports element (shallow)', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      el.appendChild(document.createTextNode('hello'))
+      const imported = document.importNode(el, false)
+      expect(imported.nodeName).to.equal('DIV')
+      expect(imported.getAttribute('class')).to.equal('test')
+      expect(imported.childNodes.length).to.equal(0)
+    })
+
+    it('documentimportnode02 - imports element (deep)', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      el.appendChild(document.createTextNode('hello'))
+      const imported = document.importNode(el, true)
+      expect(imported.nodeName).to.equal('DIV')
+      expect(imported.childNodes.length).to.equal(1)
+      expect(imported.textContent).to.equal('hello')
+    })
+
+    it('documentimportnode03 - imports text node', () => {
+      const text = document.createTextNode('test data')
+      const imported = document.importNode(text, false)
+      expect(imported.nodeType).to.equal(3)
+      expect(imported.nodeValue).to.equal('test data')
+    })
+
+    it('documentimportnode04 - imports comment', () => {
+      const comment = document.createComment('test comment')
+      const imported = document.importNode(comment, false)
+      expect(imported.nodeType).to.equal(8)
+      expect(imported.nodeValue).to.equal('test comment')
+    })
+
+    it('documentimportnode05 - imports document fragment (deep)', () => {
+      const frag = document.createDocumentFragment()
+      frag.appendChild(document.createElement('span'))
+      frag.appendChild(document.createTextNode('text'))
+      const imported = document.importNode(frag, true)
+      expect(imported.nodeType).to.equal(11)
+      expect(imported.childNodes.length).to.equal(2)
+    })
+
+    it('documentimportnode06 - imported element has null parentNode', () => {
+      const el = document.createElement('div')
+      const imported = document.importNode(el, false)
+      expect(imported.parentNode).to.equal(null)
+    })
+
+    it('documentimportnode07 - imports element with namespaced attrs', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const imported = document.importNode(el, false)
+      expect(imported.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('Yes')
+    })
+
+    it('documentimportnode08 - imports processing instruction', () => {
+      const pi = document.createProcessingInstruction('target', 'data')
+      const imported = document.importNode(pi, false)
+      expect(imported.nodeType).to.equal(7)
+      expect(imported.nodeValue).to.equal('data')
+    })
+
+    it('documentimportnode09 - deep import copies subtree', () => {
+      const div = document.createElement('div')
+      const span = document.createElement('span')
+      span.appendChild(document.createTextNode('hello'))
+      div.appendChild(span)
+      const imported = document.importNode(div, true)
+      expect(imported.childNodes.length).to.equal(1)
+      expect(imported.firstChild!.nodeName).to.equal('SPAN')
+      expect(imported.firstChild!.firstChild!.nodeValue).to.equal('hello')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -290,168 +539,499 @@ describe('level2/core', () => {
   // ---------------------------------------------------------------------------
   // domimplementation tests (all skipped)
   // ---------------------------------------------------------------------------
-  describe('domimplementation [requires DOMImplementation]', () => {
-    it.skip('domimplementationcreatedocument01', () => {})
-    it.skip('domimplementationcreatedocument02', () => {})
-    it.skip('domimplementationcreatedocument03', () => {})
-    it.skip('domimplementationcreatedocument04', () => {})
-    it.skip('domimplementationcreatedocument05', () => {})
-    it.skip('domimplementationcreatedocumenttype01', () => {})
-    it.skip('domimplementationcreatedocumenttype02', () => {})
-    it.skip('domimplementationcreatedocumenttype03', () => {})
-    it.skip('domimplementationcreatedocumenttype04', () => {})
-    it.skip('domimplementationhasfeature01', () => {})
+  describe('domimplementation', () => {
+    it.skip('domimplementationcreatedocument01 [requires DOMImplementation.createDocument]', () => {})
+    it.skip('domimplementationcreatedocument02 [requires DOMImplementation.createDocument]', () => {})
+    it.skip('domimplementationcreatedocument03 [requires DOMImplementation.createDocument]', () => {})
+    it.skip('domimplementationcreatedocument04 [requires DOMImplementation.createDocument]', () => {})
+    it.skip('domimplementationcreatedocument05 [requires DOMImplementation.createDocument]', () => {})
+    it.skip('domimplementationcreatedocumenttype01 [requires DOMImplementation.createDocumentType]', () => {})
+    it.skip('domimplementationcreatedocumenttype02 [requires DOMImplementation.createDocumentType]', () => {})
+    it.skip('domimplementationcreatedocumenttype03 [requires DOMImplementation.createDocumentType]', () => {})
+    it.skip('domimplementationcreatedocumenttype04 [requires DOMImplementation.createDocumentType]', () => {})
+    it('domimplementationhasfeature01 - hasFeature returns true', () => {
+      const impl = document.implementation
+      expect(impl.hasFeature('Core', '2.0')).to.equal(true)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // elementgetattributenodens (all skipped)
   // ---------------------------------------------------------------------------
-  describe('elementgetattributenodens [requires getAttributeNodeNS]', () => {
-    it.skip('elementgetattributenodens01', () => {})
-    it.skip('elementgetattributenodens02', () => {})
+  describe('elementgetattributenodens', () => {
+    it('elementgetattributenodens01 - returns attr node by ns+localName', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const attr = el.getAttributeNodeNS('http://www.nist.gov', 'domestic')
+      expect(attr).to.not.equal(null)
+      expect(attr!.value).to.equal('Yes')
+      expect(attr!.namespaceURI).to.equal('http://www.nist.gov')
+    })
+
+    it('elementgetattributenodens02 - returns null for nonexistent', () => {
+      const el = document.createElement('div')
+      const attr = el.getAttributeNodeNS('http://www.nist.gov', 'missing')
+      expect(attr).to.equal(null)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // elementgetelementsbytagnamens (all skipped)
   // ---------------------------------------------------------------------------
-  describe('elementgetelementsbytagnamens [requires Element.getElementsByTagNameNS]', () => {
-    it.skip('elementgetelementsbytagnamens01', () => {})
-    it.skip('elementgetelementsbytagnamens02', () => {})
-    it.skip('elementgetelementsbytagnamens03', () => {})
+  describe('elementgetelementsbytagnamens', () => {
+    it('elementgetelementsbytagnamens01 - finds elements by ns+localName', () => {
+      const parent = document.createElement('div')
+      document.body.appendChild(parent)
+      const child = document.createElementNS('http://www.nist.gov', 'emp:employee')
+      parent.appendChild(child)
+      const result = parent.getElementsByTagNameNS('http://www.nist.gov', 'employee')
+      expect(result.length).to.equal(1)
+      expect(result[0]).to.equal(child)
+    })
+
+    it('elementgetelementsbytagnamens02 - returns empty for wrong namespace', () => {
+      const parent = document.createElement('div')
+      const child = document.createElementNS('http://www.nist.gov', 'emp:employee')
+      parent.appendChild(child)
+      const result = parent.getElementsByTagNameNS('http://www.other.gov', 'employee')
+      expect(result.length).to.equal(0)
+    })
+
+    it('elementgetelementsbytagnamens03 - wildcard localName matches all', () => {
+      const parent = document.createElement('div')
+      const child1 = document.createElementNS('http://www.nist.gov', 'emp:employee')
+      const child2 = document.createElementNS('http://www.nist.gov', 'emp:address')
+      parent.appendChild(child1)
+      parent.appendChild(child2)
+      const result = parent.getElementsByTagNameNS('http://www.nist.gov', '*')
+      expect(result.length).to.equal(2)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // elementremoveattributens (skipped)
   // ---------------------------------------------------------------------------
-  describe('elementremoveattributens [requires removeAttributeNS]', () => {
-    it.skip('elementremoveattributens01', () => {})
+  describe('elementremoveattributens', () => {
+    it('elementremoveattributens01 - removes namespaced attribute', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      expect(el.hasAttributeNS('http://www.nist.gov', 'domestic')).to.equal(true)
+      el.removeAttributeNS('http://www.nist.gov', 'domestic')
+      expect(el.hasAttributeNS('http://www.nist.gov', 'domestic')).to.equal(false)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // elementsetattributenodens (all skipped)
   // ---------------------------------------------------------------------------
-  describe('elementsetattributenodens [requires setAttributeNodeNS]', () => {
-    it.skip('elementsetattributenodens01', () => {})
-    it.skip('elementsetattributenodens02', () => {})
-    it.skip('elementsetattributenodens03', () => {})
+  describe('elementsetattributenodens', () => {
+    it('elementsetattributenodens01 - adds attr via setAttributeNodeNS', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr.value = 'Yes'
+      el.setAttributeNodeNS(attr)
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('Yes')
+    })
+
+    it('elementsetattributenodens02 - replaces attr with same ns+localName', () => {
+      const el = document.createElement('div')
+      const attr1 = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr1.value = 'Yes'
+      el.setAttributeNodeNS(attr1)
+      const attr2 = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr2.value = 'No'
+      const old = el.setAttributeNodeNS(attr2)
+      expect(old).to.equal(attr1)
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('No')
+    })
+
+    it('elementsetattributenodens03 - throws INUSE_ATTRIBUTE_ERR', () => {
+      const el1 = document.createElement('div')
+      const el2 = document.createElement('div')
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr.value = 'Yes'
+      el1.setAttributeNodeNS(attr)
+      let threw = false
+      try {
+        el2.setAttributeNodeNS(attr)
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(10) // INUSE_ATTRIBUTE_ERR
+      }
+      expect(threw).to.equal(true)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // elementsetattributens (all skipped)
   // ---------------------------------------------------------------------------
-  describe('elementsetattributens [requires setAttributeNS]', () => {
-    it.skip('elementsetattributens01', () => {})
-    it.skip('elementsetattributens02', () => {})
-    it.skip('elementsetattributens03', () => {})
-    it.skip('elementsetattributens04', () => {})
-    it.skip('elementsetattributens05', () => {})
-    it.skip('elementsetattributens06', () => {})
-    it.skip('elementsetattributens07', () => {})
-    it.skip('elementsetattributens08', () => {})
-    it.skip('elementsetattributens09', () => {})
+  describe('elementsetattributens', () => {
+    it('elementsetattributens01 - sets namespaced attribute', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('Yes')
+    })
+
+    it('elementsetattributens02 - overwrites existing value', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'No')
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('No')
+    })
+
+    it('elementsetattributens03 - throws NAMESPACE_ERR for prefix with null ns', () => {
+      const el = document.createElement('div')
+      let threw = false
+      try {
+        el.setAttributeNS(null, 'emp:domestic', 'Yes')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('elementsetattributens04 - throws NAMESPACE_ERR for xml prefix with wrong ns', () => {
+      const el = document.createElement('div')
+      let threw = false
+      try {
+        el.setAttributeNS('http://www.wrong.com', 'xml:lang', 'en')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('elementsetattributens05 - sets attr with xmlns prefix and correct ns', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:ns', 'http://example.com')
+      expect(el.getAttributeNS('http://www.w3.org/2000/xmlns/', 'ns')).to.equal('http://example.com')
+    })
+
+    it.skip('elementsetattributens06 [requires parsed XML fixture]', () => {})
+    it.skip('elementsetattributens07 [requires parsed XML fixture]', () => {})
+
+    it('elementsetattributens08 - throws NAMESPACE_ERR for xmlns with wrong ns', () => {
+      const el = document.createElement('div')
+      let threw = false
+      try {
+        el.setAttributeNS('http://www.wrong.com', 'xmlns', 'val')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it.skip('elementsetattributens09 [requires parsed XML fixture]', () => {})
   })
 
   // ---------------------------------------------------------------------------
   // getAttributeNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('getAttributeNS [requires getAttributeNS]', () => {
-    it.skip('getAttributeNS01', () => {})
-    it.skip('getAttributeNS02', () => {})
-    it.skip('getAttributeNS03', () => {})
-    it.skip('getAttributeNS04', () => {})
-    it.skip('getAttributeNS05', () => {})
+  describe('getAttributeNS', () => {
+    it.skip('getAttributeNS01 [requires parsed XML fixture]', () => {})
+
+    it('getAttributeNS02 - returns empty string for attr with no value', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:district')
+      el.setAttributeNodeNS(attr)
+      const result = el.getAttributeNS('http://www.nist.gov', 'district')
+      expect(result).to.equal('')
+    })
+
+    it('getAttributeNS03 - returns null after removing attribute', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      el.removeAttributeNS('http://www.nist.gov', 'domestic')
+      const result = el.getAttributeNS('http://www.nist.gov', 'domestic')
+      expect(result).to.equal(null)
+    })
+
+    it('getAttributeNS04 - returns value after setAttributeNS', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:blank', 'NewValue')
+      const result = el.getAttributeNS('http://www.nist.gov', 'blank')
+      expect(result).to.equal('NewValue')
+    })
+
+    it('getAttributeNS05 - returns null for nonexistent namespace', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:test', 'val')
+      const result = el.getAttributeNS('http://www.other.gov', 'test')
+      expect(result).to.equal(null)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // getAttributeNodeNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('getAttributeNodeNS [requires getAttributeNodeNS]', () => {
-    it.skip('getAttributeNodeNS01', () => {})
-    it.skip('getAttributeNodeNS02', () => {})
+  describe('getAttributeNodeNS', () => {
+    it('getAttributeNodeNS01 - returns correct attr node', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const attr = el.getAttributeNodeNS('http://www.nist.gov', 'domestic')
+      expect(attr).to.not.equal(null)
+      expect(attr!.localName).to.equal('domestic')
+      expect(attr!.value).to.equal('Yes')
+    })
+
+    it('getAttributeNodeNS02 - returns null for nonexistent', () => {
+      const el = document.createElement('div')
+      const attr = el.getAttributeNodeNS('http://www.nist.gov', 'missing')
+      expect(attr).to.equal(null)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // getNamedItemNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('getNamedItemNS [requires getNamedItemNS]', () => {
-    it.skip('getNamedItemNS01', () => {})
-    it.skip('getNamedItemNS02', () => {})
+  describe('getNamedItemNS', () => {
+    it('getNamedItemNS01 - retrieves attr by namespace and localName', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const attr = el.attributes.getNamedItemNS('http://www.nist.gov', 'domestic')
+      expect(attr).to.not.equal(null)
+      expect(attr!.value).to.equal('Yes')
+    })
+
+    it('getNamedItemNS02 - returns null for nonexistent ns+localName', () => {
+      const el = document.createElement('div')
+      el.setAttribute('test', 'val')
+      const attr = el.attributes.getNamedItemNS('http://www.other.com', 'test')
+      expect(attr).to.equal(null)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // importNode (all skipped)
   // ---------------------------------------------------------------------------
-  describe('importNode [requires importNode]', () => {
-    it.skip('importNode01', () => {})
-    it.skip('importNode02', () => {})
-    it.skip('importNode03', () => {})
-    it.skip('importNode04', () => {})
-    it.skip('importNode05', () => {})
-    it.skip('importNode06', () => {})
-    it.skip('importNode07', () => {})
-    it.skip('importNode08', () => {})
+  describe('importNode', () => {
+    it('importNode01 - imported element is a clone', () => {
+      const el = document.createElement('div')
+      el.setAttribute('title', 'test')
+      const imported = document.importNode(el, false)
+      expect(imported).to.not.equal(el)
+      expect(imported.getAttribute('title')).to.equal('test')
+    })
+
+    it('importNode02 - imported text is a clone', () => {
+      const text = document.createTextNode('hello')
+      const imported = document.importNode(text, false)
+      expect(imported).to.not.equal(text)
+      expect(imported.nodeValue).to.equal('hello')
+    })
+
+    it('importNode03 - imported comment is a clone', () => {
+      const comment = document.createComment('test')
+      const imported = document.importNode(comment, false)
+      expect(imported).to.not.equal(comment)
+      expect(imported.nodeValue).to.equal('test')
+    })
+
+    it('importNode04 - deep import of element with children', () => {
+      const el = document.createElement('div')
+      el.appendChild(document.createElement('span'))
+      el.appendChild(document.createTextNode('text'))
+      const imported = document.importNode(el, true)
+      expect(imported.childNodes.length).to.equal(2)
+      expect(imported.firstChild!.nodeName).to.equal('SPAN')
+    })
+
+    it('importNode05 - shallow import of element has no children', () => {
+      const el = document.createElement('div')
+      el.appendChild(document.createElement('span'))
+      const imported = document.importNode(el, false)
+      expect(imported.childNodes.length).to.equal(0)
+    })
+
+    it('importNode06 - imported node has correct ownerDocument', () => {
+      const el = document.createElement('div')
+      const imported = document.importNode(el, false)
+      expect(imported.ownerDocument).to.equal(document)
+    })
+
+    it('importNode07 - imported fragment deep copies children', () => {
+      const frag = document.createDocumentFragment()
+      frag.appendChild(document.createElement('p'))
+      const imported = document.importNode(frag, true)
+      expect(imported.nodeType).to.equal(11)
+      expect(imported.childNodes.length).to.equal(1)
+    })
+
+    it('importNode08 - import preserves attributes', () => {
+      const el = document.createElement('div')
+      el.setAttribute('id', 'original')
+      el.setAttribute('class', 'test')
+      const imported = document.importNode(el, false)
+      expect(imported.getAttribute('id')).to.equal('original')
+      expect(imported.getAttribute('class')).to.equal('test')
+    })
   })
 
   // ---------------------------------------------------------------------------
   // localName (all skipped)
   // ---------------------------------------------------------------------------
-  describe('localName [requires Node.localName]', () => {
-    it.skip('localName01', () => {})
-    it.skip('localName02', () => {})
-    it.skip('localName03', () => {})
+  describe('localName', () => {
+    it('localName01 - element created with createElementNS has correct localName', () => {
+      const el = document.createElementNS('http://www.nist.gov', 'emp:employee')
+      expect(el.localName).to.equal('employee')
+    })
+
+    it('localName02 - attr created with createAttributeNS has correct localName', () => {
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      expect(attr.localName).to.equal('domestic')
+    })
+
+    it('localName03 - element created with createElement has localName', () => {
+      const el = document.createElement('div')
+      expect(el.localName).to.equal('div')
+    })
   })
 
   // ---------------------------------------------------------------------------
   // namednodemapgetnameditemns (all skipped)
   // ---------------------------------------------------------------------------
-  describe('namednodemapgetnameditemns [requires getNamedItemNS]', () => {
-    it.skip('namednodemapgetnameditemns01', () => {})
-    it.skip('namednodemapgetnameditemns02', () => {})
-    it.skip('namednodemapgetnameditemns03', () => {})
-    it.skip('namednodemapgetnameditemns04', () => {})
-    it.skip('namednodemapgetnameditemns05', () => {})
-    it.skip('namednodemapgetnameditemns06', () => {})
+  describe('namednodemapgetnameditemns', () => {
+    it('namednodemapgetnameditemns01 - returns attr by ns+localName', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const attr = el.attributes.getNamedItemNS('http://www.nist.gov', 'domestic')
+      expect(attr).to.not.equal(null)
+      expect(attr!.localName).to.equal('domestic')
+    })
+
+    it('namednodemapgetnameditemns02 - returns null for wrong namespace', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const attr = el.attributes.getNamedItemNS('http://www.other.gov', 'domestic')
+      expect(attr).to.equal(null)
+    })
+
+    it('namednodemapgetnameditemns03 - returns null for wrong localName', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const attr = el.attributes.getNamedItemNS('http://www.nist.gov', 'other')
+      expect(attr).to.equal(null)
+    })
+
+    it('namednodemapgetnameditemns04 - retrieves correct attr among multiple', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      el.setAttributeNS('http://www.other.gov', 'other:domestic', 'No')
+      const attr = el.attributes.getNamedItemNS('http://www.nist.gov', 'domestic')
+      expect(attr).to.not.equal(null)
+      expect(attr!.value).to.equal('Yes')
+    })
+
+    it.skip('namednodemapgetnameditemns05 [requires parsed XML fixture]', () => {})
+    it.skip('namednodemapgetnameditemns06 [requires parsed XML fixture]', () => {})
   })
 
   // ---------------------------------------------------------------------------
   // namednodemapremovenameditemns (all skipped)
   // ---------------------------------------------------------------------------
-  describe('namednodemapremovenameditemns [requires removeNamedItemNS]', () => {
-    it.skip('namednodemapremovenameditemns01', () => {})
-    it.skip('namednodemapremovenameditemns02', () => {})
-    it.skip('namednodemapremovenameditemns03', () => {})
-    it.skip('namednodemapremovenameditemns04', () => {})
-    it.skip('namednodemapremovenameditemns05', () => {})
-    it.skip('namednodemapremovenameditemns06', () => {})
-    it.skip('namednodemapremovenameditemns07', () => {})
-    it.skip('namednodemapremovenameditemns08', () => {})
-    it.skip('namednodemapremovenameditemns09', () => {})
+  describe('namednodemapremovenameditemns', () => {
+    it('namednodemapremovenameditemns01 - removes attr by ns+localName', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const removed = el.attributes.removeNamedItemNS('http://www.nist.gov', 'domestic')
+      expect(removed).to.not.equal(null)
+      expect(removed!.localName).to.equal('domestic')
+      expect(el.attributes.length).to.equal(0)
+    })
+
+    it('namednodemapremovenameditemns02 - returns null or throws for nonexistent', function () {
+      const el = document.createElement('div')
+      try {
+        const removed = el.attributes.removeNamedItemNS('http://www.nist.gov', 'missing')
+        // lazy-dom returns null
+        expect(removed).to.equal(null)
+      } catch (e: any) {
+        // jsdom throws NotFoundError
+        expect(e.name).to.equal('NotFoundError')
+      }
+    })
+
+    it('namednodemapremovenameditemns03 - removes correct attr among multiple', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      el.setAttributeNS('http://www.other.gov', 'other:domestic', 'No')
+      el.attributes.removeNamedItemNS('http://www.nist.gov', 'domestic')
+      expect(el.attributes.length).to.equal(1)
+      const remaining = el.getAttributeNS('http://www.other.gov', 'domestic')
+      expect(remaining).to.equal('No')
+    })
+
+    it.skip('namednodemapremovenameditemns04 [requires parsed XML fixture]', () => {})
+    it.skip('namednodemapremovenameditemns05 [requires parsed XML fixture]', () => {})
+    it.skip('namednodemapremovenameditemns06 [requires parsed XML fixture]', () => {})
+    it.skip('namednodemapremovenameditemns07 [requires parsed XML fixture]', () => {})
+    it.skip('namednodemapremovenameditemns08 [requires parsed XML fixture]', () => {})
+    it.skip('namednodemapremovenameditemns09 [requires parsed XML fixture]', () => {})
   })
 
   // ---------------------------------------------------------------------------
   // namednodemapsetnameditemns (all skipped)
   // ---------------------------------------------------------------------------
-  describe('namednodemapsetnameditemns [requires setNamedItemNS]', () => {
-    it.skip('namednodemapsetnameditemns01', () => {})
-    it.skip('namednodemapsetnameditemns02', () => {})
-    it.skip('namednodemapsetnameditemns03', () => {})
-    it.skip('namednodemapsetnameditemns04', () => {})
-    it.skip('namednodemapsetnameditemns05', () => {})
-    it.skip('namednodemapsetnameditemns06', () => {})
+  describe('namednodemapsetnameditemns', () => {
+    it('namednodemapsetnameditemns01 - adds attr via setNamedItemNS', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr.value = 'Yes'
+      el.attributes.setNamedItemNS(attr)
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('Yes')
+    })
+
+    it('namednodemapsetnameditemns02 - replaces attr with same ns+localName', () => {
+      const el = document.createElement('div')
+      const attr1 = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr1.value = 'Yes'
+      el.attributes.setNamedItemNS(attr1)
+      const attr2 = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr2.value = 'No'
+      const old = el.attributes.setNamedItemNS(attr2)
+      expect(old).to.equal(attr1)
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('No')
+    })
+
+    it('namednodemapsetnameditemns03 - different ns same localName adds separate attrs', () => {
+      const el = document.createElement('div')
+      const attr1 = document.createAttributeNS('http://www.ns1.com', 'ns1:test')
+      attr1.value = 'val1'
+      el.attributes.setNamedItemNS(attr1)
+      const attr2 = document.createAttributeNS('http://www.ns2.com', 'ns2:test')
+      attr2.value = 'val2'
+      el.attributes.setNamedItemNS(attr2)
+      expect(el.attributes.length).to.equal(2)
+      expect(el.getAttributeNS('http://www.ns1.com', 'test')).to.equal('val1')
+      expect(el.getAttributeNS('http://www.ns2.com', 'test')).to.equal('val2')
+    })
+
+    it.skip('namednodemapsetnameditemns04 [requires parsed XML fixture]', () => {})
+    it.skip('namednodemapsetnameditemns05 [requires WRONG_DOCUMENT_ERR]', () => {})
+    it.skip('namednodemapsetnameditemns06 [requires INUSE_ATTRIBUTE_ERR]', () => {})
   })
 
   // ---------------------------------------------------------------------------
   // nodegetlocalname (skipped)
   // ---------------------------------------------------------------------------
-  describe('nodegetlocalname [requires Node.localName]', () => {
-    it.skip('nodegetlocalname01', () => {})
+  describe('nodegetlocalname', () => {
+    it('nodegetlocalname01 - returns localName for namespaced element', () => {
+      const el = document.createElementNS('http://www.nist.gov', 'emp:employee')
+      expect(el.localName).to.equal('employee')
+    })
   })
 
   // ---------------------------------------------------------------------------
   // nodegetnamespaceuri (skipped)
   // ---------------------------------------------------------------------------
-  describe('nodegetnamespaceuri [requires Node.namespaceURI]', () => {
-    it.skip('nodegetnamespaceuri01', () => {})
+  describe('nodegetnamespaceuri', () => {
+    it('nodegetnamespaceuri01 - returns namespaceURI for namespaced element', () => {
+      const el = document.createElementNS('http://www.nist.gov', 'emp:employee')
+      expect(el.namespaceURI).to.equal('http://www.nist.gov')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -472,23 +1052,44 @@ describe('level2/core', () => {
   // ---------------------------------------------------------------------------
   // nodegetprefix (skipped)
   // ---------------------------------------------------------------------------
-  describe('nodegetprefix [requires Node.prefix]', () => {
-    it.skip('nodegetprefix01', () => {})
+  describe('nodegetprefix', () => {
+    it('nodegetprefix01 - returns prefix for namespaced element', () => {
+      const el = document.createElementNS('http://www.nist.gov', 'emp:employee')
+      expect(el.prefix).to.equal('emp')
+    })
   })
 
   // ---------------------------------------------------------------------------
   // nodehasattributes (all skipped)
   // ---------------------------------------------------------------------------
-  describe('nodehasattributes [requires hasAttributes]', () => {
-    it.skip('nodehasattributes01', () => {})
-    it.skip('nodehasattributes02', () => {})
+  describe('nodehasattributes', () => {
+    it('nodehasattributes01: element with attributes returns true', () => {
+      const el = document.createElement('div')
+      el.setAttribute('class', 'test')
+      expect(el.hasAttributes()).to.equal(true)
+    })
+
+    it('nodehasattributes02: element without attributes returns false', () => {
+      const el = document.createElement('div')
+      expect(el.hasAttributes()).to.equal(false)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // normalize (skipped)
   // ---------------------------------------------------------------------------
-  describe('normalize [requires normalize]', () => {
-    it.skip('normalize01', () => {})
+  describe('normalize', () => {
+    it('normalize01: merges adjacent text nodes', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      el.appendChild(document.createTextNode('hello'))
+      el.appendChild(document.createTextNode(' '))
+      el.appendChild(document.createTextNode('world'))
+      expect(el.childNodes.length).to.equal(3)
+      el.normalize()
+      expect(el.childNodes.length).to.equal(1)
+      expect(el.textContent).to.equal('hello world')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -503,10 +1104,21 @@ describe('level2/core', () => {
   // ---------------------------------------------------------------------------
   // prefix (all skipped)
   // ---------------------------------------------------------------------------
-  describe('prefix [requires Node.prefix]', () => {
-    it.skip('prefix01', () => {})
-    it.skip('prefix02', () => {})
-    it.skip('prefix03', () => {})
+  describe('prefix', () => {
+    it('prefix01 - element prefix from createElementNS', () => {
+      const el = document.createElementNS('http://www.nist.gov', 'emp:employee')
+      expect(el.prefix).to.equal('emp')
+    })
+
+    it('prefix02 - attr prefix from createAttributeNS', () => {
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      expect(attr.prefix).to.equal('emp')
+    })
+
+    it('prefix03 - null prefix for element without prefix', () => {
+      const el = document.createElementNS('http://www.nist.gov', 'employee')
+      expect(el.prefix).to.equal(null)
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -519,48 +1131,153 @@ describe('level2/core', () => {
   // ---------------------------------------------------------------------------
   // removeAttributeNS (skipped)
   // ---------------------------------------------------------------------------
-  describe('removeAttributeNS [requires removeAttributeNS]', () => {
-    it.skip('removeAttributeNS01', () => {})
+  describe('removeAttributeNS', () => {
+    it('removeAttributeNS01 - removes namespaced attribute', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      el.removeAttributeNS('http://www.nist.gov', 'domestic')
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal(null)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // removeNamedItemNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('removeNamedItemNS [requires removeNamedItemNS]', () => {
-    it.skip('removeNamedItemNS01', () => {})
-    it.skip('removeNamedItemNS02', () => {})
+  describe('removeNamedItemNS', () => {
+    it('removeNamedItemNS01 - removes attr by ns+localName via NamedNodeMap', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const removed = el.attributes.removeNamedItemNS('http://www.nist.gov', 'domestic')
+      expect(removed).to.not.equal(null)
+      expect(removed!.value).to.equal('Yes')
+      expect(el.attributes.length).to.equal(0)
+    })
+
+    it('removeNamedItemNS02 - returns null or throws for nonexistent', function () {
+      const el = document.createElement('div')
+      try {
+        const removed = el.attributes.removeNamedItemNS('http://www.nist.gov', 'missing')
+        // lazy-dom returns null
+        expect(removed).to.equal(null)
+      } catch (e: any) {
+        // jsdom throws NotFoundError
+        expect(e.name).to.equal('NotFoundError')
+      }
+    })
   })
 
   // ---------------------------------------------------------------------------
   // setAttributeNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('setAttributeNS [requires setAttributeNS]', () => {
-    it.skip('setAttributeNS01', () => {})
-    it.skip('setAttributeNS02', () => {})
-    it.skip('setAttributeNS03', () => {})
-    it.skip('setAttributeNS04', () => {})
-    it.skip('setAttributeNS05', () => {})
-    it.skip('setAttributeNS06', () => {})
-    it.skip('setAttributeNS07', () => {})
-    it.skip('setAttributeNS08', () => {})
+  describe('setAttributeNS', () => {
+    it('setAttributeNS01 - sets and retrieves namespaced attr', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('Yes')
+    })
+
+    it('setAttributeNS02 - attr has correct prefix', () => {
+      const el = document.createElement('div')
+      el.setAttributeNS('http://www.nist.gov', 'emp:domestic', 'Yes')
+      const attr = el.getAttributeNodeNS('http://www.nist.gov', 'domestic')
+      expect(attr!.prefix).to.equal('emp')
+    })
+
+    it('setAttributeNS03 - throws NAMESPACE_ERR for prefix with null ns', () => {
+      const el = document.createElement('div')
+      let threw = false
+      try {
+        el.setAttributeNS(null, 'emp:domestic', 'Yes')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it('setAttributeNS04 - throws NAMESPACE_ERR for xml prefix with wrong ns', () => {
+      const el = document.createElement('div')
+      let threw = false
+      try {
+        el.setAttributeNS('http://wrong.com', 'xml:lang', 'en')
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(14)
+      }
+      expect(threw).to.equal(true)
+    })
+
+    it.skip('setAttributeNS05 [requires parsed XML fixture]', () => {})
+    it.skip('setAttributeNS06 [requires parsed XML fixture]', () => {})
+    it.skip('setAttributeNS07 [requires parsed XML fixture]', () => {})
+    it.skip('setAttributeNS08 [requires parsed XML fixture]', () => {})
   })
 
   // ---------------------------------------------------------------------------
   // setAttributeNodeNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('setAttributeNodeNS [requires setAttributeNodeNS]', () => {
-    it.skip('setAttributeNodeNS01', () => {})
-    it.skip('setAttributeNodeNS02', () => {})
-    it.skip('setAttributeNodeNS03', () => {})
+  describe('setAttributeNodeNS', () => {
+    it('setAttributeNodeNS01 - adds attr via setAttributeNodeNS', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr.value = 'Yes'
+      el.setAttributeNodeNS(attr)
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('Yes')
+    })
+
+    it('setAttributeNodeNS02 - returns old attr on replacement', () => {
+      const el = document.createElement('div')
+      const attr1 = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr1.value = 'Yes'
+      el.setAttributeNodeNS(attr1)
+      const attr2 = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr2.value = 'No'
+      const old = el.setAttributeNodeNS(attr2)
+      expect(old).to.equal(attr1)
+    })
+
+    it('setAttributeNodeNS03 - throws INUSE_ATTRIBUTE_ERR for attr in use', () => {
+      const el1 = document.createElement('div')
+      const el2 = document.createElement('div')
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr.value = 'Yes'
+      el1.setAttributeNodeNS(attr)
+      let threw = false
+      try {
+        el2.setAttributeNodeNS(attr)
+      } catch (e: any) {
+        threw = true
+        expect(e.code).to.equal(10)
+      }
+      expect(threw).to.equal(true)
+    })
   })
 
   // ---------------------------------------------------------------------------
   // setNamedItemNS (all skipped)
   // ---------------------------------------------------------------------------
-  describe('setNamedItemNS [requires setNamedItemNS]', () => {
-    it.skip('setNamedItemNS01', () => {})
-    it.skip('setNamedItemNS02', () => {})
-    it.skip('setNamedItemNS03', () => {})
+  describe('setNamedItemNS', () => {
+    it('setNamedItemNS01 - adds attr via setNamedItemNS', () => {
+      const el = document.createElement('div')
+      const attr = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr.value = 'Yes'
+      el.attributes.setNamedItemNS(attr)
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('Yes')
+    })
+
+    it('setNamedItemNS02 - replaces attr with same ns+localName', () => {
+      const el = document.createElement('div')
+      const attr1 = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr1.value = 'Yes'
+      el.attributes.setNamedItemNS(attr1)
+      const attr2 = document.createAttributeNS('http://www.nist.gov', 'emp:domestic')
+      attr2.value = 'No'
+      const old = el.attributes.setNamedItemNS(attr2)
+      expect(old).to.equal(attr1)
+      expect(el.getAttributeNS('http://www.nist.gov', 'domestic')).to.equal('No')
+    })
+
+    it.skip('setNamedItemNS03 [requires WRONG_DOCUMENT_ERR]', () => {})
   })
 
   // ---------------------------------------------------------------------------

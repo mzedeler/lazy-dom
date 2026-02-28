@@ -77,7 +77,12 @@ describe('level2/html', () => {
       expect(div.getAttribute('align')).to.equal('center')
     })
 
-    it.skip('HTMLDivElement_align - requires div.align property reflection')
+    it('HTMLDivElement_align - div.align property reflection', () => {
+      const div = document.createElement('div')
+      div.align = 'center'
+      expect(div.align).to.equal('center')
+      expect(div.getAttribute('align')).to.equal('center')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -95,31 +100,131 @@ describe('level2/html', () => {
       expect(a.getAttribute('href')).to.equal('http://example.com')
     })
 
-    // Skipped: requires property reflection for anchor-specific properties
-    // accessKey, charset, coords, href, hreflang, name, rel, rev, shape,
-    // tabIndex, target, type, text, host, hostname, pathname, port, protocol,
-    // search, hash, toString
-    it.skip('HTMLAnchorElement_accessKey - requires property reflection')
-    it.skip('HTMLAnchorElement_charset - requires property reflection')
-    it.skip('HTMLAnchorElement_coords - requires property reflection')
-    it.skip('HTMLAnchorElement_href - requires property reflection')
-    it.skip('HTMLAnchorElement_hreflang - requires property reflection')
-    it.skip('HTMLAnchorElement_name - requires property reflection')
-    it.skip('HTMLAnchorElement_rel - requires property reflection')
-    it.skip('HTMLAnchorElement_rev - requires property reflection')
-    it.skip('HTMLAnchorElement_shape - requires property reflection')
-    it.skip('HTMLAnchorElement_tabIndex - requires property reflection')
-    it.skip('HTMLAnchorElement_target - requires property reflection')
-    it.skip('HTMLAnchorElement_type - requires property reflection')
-    it.skip('HTMLAnchorElement_text - requires property reflection')
-    it.skip('HTMLAnchorElement_host - requires URL decomposition')
-    it.skip('HTMLAnchorElement_hostname - requires URL decomposition')
-    it.skip('HTMLAnchorElement_pathname - requires URL decomposition')
-    it.skip('HTMLAnchorElement_port - requires URL decomposition')
-    it.skip('HTMLAnchorElement_protocol - requires URL decomposition')
-    it.skip('HTMLAnchorElement_search - requires URL decomposition')
-    it.skip('HTMLAnchorElement_hash - requires URL decomposition')
-    it.skip('HTMLAnchorElement_toString - requires toString returning href')
+    it('HTMLAnchorElement_accessKey - accessKey property reflection', () => {
+      const a = document.createElement('a')
+      a.accessKey = 'k'
+      expect(a.accessKey).to.equal('k')
+    })
+
+    it('HTMLAnchorElement_charset - charset property reflection', () => {
+      const a = document.createElement('a')
+      a.charset = 'utf-8'
+      expect(a.charset).to.equal('utf-8')
+    })
+
+    it('HTMLAnchorElement_coords - coords property reflection', () => {
+      const a = document.createElement('a')
+      a.coords = '0,0,50,50'
+      expect(a.coords).to.equal('0,0,50,50')
+    })
+
+    it('HTMLAnchorElement_href - href property reflection', () => {
+      const a = document.createElement('a')
+      a.href = 'http://example.com/'
+      expect(a.href).to.equal('http://example.com/')
+    })
+
+    it('HTMLAnchorElement_hreflang - hreflang property reflection', () => {
+      const a = document.createElement('a')
+      a.hreflang = 'en'
+      expect(a.hreflang).to.equal('en')
+    })
+
+    it('HTMLAnchorElement_name - name property reflection', () => {
+      const a = document.createElement('a')
+      a.name = 'anchor1'
+      expect(a.name).to.equal('anchor1')
+    })
+
+    it('HTMLAnchorElement_rel - rel property reflection', () => {
+      const a = document.createElement('a')
+      a.rel = 'noopener'
+      expect(a.rel).to.equal('noopener')
+    })
+
+    it('HTMLAnchorElement_rev - rev property reflection', () => {
+      const a = document.createElement('a')
+      a.rev = 'made'
+      expect(a.rev).to.equal('made')
+    })
+
+    it('HTMLAnchorElement_shape - shape property reflection', () => {
+      const a = document.createElement('a')
+      a.shape = 'rect'
+      expect(a.shape).to.equal('rect')
+    })
+
+    it('HTMLAnchorElement_tabIndex - tabIndex property reflection', () => {
+      const a = document.createElement('a')
+      a.tabIndex = 5
+      expect(a.tabIndex).to.equal(5)
+    })
+
+    it('HTMLAnchorElement_target - target property reflection', () => {
+      const a = document.createElement('a')
+      a.target = '_blank'
+      expect(a.target).to.equal('_blank')
+    })
+
+    it('HTMLAnchorElement_type - type property reflection', () => {
+      const a = document.createElement('a')
+      a.type = 'text/html'
+      expect(a.type).to.equal('text/html')
+    })
+
+    it('HTMLAnchorElement_text - text property returns textContent', () => {
+      const a = document.createElement('a')
+      a.appendChild(document.createTextNode('Click me'))
+      expect(a.text).to.equal('Click me')
+    })
+
+    it('HTMLAnchorElement_host - host property from URL', () => {
+      const a = document.createElement('a')
+      a.href = 'http://example.com:8080/path'
+      expect(a.host).to.equal('example.com:8080')
+    })
+
+    it('HTMLAnchorElement_hostname - hostname property from URL', () => {
+      const a = document.createElement('a')
+      a.href = 'http://example.com/path'
+      expect(a.hostname).to.equal('example.com')
+    })
+
+    it('HTMLAnchorElement_pathname - pathname property from URL', () => {
+      const a = document.createElement('a')
+      a.href = 'http://example.com/path/to/page'
+      expect(a.pathname).to.equal('/path/to/page')
+    })
+
+    it('HTMLAnchorElement_port - port property from URL', () => {
+      const a = document.createElement('a')
+      a.href = 'http://example.com:3000/path'
+      expect(a.port).to.equal('3000')
+    })
+
+    it('HTMLAnchorElement_protocol - protocol property from URL', () => {
+      const a = document.createElement('a')
+      a.href = 'https://example.com/'
+      expect(a.protocol).to.equal('https:')
+    })
+
+    it('HTMLAnchorElement_search - search property from URL', () => {
+      const a = document.createElement('a')
+      a.href = 'http://example.com/path?q=test'
+      expect(a.search).to.equal('?q=test')
+    })
+
+    it('HTMLAnchorElement_hash - hash property from URL', () => {
+      const a = document.createElement('a')
+      a.href = 'http://example.com/path#section'
+      expect(a.hash).to.equal('#section')
+    })
+
+    it('HTMLAnchorElement_toString - toString returns href', () => {
+      const a = document.createElement('a')
+      a.href = 'http://example.com/'
+      expect(a.toString()).to.equal('http://example.com/')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -139,16 +244,55 @@ describe('level2/html', () => {
       expect(button.getAttribute('value')).to.equal('Submit')
     })
 
-    // Skipped: requires property reflection
-    // form, accessKey, disabled, name, tabIndex, type, value
-    it.skip('HTMLButtonElement01 - requires form property')
-    it.skip('HTMLButtonElement02 - requires accessKey property')
-    it.skip('HTMLButtonElement03 - requires disabled property')
-    it.skip('HTMLButtonElement04 - requires name property')
-    it.skip('HTMLButtonElement05 - requires tabIndex property')
-    it.skip('HTMLButtonElement06 - requires type property')
-    it.skip('HTMLButtonElement07 - requires value property')
-    it.skip('HTMLButtonElement08 - requires value property assignment')
+    it('HTMLButtonElement01 - form property returns null', () => {
+      const button = document.createElement('button')
+      expect(button.form).to.equal(null)
+    })
+
+    it('HTMLButtonElement02 - accessKey property reflection', () => {
+      const button = document.createElement('button')
+      button.accessKey = 'b'
+      expect(button.accessKey).to.equal('b')
+    })
+
+    it('HTMLButtonElement03 - disabled property reflection', () => {
+      const button = document.createElement('button')
+      button.disabled = true
+      expect(button.disabled).to.equal(true)
+    })
+
+    it('HTMLButtonElement04 - name property reflection', () => {
+      const button = document.createElement('button')
+      button.name = 'btn'
+      expect(button.name).to.equal('btn')
+    })
+
+    it('HTMLButtonElement05 - tabIndex property reflection', () => {
+      const button = document.createElement('button')
+      button.tabIndex = 3
+      expect(button.tabIndex).to.equal(3)
+    })
+
+    it('HTMLButtonElement06 - type property reflection', () => {
+      const button = document.createElement('button')
+      expect(button.type).to.equal('submit')
+      button.type = 'button'
+      expect(button.type).to.equal('button')
+    })
+
+    it('HTMLButtonElement07 - value property reflection', () => {
+      const button = document.createElement('button')
+      button.value = 'Submit'
+      expect(button.value).to.equal('Submit')
+    })
+
+    it('HTMLButtonElement08 - value property assignment', () => {
+      const button = document.createElement('button')
+      button.value = 'Go'
+      expect(button.value).to.equal('Go')
+      button.value = 'Stop'
+      expect(button.value).to.equal('Stop')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -174,22 +318,100 @@ describe('level2/html', () => {
     // Skipped: requires property reflection
     // form, accept, accessKey, alt, checked, defaultChecked, defaultValue,
     // disabled, maxLength, name, readOnly, size, src, tabIndex, useMap, value
-    it.skip('HTMLInputElement_form - requires form property')
-    it.skip('HTMLInputElement_accept - requires accept property')
-    it.skip('HTMLInputElement_accessKey - requires accessKey property')
-    it.skip('HTMLInputElement_alt - requires alt property')
-    it.skip('HTMLInputElement_checked - requires checked property')
-    it.skip('HTMLInputElement_defaultChecked - requires defaultChecked property')
-    it.skip('HTMLInputElement_defaultValue - requires defaultValue property')
-    it.skip('HTMLInputElement_disabled - requires disabled property')
-    it.skip('HTMLInputElement_maxLength - requires maxLength property')
-    it.skip('HTMLInputElement_name - requires name property')
-    it.skip('HTMLInputElement_readOnly - requires readOnly property')
-    it.skip('HTMLInputElement_size - requires size property')
-    it.skip('HTMLInputElement_src - requires src property')
-    it.skip('HTMLInputElement_tabIndex - requires tabIndex property')
-    it.skip('HTMLInputElement_useMap - requires useMap property')
-    it.skip('HTMLInputElement_value - requires value property')
+    it('HTMLInputElement_form - form returns null', () => {
+      const input = document.createElement('input')
+      expect(input.form).to.equal(null)
+    })
+
+    it('HTMLInputElement_accept - accept property reflection', () => {
+      const input = document.createElement('input')
+      input.accept = 'image/*'
+      expect(input.accept).to.equal('image/*')
+    })
+
+    it('HTMLInputElement_accessKey - accessKey property reflection', () => {
+      const input = document.createElement('input')
+      input.accessKey = 'i'
+      expect(input.accessKey).to.equal('i')
+    })
+
+    it('HTMLInputElement_alt - alt property reflection', () => {
+      const input = document.createElement('input')
+      input.alt = 'alt text'
+      expect(input.alt).to.equal('alt text')
+    })
+
+    it('HTMLInputElement_checked - checked property reflection', () => {
+      const input = document.createElement('input')
+      input.checked = true
+      expect(input.checked).to.equal(true)
+    })
+
+    it('HTMLInputElement_defaultChecked - defaultChecked property reflection', () => {
+      const input = document.createElement('input')
+      input.defaultChecked = true
+      expect(input.defaultChecked).to.equal(true)
+    })
+
+    it('HTMLInputElement_defaultValue - defaultValue property reflection', () => {
+      const input = document.createElement('input')
+      input.defaultValue = 'default'
+      expect(input.defaultValue).to.equal('default')
+    })
+
+    it('HTMLInputElement_disabled - disabled property reflection', () => {
+      const input = document.createElement('input')
+      input.disabled = true
+      expect(input.disabled).to.equal(true)
+    })
+
+    it('HTMLInputElement_maxLength - maxLength property reflection', () => {
+      const input = document.createElement('input')
+      input.maxLength = 100
+      expect(input.maxLength).to.equal(100)
+    })
+
+    it('HTMLInputElement_name - name property reflection', () => {
+      const input = document.createElement('input')
+      input.name = 'field'
+      expect(input.name).to.equal('field')
+    })
+
+    it('HTMLInputElement_readOnly - readOnly property reflection', () => {
+      const input = document.createElement('input')
+      input.readOnly = true
+      expect(input.readOnly).to.equal(true)
+    })
+
+    it('HTMLInputElement_size - size property reflection', () => {
+      const input = document.createElement('input')
+      input.size = 30
+      expect(input.size).to.equal(30)
+    })
+
+    it('HTMLInputElement_src - src property reflection', () => {
+      const input = document.createElement('input')
+      input.src = 'image.png'
+      expect(input.src).to.include('image.png')
+    })
+
+    it('HTMLInputElement_tabIndex - tabIndex property reflection', () => {
+      const input = document.createElement('input')
+      input.tabIndex = 7
+      expect(input.tabIndex).to.equal(7)
+    })
+
+    it('HTMLInputElement_useMap - useMap property reflection', () => {
+      const input = document.createElement('input')
+      input.useMap = '#map'
+      expect(input.useMap).to.equal('#map')
+    })
+
+    it('HTMLInputElement_value - value property reflection', () => {
+      const input = document.createElement('input')
+      input.value = 'hello'
+      expect(input.value).to.equal('hello')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -202,9 +424,22 @@ describe('level2/html', () => {
     })
 
     // Skipped: requires property reflection
-    it.skip('HTMLLabelElement_form - requires form property')
-    it.skip('HTMLLabelElement_accessKey - requires accessKey property')
-    it.skip('HTMLLabelElement_htmlFor - requires htmlFor property')
+    it('HTMLLabelElement_form - form returns null', () => {
+      const label = document.createElement('label')
+      expect(label.form).to.equal(null)
+    })
+
+    it('HTMLLabelElement_accessKey - accessKey property reflection', () => {
+      const label = document.createElement('label')
+      label.accessKey = 'l'
+      expect(label.accessKey).to.equal('l')
+    })
+
+    it('HTMLLabelElement_htmlFor - htmlFor property reflection', () => {
+      const label = document.createElement('label')
+      label.htmlFor = 'input-id'
+      expect(label.htmlFor).to.equal('input-id')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -218,13 +453,47 @@ describe('level2/html', () => {
 
     // Skipped: requires property reflection and form collection APIs
     it.skip('HTMLFormElement_elements - requires elements collection')
-    it.skip('HTMLFormElement_length - requires length property')
-    it.skip('HTMLFormElement_name - requires name property')
-    it.skip('HTMLFormElement_acceptCharset - requires acceptCharset property')
-    it.skip('HTMLFormElement_action - requires action property')
-    it.skip('HTMLFormElement_enctype - requires enctype property')
-    it.skip('HTMLFormElement_method - requires method property')
-    it.skip('HTMLFormElement_target - requires target property')
+
+    it('HTMLFormElement_length - length returns 0', () => {
+      const form = document.createElement('form')
+      expect(form.length).to.equal(0)
+    })
+
+    it('HTMLFormElement_name - name property reflection', () => {
+      const form = document.createElement('form')
+      form.name = 'myform'
+      expect(form.name).to.equal('myform')
+    })
+
+    it('HTMLFormElement_acceptCharset - acceptCharset property reflection', () => {
+      const form = document.createElement('form')
+      form.acceptCharset = 'utf-8'
+      expect(form.acceptCharset).to.equal('utf-8')
+    })
+
+    it('HTMLFormElement_action - action property reflection', () => {
+      const form = document.createElement('form')
+      form.action = '/submit'
+      expect(form.action).to.include('/submit')
+    })
+
+    it('HTMLFormElement_enctype - enctype property reflection', () => {
+      const form = document.createElement('form')
+      form.enctype = 'multipart/form-data'
+      expect(form.enctype).to.equal('multipart/form-data')
+    })
+
+    it('HTMLFormElement_method - method property reflection', () => {
+      const form = document.createElement('form')
+      form.method = 'post'
+      expect(form.method).to.equal('post')
+    })
+
+    it('HTMLFormElement_target - target property reflection', () => {
+      const form = document.createElement('form')
+      form.target = '_blank'
+      expect(form.target).to.equal('_blank')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -245,18 +514,77 @@ describe('level2/html', () => {
     // Skipped: requires property reflection
     // alt, border, height, hspace, isMap, longDesc, lowSrc, name, src,
     // useMap, vspace, width
-    it.skip('HTMLImageElement_alt - requires alt property')
-    it.skip('HTMLImageElement_border - requires border property')
-    it.skip('HTMLImageElement_height - requires height property')
-    it.skip('HTMLImageElement_hspace - requires hspace property')
-    it.skip('HTMLImageElement_isMap - requires isMap property')
-    it.skip('HTMLImageElement_longDesc - requires longDesc property')
-    it.skip('HTMLImageElement_lowSrc - requires lowSrc property')
-    it.skip('HTMLImageElement_name - requires name property')
-    it.skip('HTMLImageElement_src - requires src property reflection')
-    it.skip('HTMLImageElement_useMap - requires useMap property')
-    it.skip('HTMLImageElement_vspace - requires vspace property')
-    it.skip('HTMLImageElement_width - requires width property')
+    it('HTMLImageElement_alt - alt property reflection', () => {
+      const img = document.createElement('img')
+      img.alt = 'photo'
+      expect(img.alt).to.equal('photo')
+    })
+
+    it('HTMLImageElement_border - border property reflection', () => {
+      const img = document.createElement('img')
+      img.border = '1'
+      expect(img.border).to.equal('1')
+    })
+
+    it('HTMLImageElement_height - height property reflection', () => {
+      const img = document.createElement('img')
+      img.height = 100
+      expect(img.height).to.equal(100)
+    })
+
+    it('HTMLImageElement_hspace - hspace property reflection', () => {
+      const img = document.createElement('img')
+      img.hspace = 5
+      expect(img.hspace).to.equal(5)
+    })
+
+    it('HTMLImageElement_isMap - isMap property reflection', () => {
+      const img = document.createElement('img')
+      img.isMap = true
+      expect(img.isMap).to.equal(true)
+    })
+
+    it('HTMLImageElement_longDesc - longDesc property reflection', () => {
+      const img = document.createElement('img')
+      img.longDesc = 'desc.html'
+      expect(img.longDesc).to.include('desc.html')
+    })
+
+    it('HTMLImageElement_lowSrc - lowSrc property reflection', () => {
+      const img = document.createElement('img')
+      img.lowSrc = 'low.png'
+      expect(img.lowSrc).to.include('low.png')
+    })
+
+    it('HTMLImageElement_name - name property reflection', () => {
+      const img = document.createElement('img')
+      img.name = 'img1'
+      expect(img.name).to.equal('img1')
+    })
+
+    it('HTMLImageElement_src - src property reflection', () => {
+      const img = document.createElement('img')
+      img.src = 'photo.png'
+      expect(img.src).to.include('photo.png')
+    })
+
+    it('HTMLImageElement_useMap - useMap property reflection', () => {
+      const img = document.createElement('img')
+      img.useMap = '#map'
+      expect(img.useMap).to.equal('#map')
+    })
+
+    it('HTMLImageElement_vspace - vspace property reflection', () => {
+      const img = document.createElement('img')
+      img.vspace = 10
+      expect(img.vspace).to.equal(10)
+    })
+
+    it('HTMLImageElement_width - width property reflection', () => {
+      const img = document.createElement('img')
+      img.width = 200
+      expect(img.width).to.equal(200)
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -304,7 +632,11 @@ describe('level2/html', () => {
     })
 
     // Skipped: requires align property reflection for each heading level
-    it.skip('HTMLHeadingElement_h1_align through h6_align - requires align property reflection')
+    it('HTMLHeadingElement_h1_align - align property reflection', () => {
+      const h1 = document.createElement('h1')
+      h1.align = 'center'
+      expect(h1.align).to.equal('center')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -317,8 +649,17 @@ describe('level2/html', () => {
     })
 
     // Skipped: requires property reflection
-    it.skip('HTMLUListElement_compact - requires compact property')
-    it.skip('HTMLUListElement_type - requires type property')
+    it('HTMLUListElement_compact - compact property reflection', () => {
+      const ul = document.createElement('ul')
+      ul.compact = true
+      expect(ul.compact).to.equal(true)
+    })
+
+    it('HTMLUListElement_type - type property reflection', () => {
+      const ul = document.createElement('ul')
+      ul.type = 'disc'
+      expect(ul.type).to.equal('disc')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -331,8 +672,17 @@ describe('level2/html', () => {
     })
 
     // Skipped: requires property reflection
-    it.skip('HTMLLIElement_type - requires type property')
-    it.skip('HTMLLIElement_value - requires value property')
+    it('HTMLLIElement_type - type property reflection', () => {
+      const li = document.createElement('li')
+      li.type = 'square'
+      expect(li.type).to.equal('square')
+    })
+
+    it('HTMLLIElement_value - value property reflection', () => {
+      const li = document.createElement('li')
+      li.value = 5
+      expect(li.value).to.equal(5)
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -378,12 +728,41 @@ describe('level2/html', () => {
     })
 
     // Skipped: requires property reflection
-    it.skip('HTMLBodyElement_aLink - requires aLink property')
-    it.skip('HTMLBodyElement_background - requires background property')
-    it.skip('HTMLBodyElement_bgColor - requires bgColor property')
-    it.skip('HTMLBodyElement_link - requires link property')
-    it.skip('HTMLBodyElement_text - requires text property')
-    it.skip('HTMLBodyElement_vLink - requires vLink property')
+    it('HTMLBodyElement_aLink - aLink property reflection', () => {
+      document.body.aLink = '#ff0000'
+      expect(document.body.aLink).to.equal('#ff0000')
+      document.body.removeAttribute('alink')
+    })
+
+    it('HTMLBodyElement_background - background property reflection', () => {
+      document.body.background = 'bg.png'
+      expect(document.body.background).to.equal('bg.png')
+      document.body.removeAttribute('background')
+    })
+
+    it('HTMLBodyElement_bgColor - bgColor property reflection', () => {
+      document.body.bgColor = '#ffffff'
+      expect(document.body.bgColor).to.equal('#ffffff')
+      document.body.removeAttribute('bgcolor')
+    })
+
+    it('HTMLBodyElement_link - link property reflection', () => {
+      document.body.link = '#0000ff'
+      expect(document.body.link).to.equal('#0000ff')
+      document.body.removeAttribute('link')
+    })
+
+    it('HTMLBodyElement_text - text property reflection', () => {
+      document.body.text = '#000000'
+      expect(document.body.text).to.equal('#000000')
+      document.body.removeAttribute('text')
+    })
+
+    it('HTMLBodyElement_vLink - vLink property reflection', () => {
+      document.body.vLink = '#800080'
+      expect(document.body.vLink).to.equal('#800080')
+      document.body.removeAttribute('vlink')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -517,185 +896,974 @@ describe('level2/html', () => {
   })
 
   // ---------------------------------------------------------------------------
-  // Elements NOT supported by lazy-dom (all skipped)
+  // HTMLAreaElement
   // ---------------------------------------------------------------------------
-  describe('Unsupported elements', () => {
-    describe('HTMLAreaElement', () => {
-      // 8 tests: accessKey, alt, coords, href, noHref, shape, tabIndex, target
-      it.skip('HTMLAreaElement01-08 - requires HTMLAreaElement and property reflection')
+  describe('HTMLAreaElement', () => {
+    it('HTMLAreaElement01 - accessKey property reflection', () => {
+      const area = document.createElement('area') as any
+      area.accessKey = 'a'
+      expect(area.accessKey).to.equal('a')
     })
 
-    describe('HTMLBRElement', () => {
-      it.skip('HTMLBRElement01 - requires br.clear property')
+    it('HTMLAreaElement02 - alt property reflection', () => {
+      const area = document.createElement('area') as any
+      area.alt = 'description'
+      expect(area.alt).to.equal('description')
     })
 
-    describe('HTMLBaseElement', () => {
-      // 2 tests: href, target
-      it.skip('HTMLBaseElement01-02 - requires HTMLBaseElement and property reflection')
+    it('HTMLAreaElement03 - coords property reflection', () => {
+      const area = document.createElement('area') as any
+      area.coords = '0,0,50,50'
+      expect(area.coords).to.equal('0,0,50,50')
     })
 
-    describe('HTMLDListElement', () => {
-      // 4 tests: compact and related properties
-      it.skip('HTMLDListElement01-04 - requires HTMLDListElement and compact property')
+    it('HTMLAreaElement04 - href property reflection', () => {
+      const area = document.createElement('area') as any
+      area.href = 'http://example.com'
+      expect(area.href).to.include('example.com')
     })
 
+    it('HTMLAreaElement05 - noHref property reflection', () => {
+      const area = document.createElement('area') as any
+      area.noHref = true
+      expect(area.noHref).to.equal(true)
+    })
+
+    it('HTMLAreaElement06 - shape property reflection', () => {
+      const area = document.createElement('area') as any
+      area.shape = 'rect'
+      expect(area.shape).to.equal('rect')
+    })
+
+    it('HTMLAreaElement07 - tabIndex property reflection', () => {
+      const area = document.createElement('area') as any
+      area.tabIndex = 5
+      expect(area.tabIndex).to.equal(5)
+    })
+
+    it('HTMLAreaElement08 - target property reflection', () => {
+      const area = document.createElement('area') as any
+      area.target = '_blank'
+      expect(area.target).to.equal('_blank')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLBRElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLBRElement', () => {
+    it('HTMLBRElement01 - clear property reflection', () => {
+      const br = document.createElement('br') as any
+      br.clear = 'all'
+      expect(br.clear).to.equal('all')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLBaseElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLBaseElement', () => {
+    it('HTMLBaseElement01 - href property reflection', () => {
+      const base = document.createElement('base') as any
+      base.href = 'http://example.com/'
+      expect(base.href).to.include('example.com')
+    })
+
+    it('HTMLBaseElement02 - target property reflection', () => {
+      const base = document.createElement('base') as any
+      base.target = '_blank'
+      expect(base.target).to.equal('_blank')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLDListElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLDListElement', () => {
+    it('HTMLDListElement01 - compact property reflection', () => {
+      const dl = document.createElement('dl') as any
+      dl.compact = true
+      expect(dl.compact).to.equal(true)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Deprecated elements (skipped)
+  // ---------------------------------------------------------------------------
+  describe('Deprecated elements', () => {
     describe('HTMLDirectoryElement', () => {
-      // 2 tests: compact
       it.skip('HTMLDirectoryElement01-02 - requires HTMLDirectoryElement (deprecated)')
     })
 
-    describe('HTMLFieldSetElement', () => {
-      // 6 tests: form and related properties
-      it.skip('HTMLFieldSetElement01-06 - requires HTMLFieldSetElement and form property')
-    })
-
     describe('HTMLFontElement', () => {
-      // 7 tests: color, face, size
       it.skip('HTMLFontElement01-07 - requires HTMLFontElement (deprecated)')
     })
 
     describe('HTMLFrameElement', () => {
-      // 9 tests: frameBorder, longDesc, marginHeight, marginWidth, name, noResize, scrolling, src, contentDocument
       it.skip('HTMLFrameElement01-09 - requires HTMLFrameElement (deprecated)')
     })
 
     describe('HTMLFrameSetElement', () => {
-      // 6 tests: cols, rows
       it.skip('HTMLFrameSetElement01-06 - requires HTMLFrameSetElement (deprecated)')
-    })
-
-    describe('HTMLHRElement', () => {
-      // 2 tests: align, noShade, size, width
-      it.skip('HTMLHRElement01-02 - requires HTMLHRElement and property reflection')
-    })
-
-    describe('HTMLHtmlElement', () => {
-      // 4 tests: version
-      it.skip('HTMLHtmlElement01-04 - requires HTMLHtmlElement and version property')
-    })
-
-    describe('HTMLIFrameElement', () => {
-      // 7 tests: align, frameBorder, height, longDesc, marginHeight, marginWidth, name, scrolling, src, width
-      it.skip('HTMLIFrameElement01-07 - requires HTMLIFrameElement property reflection')
     })
 
     describe('HTMLIsIndexElement', () => {
       it.skip('HTMLIsIndexElement01 - requires HTMLIsIndexElement (deprecated)')
     })
+  })
 
-    describe('HTMLLegendElement', () => {
-      // 7 tests: form, accessKey, align
-      it.skip('HTMLLegendElement01-07 - requires HTMLLegendElement and form property')
+  // ---------------------------------------------------------------------------
+  // HTMLFieldSetElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLFieldSetElement', () => {
+    it('HTMLFieldSetElement01 - form returns null', () => {
+      const fieldset = document.createElement('fieldset') as any
+      expect(fieldset.form).to.equal(null)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLHRElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLHRElement', () => {
+    it('HTMLHRElement01 - align property reflection', () => {
+      const hr = document.createElement('hr') as any
+      hr.align = 'center'
+      expect(hr.align).to.equal('center')
     })
 
-    describe('HTMLLinkElement', () => {
-      // 7 tests: charset, disabled, href, hreflang, media, rel, rev, target, type
-      it.skip('HTMLLinkElement01-07 - requires HTMLLinkElement and property reflection')
+    it('HTMLHRElement02 - noShade property reflection', () => {
+      const hr = document.createElement('hr') as any
+      hr.noShade = true
+      expect(hr.noShade).to.equal(true)
     })
 
-    describe('HTMLMapElement', () => {
-      // 4 tests: areas collection, name
-      it.skip('HTMLMapElement01-04 - requires HTMLMapElement and areas collection')
+    it('HTMLHRElement03 - size property reflection', () => {
+      const hr = document.createElement('hr') as any
+      hr.size = '2'
+      expect(hr.size).to.equal('2')
     })
 
-    describe('HTMLMetaElement', () => {
-      // 6 tests: content, httpEquiv, name, scheme
-      it.skip('HTMLMetaElement01-06 - requires HTMLMetaElement and property reflection')
+    it('HTMLHRElement04 - width property reflection', () => {
+      const hr = document.createElement('hr') as any
+      hr.width = '100%'
+      expect(hr.width).to.equal('100%')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLHtmlElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLHtmlElement', () => {
+    it('HTMLHtmlElement01 - version property reflection', () => {
+      const html = document.createElement('html') as any
+      html.version = '-//W3C//DTD HTML 4.01//EN'
+      expect(html.version).to.equal('-//W3C//DTD HTML 4.01//EN')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLIFrameElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLIFrameElement', () => {
+    it('HTMLIFrameElement01 - align property reflection', () => {
+      const iframe = document.createElement('iframe') as any
+      iframe.align = 'left'
+      expect(iframe.align).to.equal('left')
     })
 
-    describe('HTMLModElement', () => {
-      // 4 tests: cite, dateTime (for ins/del elements)
-      it.skip('HTMLModElement01-04 - requires HTMLModElement and property reflection')
+    it('HTMLIFrameElement02 - frameBorder property reflection', () => {
+      const iframe = document.createElement('iframe') as any
+      iframe.frameBorder = '1'
+      expect(iframe.frameBorder).to.equal('1')
     })
 
-    describe('HTMLOListElement', () => {
-      // 4 tests: compact, start, type
-      it.skip('HTMLOListElement01-04 - requires HTMLOListElement and property reflection')
+    it('HTMLIFrameElement03 - height property reflection', () => {
+      const iframe = document.createElement('iframe') as any
+      iframe.height = '300'
+      expect(iframe.height).to.equal('300')
     })
 
-    describe('HTMLObjectElement', () => {
-      // 8 tests: form, code, align, archive, border, codeBase, codeType, data, etc.
-      it.skip('HTMLObjectElement01-08 - requires HTMLObjectElement and property reflection')
+    it('HTMLIFrameElement04 - longDesc property reflection', () => {
+      const iframe = document.createElement('iframe') as any
+      iframe.longDesc = 'desc.html'
+      expect(iframe.longDesc).to.include('desc.html')
     })
 
-    describe('HTMLOptGroupElement', () => {
-      // 2 tests: disabled, label
-      it.skip('HTMLOptGroupElement01-02 - requires HTMLOptGroupElement')
+    it('HTMLIFrameElement05 - name property reflection', () => {
+      const iframe = document.createElement('iframe') as any
+      iframe.name = 'frame1'
+      expect(iframe.name).to.equal('frame1')
     })
 
-    describe('HTMLOptionElement', () => {
-      // 12 tests: form, defaultSelected, text, index, disabled, label, selected, value
-      it.skip('HTMLOptionElement01-12 - requires HTMLOptionElement and property reflection')
+    it('HTMLIFrameElement06 - src property reflection', () => {
+      const iframe = document.createElement('iframe') as any
+      iframe.src = 'page.html'
+      expect(iframe.src).to.include('page.html')
     })
 
-    describe('HTMLParamElement', () => {
-      // 3 tests: name, type, value, valueType
-      it.skip('HTMLParamElement01-03 - requires HTMLParamElement')
+    it('HTMLIFrameElement07 - width property reflection', () => {
+      const iframe = document.createElement('iframe') as any
+      iframe.width = '500'
+      expect(iframe.width).to.equal('500')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLLegendElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLLegendElement', () => {
+    it('HTMLLegendElement01 - form returns null', () => {
+      const legend = document.createElement('legend') as any
+      expect(legend.form).to.equal(null)
     })
 
-    describe('HTMLQuoteElement', () => {
-      // 10 tests: cite (for blockquote and q elements)
-      it.skip('HTMLQuoteElement01-10 - requires HTMLQuoteElement and cite property')
+    it('HTMLLegendElement02 - accessKey property reflection', () => {
+      const legend = document.createElement('legend') as any
+      legend.accessKey = 'l'
+      expect(legend.accessKey).to.equal('l')
     })
 
-    describe('HTMLScriptElement', () => {
-      // 11 tests: text, charset, defer, event, htmlFor, src, type
-      it.skip('HTMLScriptElement01-11 - requires HTMLScriptElement and property reflection')
+    it('HTMLLegendElement03 - align property reflection', () => {
+      const legend = document.createElement('legend') as any
+      legend.align = 'top'
+      expect(legend.align).to.equal('top')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLLinkElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLLinkElement', () => {
+    it('HTMLLinkElement01 - charset property reflection', () => {
+      const link = document.createElement('link') as any
+      link.charset = 'utf-8'
+      expect(link.charset).to.equal('utf-8')
     })
 
-    describe('HTMLSelectElement', () => {
-      // 25 tests: type, selectedIndex, value, length, form, options, disabled, multiple, name, size, tabIndex, add, remove
-      it.skip('HTMLSelectElement01-25 - requires HTMLSelectElement and options collection')
+    it('HTMLLinkElement02 - disabled property reflection', () => {
+      const link = document.createElement('link') as any
+      link.disabled = true
+      expect(link.disabled).to.equal(true)
     })
 
-    describe('HTMLStyleElement', () => {
-      // 7 tests: disabled, media, type
-      it.skip('HTMLStyleElement01-07 - requires HTMLStyleElement and property reflection')
+    it('HTMLLinkElement03 - href property reflection', () => {
+      const link = document.createElement('link') as any
+      link.href = 'style.css'
+      expect(link.href).to.include('style.css')
     })
 
-    describe('HTMLTableElement', () => {
-      // 29 tests: caption, tHead, tFoot, rows, tBodies, align, bgColor, border, cellPadding, cellSpacing, frame, rules, summary, width, createTHead, deleteTHead, createTFoot, deleteTFoot, createCaption, deleteCaption, insertRow, deleteRow
-      it.skip('HTMLTableElement01-29 - requires HTMLTableElement and table navigation APIs')
+    it('HTMLLinkElement04 - hreflang property reflection', () => {
+      const link = document.createElement('link') as any
+      link.hreflang = 'en'
+      expect(link.hreflang).to.equal('en')
     })
 
-    describe('HTMLTableCaptionElement', () => {
-      // 3 tests: align
-      it.skip('HTMLTableCaptionElement01-03 - requires HTMLTableCaptionElement')
+    it('HTMLLinkElement05 - media property reflection', () => {
+      const link = document.createElement('link') as any
+      link.media = 'screen'
+      expect(link.media).to.equal('screen')
     })
 
-    describe('HTMLTableCellElement', () => {
-      // 12 tests: cellIndex, abbr, align, axis, bgColor, ch, chOff, colSpan, headers, height, noWrap, rowSpan, scope, vAlign, width
-      it.skip('HTMLTableCellElement01-12 - requires HTMLTableCellElement and property reflection')
+    it('HTMLLinkElement06 - rel property reflection', () => {
+      const link = document.createElement('link') as any
+      link.rel = 'stylesheet'
+      expect(link.rel).to.equal('stylesheet')
     })
 
-    describe('HTMLTableColElement', () => {
-      // 8 tests: align, ch, chOff, span, vAlign, width
-      it.skip('HTMLTableColElement01-08 - requires HTMLTableColElement and property reflection')
+    it('HTMLLinkElement07 - type property reflection', () => {
+      const link = document.createElement('link') as any
+      link.type = 'text/css'
+      expect(link.type).to.equal('text/css')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLMapElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLMapElement', () => {
+    it('HTMLMapElement01 - name property reflection', () => {
+      const map = document.createElement('map') as any
+      map.name = 'mymap'
+      expect(map.name).to.equal('mymap')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLMetaElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLMetaElement', () => {
+    it('HTMLMetaElement01 - content property reflection', () => {
+      const meta = document.createElement('meta') as any
+      meta.content = 'text/html; charset=utf-8'
+      expect(meta.content).to.equal('text/html; charset=utf-8')
     })
 
-    describe('HTMLTableRowElement', () => {
-      // 22 tests: rowIndex, sectionRowIndex, cells, align, bgColor, ch, chOff, vAlign, insertCell, deleteCell
-      it.skip('HTMLTableRowElement01-22 - requires HTMLTableRowElement and row navigation APIs')
+    it('HTMLMetaElement02 - httpEquiv property reflection', () => {
+      const meta = document.createElement('meta') as any
+      meta.httpEquiv = 'Content-Type'
+      expect(meta.httpEquiv).to.equal('Content-Type')
     })
 
-    describe('HTMLTableSectionElement', () => {
-      // 14 tests: align, ch, chOff, vAlign, rows, insertRow, deleteRow
-      it.skip('HTMLTableSectionElement01-14 - requires HTMLTableSectionElement and section navigation APIs')
+    it('HTMLMetaElement03 - name property reflection', () => {
+      const meta = document.createElement('meta') as any
+      meta.name = 'viewport'
+      expect(meta.name).to.equal('viewport')
     })
 
-    describe('HTMLTextAreaElement', () => {
-      // 16 tests: form, defaultValue, accessKey, cols, disabled, name, readOnly, rows, tabIndex, type, value
-      it.skip('HTMLTextAreaElement01-16 - requires HTMLTextAreaElement and property reflection')
+    it('HTMLMetaElement04 - scheme property reflection', () => {
+      const meta = document.createElement('meta') as any
+      meta.scheme = 'DCMI.Period'
+      expect(meta.scheme).to.equal('DCMI.Period')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLModElement (ins/del)
+  // ---------------------------------------------------------------------------
+  describe('HTMLModElement', () => {
+    it('HTMLModElement01 - cite property on ins', () => {
+      const ins = document.createElement('ins') as any
+      ins.cite = 'http://example.com'
+      expect(ins.cite).to.include('example.com')
     })
 
-    describe('HTMLTitleElement', () => {
-      // 2 tests: text
-      it.skip('HTMLTitleElement01-02 - requires HTMLTitleElement and text property')
+    it('HTMLModElement02 - dateTime property on ins', () => {
+      const ins = document.createElement('ins') as any
+      ins.dateTime = '2024-01-01'
+      expect(ins.dateTime).to.equal('2024-01-01')
     })
 
-    describe('HTMLDocument', () => {
-      // Various tests: document.title, document.body set, document.cookie, document.domain, etc.
-      it.skip('HTMLDocument01-10 - requires document.title, document.cookie, document.domain, etc.')
+    it('HTMLModElement03 - cite property on del', () => {
+      const del = document.createElement('del') as any
+      del.cite = 'http://example.com'
+      expect(del.cite).to.include('example.com')
     })
+
+    it('HTMLModElement04 - dateTime property on del', () => {
+      const del = document.createElement('del') as any
+      del.dateTime = '2024-01-01'
+      expect(del.dateTime).to.equal('2024-01-01')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLOListElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLOListElement', () => {
+    it('HTMLOListElement01 - compact property reflection', () => {
+      const ol = document.createElement('ol') as any
+      ol.compact = true
+      expect(ol.compact).to.equal(true)
+    })
+
+    it('HTMLOListElement02 - start property reflection', () => {
+      const ol = document.createElement('ol') as any
+      ol.start = 5
+      expect(ol.start).to.equal(5)
+    })
+
+    it('HTMLOListElement03 - type property reflection', () => {
+      const ol = document.createElement('ol') as any
+      ol.type = 'a'
+      expect(ol.type).to.equal('a')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLObjectElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLObjectElement', () => {
+    it('HTMLObjectElement01 - form returns null', () => {
+      const obj = document.createElement('object') as any
+      expect(obj.form).to.equal(null)
+    })
+
+    it('HTMLObjectElement02 - code property reflection', () => {
+      const obj = document.createElement('object') as any
+      obj.code = 'MyApplet.class'
+      expect(obj.code).to.equal('MyApplet.class')
+    })
+
+    it('HTMLObjectElement03 - align property reflection', () => {
+      const obj = document.createElement('object') as any
+      obj.align = 'middle'
+      expect(obj.align).to.equal('middle')
+    })
+
+    it('HTMLObjectElement04 - data property reflection', () => {
+      const obj = document.createElement('object') as any
+      obj.data = 'movie.swf'
+      expect(obj.data).to.include('movie.swf')
+    })
+
+    it('HTMLObjectElement05 - type property reflection', () => {
+      const obj = document.createElement('object') as any
+      obj.type = 'application/x-shockwave-flash'
+      expect(obj.type).to.equal('application/x-shockwave-flash')
+    })
+
+    it('HTMLObjectElement06 - name property reflection', () => {
+      const obj = document.createElement('object') as any
+      obj.name = 'myobject'
+      expect(obj.name).to.equal('myobject')
+    })
+
+    it('HTMLObjectElement07 - width property reflection', () => {
+      const obj = document.createElement('object') as any
+      obj.width = '400'
+      expect(obj.width).to.equal('400')
+    })
+
+    it('HTMLObjectElement08 - height property reflection', () => {
+      const obj = document.createElement('object') as any
+      obj.height = '300'
+      expect(obj.height).to.equal('300')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLOptGroupElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLOptGroupElement', () => {
+    it('HTMLOptGroupElement01 - disabled property reflection', () => {
+      const optgroup = document.createElement('optgroup') as any
+      optgroup.disabled = true
+      expect(optgroup.disabled).to.equal(true)
+    })
+
+    it('HTMLOptGroupElement02 - label property reflection', () => {
+      const optgroup = document.createElement('optgroup') as any
+      optgroup.label = 'Group 1'
+      expect(optgroup.label).to.equal('Group 1')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLOptionElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLOptionElement', () => {
+    it('HTMLOptionElement01 - form returns null', () => {
+      const option = document.createElement('option') as any
+      expect(option.form).to.equal(null)
+    })
+
+    it('HTMLOptionElement02 - defaultSelected property reflection', () => {
+      const option = document.createElement('option') as any
+      option.defaultSelected = true
+      expect(option.defaultSelected).to.equal(true)
+    })
+
+    it('HTMLOptionElement03 - text returns textContent', () => {
+      const option = document.createElement('option') as any
+      option.appendChild(document.createTextNode('Option 1'))
+      expect(option.text).to.equal('Option 1')
+    })
+
+    it('HTMLOptionElement04 - disabled property reflection', () => {
+      const option = document.createElement('option') as any
+      option.disabled = true
+      expect(option.disabled).to.equal(true)
+    })
+
+    it('HTMLOptionElement05 - label property reflection', () => {
+      const option = document.createElement('option') as any
+      option.label = 'Opt1'
+      expect(option.label).to.equal('Opt1')
+    })
+
+    it('HTMLOptionElement06 - value property reflection', () => {
+      const option = document.createElement('option') as any
+      option.value = 'val1'
+      expect(option.value).to.equal('val1')
+    })
+
+    it('HTMLOptionElement07 - selected property', () => {
+      const option = document.createElement('option') as any
+      option.selected = true
+      expect(option.selected).to.equal(true)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLParamElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLParamElement', () => {
+    it('HTMLParamElement01 - name property reflection', () => {
+      const param = document.createElement('param') as any
+      param.name = 'movie'
+      expect(param.name).to.equal('movie')
+    })
+
+    it('HTMLParamElement02 - value property reflection', () => {
+      const param = document.createElement('param') as any
+      param.value = 'movie.swf'
+      expect(param.value).to.equal('movie.swf')
+    })
+
+    it('HTMLParamElement03 - valueType property reflection', () => {
+      const param = document.createElement('param') as any
+      param.valueType = 'data'
+      expect(param.valueType).to.equal('data')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLQuoteElement (blockquote, q)
+  // ---------------------------------------------------------------------------
+  describe('HTMLQuoteElement', () => {
+    it('HTMLQuoteElement01 - cite property on blockquote', () => {
+      const bq = document.createElement('blockquote') as any
+      bq.cite = 'http://example.com'
+      expect(bq.cite).to.include('example.com')
+    })
+
+    it('HTMLQuoteElement02 - cite property on q', () => {
+      const q = document.createElement('q') as any
+      q.cite = 'http://example.com'
+      expect(q.cite).to.include('example.com')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLScriptElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLScriptElement', () => {
+    it('HTMLScriptElement01 - text property', () => {
+      const script = document.createElement('script') as any
+      script.text = 'alert("hello")'
+      expect(script.text).to.equal('alert("hello")')
+    })
+
+    it('HTMLScriptElement02 - charset property reflection', () => {
+      const script = document.createElement('script') as any
+      script.charset = 'utf-8'
+      expect(script.charset).to.equal('utf-8')
+    })
+
+    it('HTMLScriptElement03 - defer property reflection', () => {
+      const script = document.createElement('script') as any
+      script.defer = true
+      expect(script.defer).to.equal(true)
+    })
+
+    it('HTMLScriptElement04 - event property reflection', () => {
+      const script = document.createElement('script') as any
+      script.event = 'onclick'
+      expect(script.event).to.equal('onclick')
+    })
+
+    it('HTMLScriptElement05 - htmlFor property reflection', () => {
+      const script = document.createElement('script') as any
+      script.htmlFor = 'button1'
+      expect(script.htmlFor).to.equal('button1')
+    })
+
+    it('HTMLScriptElement06 - src property reflection', () => {
+      const script = document.createElement('script') as any
+      script.src = 'script.js'
+      expect(script.src).to.include('script.js')
+    })
+
+    it('HTMLScriptElement07 - type property reflection', () => {
+      const script = document.createElement('script') as any
+      script.type = 'text/javascript'
+      expect(script.type).to.equal('text/javascript')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLSelectElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLSelectElement', () => {
+    it('HTMLSelectElement01 - type returns select-one by default', () => {
+      const select = document.createElement('select') as any
+      expect(select.type).to.equal('select-one')
+    })
+
+    it('HTMLSelectElement02 - type returns select-multiple when multiple', () => {
+      const select = document.createElement('select') as any
+      select.multiple = true
+      expect(select.type).to.equal('select-multiple')
+    })
+
+    it('HTMLSelectElement03 - form returns null', () => {
+      const select = document.createElement('select') as any
+      expect(select.form).to.equal(null)
+    })
+
+    it('HTMLSelectElement04 - disabled property reflection', () => {
+      const select = document.createElement('select') as any
+      select.disabled = true
+      expect(select.disabled).to.equal(true)
+    })
+
+    it('HTMLSelectElement05 - multiple property reflection', () => {
+      const select = document.createElement('select') as any
+      select.multiple = true
+      expect(select.multiple).to.equal(true)
+    })
+
+    it('HTMLSelectElement06 - name property reflection', () => {
+      const select = document.createElement('select') as any
+      select.name = 'myselect'
+      expect(select.name).to.equal('myselect')
+    })
+
+    it('HTMLSelectElement07 - size property reflection', () => {
+      const select = document.createElement('select') as any
+      select.size = 5
+      expect(select.size).to.equal(5)
+    })
+
+    it('HTMLSelectElement08 - tabIndex property reflection', () => {
+      const select = document.createElement('select') as any
+      select.tabIndex = 3
+      expect(select.tabIndex).to.equal(3)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLStyleElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLStyleElement', () => {
+    it('HTMLStyleElement01 - disabled property reflection', () => {
+      const style = document.createElement('style') as any
+      style.disabled = true
+      expect(style.disabled).to.equal(true)
+    })
+
+    it('HTMLStyleElement02 - media property reflection', () => {
+      const style = document.createElement('style') as any
+      style.media = 'screen'
+      expect(style.media).to.equal('screen')
+    })
+
+    it('HTMLStyleElement03 - type property reflection', () => {
+      const style = document.createElement('style') as any
+      style.type = 'text/css'
+      expect(style.type).to.equal('text/css')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLTableElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLTableElement', () => {
+    it('HTMLTableElement01 - align property reflection', () => {
+      const table = document.createElement('table') as any
+      table.align = 'center'
+      expect(table.align).to.equal('center')
+    })
+
+    it('HTMLTableElement02 - bgColor property reflection', () => {
+      const table = document.createElement('table') as any
+      table.bgColor = '#ffffff'
+      expect(table.bgColor).to.equal('#ffffff')
+    })
+
+    it('HTMLTableElement03 - border property reflection', () => {
+      const table = document.createElement('table') as any
+      table.border = '1'
+      expect(table.border).to.equal('1')
+    })
+
+    it('HTMLTableElement04 - cellPadding property reflection', () => {
+      const table = document.createElement('table') as any
+      table.cellPadding = '5'
+      expect(table.cellPadding).to.equal('5')
+    })
+
+    it('HTMLTableElement05 - cellSpacing property reflection', () => {
+      const table = document.createElement('table') as any
+      table.cellSpacing = '2'
+      expect(table.cellSpacing).to.equal('2')
+    })
+
+    it('HTMLTableElement06 - summary property reflection', () => {
+      const table = document.createElement('table') as any
+      table.summary = 'Summary text'
+      expect(table.summary).to.equal('Summary text')
+    })
+
+    it('HTMLTableElement07 - width property reflection', () => {
+      const table = document.createElement('table') as any
+      table.width = '100%'
+      expect(table.width).to.equal('100%')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLTableCaptionElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLTableCaptionElement', () => {
+    it('HTMLTableCaptionElement01 - align property reflection', () => {
+      const caption = document.createElement('caption') as any
+      caption.align = 'top'
+      expect(caption.align).to.equal('top')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLTableCellElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLTableCellElement', () => {
+    it('HTMLTableCellElement01 - abbr property reflection', () => {
+      const td = document.createElement('td') as any
+      td.abbr = 'Name'
+      expect(td.abbr).to.equal('Name')
+    })
+
+    it('HTMLTableCellElement02 - align property reflection', () => {
+      const td = document.createElement('td') as any
+      td.align = 'center'
+      expect(td.align).to.equal('center')
+    })
+
+    it('HTMLTableCellElement03 - axis property reflection', () => {
+      const td = document.createElement('td') as any
+      td.axis = 'expenses'
+      expect(td.axis).to.equal('expenses')
+    })
+
+    it('HTMLTableCellElement04 - bgColor property reflection', () => {
+      const td = document.createElement('td') as any
+      td.bgColor = '#ff0000'
+      expect(td.bgColor).to.equal('#ff0000')
+    })
+
+    it('HTMLTableCellElement05 - colSpan property reflection', () => {
+      const td = document.createElement('td') as any
+      td.colSpan = 3
+      expect(td.colSpan).to.equal(3)
+    })
+
+    it('HTMLTableCellElement06 - headers property reflection', () => {
+      const td = document.createElement('td') as any
+      td.headers = 'header1 header2'
+      expect(td.headers).to.equal('header1 header2')
+    })
+
+    it('HTMLTableCellElement07 - height property reflection', () => {
+      const td = document.createElement('td') as any
+      td.height = '50'
+      expect(td.height).to.equal('50')
+    })
+
+    it('HTMLTableCellElement08 - noWrap property reflection', () => {
+      const td = document.createElement('td') as any
+      td.noWrap = true
+      expect(td.noWrap).to.equal(true)
+    })
+
+    it('HTMLTableCellElement09 - rowSpan property reflection', () => {
+      const td = document.createElement('td') as any
+      td.rowSpan = 2
+      expect(td.rowSpan).to.equal(2)
+    })
+
+    it('HTMLTableCellElement10 - scope property reflection', () => {
+      const td = document.createElement('td') as any
+      td.scope = 'col'
+      expect(td.scope).to.equal('col')
+    })
+
+    it('HTMLTableCellElement11 - vAlign property reflection', () => {
+      const td = document.createElement('td') as any
+      td.vAlign = 'top'
+      expect(td.vAlign).to.equal('top')
+    })
+
+    it('HTMLTableCellElement12 - width property reflection', () => {
+      const td = document.createElement('td') as any
+      td.width = '200'
+      expect(td.width).to.equal('200')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLTableColElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLTableColElement', () => {
+    it('HTMLTableColElement01 - align property reflection', () => {
+      const col = document.createElement('col') as any
+      col.align = 'center'
+      expect(col.align).to.equal('center')
+    })
+
+    it('HTMLTableColElement02 - ch property reflection', () => {
+      const col = document.createElement('col') as any
+      col.ch = '.'
+      expect(col.ch).to.equal('.')
+    })
+
+    it('HTMLTableColElement03 - chOff property reflection', () => {
+      const col = document.createElement('col') as any
+      col.chOff = '2'
+      expect(col.chOff).to.equal('2')
+    })
+
+    it('HTMLTableColElement04 - span property reflection', () => {
+      const col = document.createElement('col') as any
+      col.span = 3
+      expect(col.span).to.equal(3)
+    })
+
+    it('HTMLTableColElement05 - vAlign property reflection', () => {
+      const col = document.createElement('col') as any
+      col.vAlign = 'middle'
+      expect(col.vAlign).to.equal('middle')
+    })
+
+    it('HTMLTableColElement06 - width property reflection', () => {
+      const col = document.createElement('col') as any
+      col.width = '100'
+      expect(col.width).to.equal('100')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLTableRowElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLTableRowElement', () => {
+    it('HTMLTableRowElement01 - align property reflection', () => {
+      const tr = document.createElement('tr') as any
+      tr.align = 'center'
+      expect(tr.align).to.equal('center')
+    })
+
+    it('HTMLTableRowElement02 - bgColor property reflection', () => {
+      const tr = document.createElement('tr') as any
+      tr.bgColor = '#cccccc'
+      expect(tr.bgColor).to.equal('#cccccc')
+    })
+
+    it('HTMLTableRowElement03 - ch property reflection', () => {
+      const tr = document.createElement('tr') as any
+      tr.ch = '.'
+      expect(tr.ch).to.equal('.')
+    })
+
+    it('HTMLTableRowElement04 - chOff property reflection', () => {
+      const tr = document.createElement('tr') as any
+      tr.chOff = '1'
+      expect(tr.chOff).to.equal('1')
+    })
+
+    it('HTMLTableRowElement05 - vAlign property reflection', () => {
+      const tr = document.createElement('tr') as any
+      tr.vAlign = 'bottom'
+      expect(tr.vAlign).to.equal('bottom')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLTableSectionElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLTableSectionElement', () => {
+    it('HTMLTableSectionElement01 - align property on thead', () => {
+      const thead = document.createElement('thead') as any
+      thead.align = 'center'
+      expect(thead.align).to.equal('center')
+    })
+
+    it('HTMLTableSectionElement02 - ch property on tbody', () => {
+      const tbody = document.createElement('tbody') as any
+      tbody.ch = '.'
+      expect(tbody.ch).to.equal('.')
+    })
+
+    it('HTMLTableSectionElement03 - chOff property on tfoot', () => {
+      const tfoot = document.createElement('tfoot') as any
+      tfoot.chOff = '2'
+      expect(tfoot.chOff).to.equal('2')
+    })
+
+    it('HTMLTableSectionElement04 - vAlign property on tbody', () => {
+      const tbody = document.createElement('tbody') as any
+      tbody.vAlign = 'top'
+      expect(tbody.vAlign).to.equal('top')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLTextAreaElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLTextAreaElement', () => {
+    it('HTMLTextAreaElement01 - form returns null', () => {
+      const textarea = document.createElement('textarea') as any
+      expect(textarea.form).to.equal(null)
+    })
+
+    it('HTMLTextAreaElement02 - defaultValue property', () => {
+      const textarea = document.createElement('textarea') as any
+      textarea.defaultValue = 'default text'
+      expect(textarea.defaultValue).to.equal('default text')
+    })
+
+    it('HTMLTextAreaElement03 - cols property reflection', () => {
+      const textarea = document.createElement('textarea') as any
+      textarea.cols = 40
+      expect(textarea.cols).to.equal(40)
+    })
+
+    it('HTMLTextAreaElement04 - disabled property reflection', () => {
+      const textarea = document.createElement('textarea') as any
+      textarea.disabled = true
+      expect(textarea.disabled).to.equal(true)
+    })
+
+    it('HTMLTextAreaElement05 - name property reflection', () => {
+      const textarea = document.createElement('textarea') as any
+      textarea.name = 'comments'
+      expect(textarea.name).to.equal('comments')
+    })
+
+    it('HTMLTextAreaElement06 - readOnly property reflection', () => {
+      const textarea = document.createElement('textarea') as any
+      textarea.readOnly = true
+      expect(textarea.readOnly).to.equal(true)
+    })
+
+    it('HTMLTextAreaElement07 - rows property reflection', () => {
+      const textarea = document.createElement('textarea') as any
+      textarea.rows = 10
+      expect(textarea.rows).to.equal(10)
+    })
+
+    it('HTMLTextAreaElement08 - tabIndex property reflection', () => {
+      const textarea = document.createElement('textarea') as any
+      textarea.tabIndex = 4
+      expect(textarea.tabIndex).to.equal(4)
+    })
+
+    it('HTMLTextAreaElement09 - type returns textarea', () => {
+      const textarea = document.createElement('textarea') as any
+      expect(textarea.type).to.equal('textarea')
+    })
+
+    it('HTMLTextAreaElement10 - value property', () => {
+      const textarea = document.createElement('textarea') as any
+      textarea.value = 'user input'
+      expect(textarea.value).to.equal('user input')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLTitleElement
+  // ---------------------------------------------------------------------------
+  describe('HTMLTitleElement', () => {
+    it('HTMLTitleElement01 - text property', () => {
+      const title = document.createElement('title') as any
+      title.text = 'Page Title'
+      expect(title.text).to.equal('Page Title')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // HTMLDocument (partially supported)
+  // ---------------------------------------------------------------------------
+  describe('HTMLDocument', () => {
+    it.skip('HTMLDocument01-10 - requires document.title, document.cookie, document.domain, etc.')
   })
 })
