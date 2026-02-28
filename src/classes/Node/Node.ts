@@ -281,17 +281,15 @@ export abstract class Node<NV = null> {
     return false
   }
 
-  // TODO: Document doesn't extend Node, so body/head have no parent link to
-  // the document. This special-cases the check instead of walking the parent
-  // chain naturally. Consider making Document a Node so this isn't needed.
   getRootNode(): Node | Document {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let current: Node = this
     while (current.parent !== null) {
       current = current.parent
     }
+    // If the root is the documentElement, return the document itself
     const doc = current.ownerDocument
-    if (doc.body === current || doc.head === current) {
+    if (doc.documentElement === current) {
       return doc
     }
     return current

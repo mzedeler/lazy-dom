@@ -68,6 +68,10 @@ import * as NodeRegistry from "../wasm/NodeRegistry"
 export class DocumentStore {
   wasmDocId: number
 
+  documentElement: () => HTMLHtmlElement = () => {
+    throw valueNotSetError('documentElement')
+  }
+
   body: () => HTMLBodyElement = () => {
     throw valueNotSetError('body')
   }
@@ -180,18 +184,47 @@ export class Document implements EventTarget {
   }
 
   constructor() {
-    this.documentStore.body = () => {
-      const body = new HTMLBodyElement()
-      this.documentStore.body = () => body
-      body.nodeStore.ownerDocument = () => this
-      return body
-    }
+    // Lazy init: the entire html > head + body tree is built on first access
+    const initTree = () => {
+      const html = new HTMLHtmlElement()
+      html.elementStore.tagName = () => 'HTML'
+      html.nodeStore.ownerDocument = () => this
 
-    this.documentStore.head = () => {
       const head = new HTMLElement()
-      this.documentStore.head = () => head
       head.elementStore.tagName = () => 'HEAD'
       head.nodeStore.ownerDocument = () => this
+
+      const body = new HTMLBodyElement()
+      body.nodeStore.ownerDocument = () => this
+
+      // Build tree: html > head + body
+      nodeOps.setParentId(head.wasmId, html.wasmId)
+      nodeOps.appendChild(html.wasmId, head.wasmId)
+      nodeOps.setParentId(body.wasmId, html.wasmId)
+      nodeOps.appendChild(html.wasmId, body.wasmId)
+
+      // Connect entire tree to document for element tracking
+      this.documentStore.connect(html)
+
+      // Memoize all three
+      this.documentStore.documentElement = () => html
+      this.documentStore.body = () => body
+      this.documentStore.head = () => head
+
+      return { html, head, body }
+    }
+
+    // Any of the three accessors triggers full tree init
+    this.documentStore.documentElement = () => {
+      const { html } = initTree()
+      return html
+    }
+    this.documentStore.body = () => {
+      const { body } = initTree()
+      return body
+    }
+    this.documentStore.head = () => {
+      const { head } = initTree()
       return head
     }
 
@@ -345,7 +378,7 @@ export class Document implements EventTarget {
   }
 
   getElementsByTagName(tagName: string): Element[] {
-    return this.body.getElementsByTagName(tagName)
+    return this.documentElement.getElementsByTagName(tagName)
   }
 
   getElementById(id: string): Element | null {
@@ -372,11 +405,11 @@ export class Document implements EventTarget {
   }
 
   querySelectorAll(query: string) {
-    return this.body.querySelectorAll(query)
+    return this.documentElement.querySelectorAll(query)
   }
 
   querySelector(selectors: string): Element | null {
-    return this.body.querySelector(selectors)
+    return this.documentElement.querySelector(selectors)
   }
 
   getElementsByTagNameNS(namespaceURI: string, localName: string) {
@@ -450,8 +483,7 @@ export class Document implements EventTarget {
     return this.documentStore.head()
   }
 
-  // should be html, but body for now
-  get documentElement() {
-    return this.body
+  get documentElement(): HTMLHtmlElement {
+    return this.documentStore.documentElement()
   }
 }

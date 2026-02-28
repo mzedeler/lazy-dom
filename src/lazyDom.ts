@@ -8,10 +8,9 @@ import { HTMLLIElement } from "./classes/elements/HTMLLIElement"
 import { HTMLSpanElement } from "./classes/elements/HTMLSpanElement"
 import { HTMLElement } from "./classes/elements/HTMLElement"
 import { SVGElement } from "./classes/elements/SVGElement"
+import { HTMLIFrameElement } from "./classes/elements/HTMLIFrameElement"
 
 class EventTarget {}
-
-class HTMLIFrameElement {}
 
 class Navigator {}
 
