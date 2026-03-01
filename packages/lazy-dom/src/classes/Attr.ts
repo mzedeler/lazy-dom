@@ -32,6 +32,10 @@ export class Attr {
     return this.localName
   }
 
+  get tagName() {
+    return this.name
+  }
+
   get nodeName() {
     return this.name
   }

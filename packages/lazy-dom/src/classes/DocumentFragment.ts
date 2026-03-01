@@ -28,6 +28,18 @@ export class DocumentFragment extends Node {
       .join('')
   }
 
+  set textContent(value: string) {
+    // Remove all existing children
+    const children = this.nodeStore.getChildNodesArray()
+    for (const child of children) {
+      this.removeChild(child)
+    }
+    // Append a text node if value is non-empty
+    if (value !== '') {
+      this.appendChild(this.ownerDocument.createTextNode(value))
+    }
+  }
+
   protected _cloneNodeShallow(): DocumentFragment {
     const clone = this.ownerDocument.createDocumentFragment()
     return clone

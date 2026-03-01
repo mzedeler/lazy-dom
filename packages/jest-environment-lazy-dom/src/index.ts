@@ -148,6 +148,8 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       })
     }
 
+    defineStubOnBoth("history", window.history)
+
     defineStubOnBoth("DOMParser", class DOMParser {
       parseFromString() {
         return document
@@ -252,6 +254,13 @@ export default class LazyDomEnvironment extends NodeEnvironment {
         writable: true,
       })
     }
+
+    Object.defineProperty(g, "dispatchEvent", {
+      configurable: true,
+      enumerable: true,
+      value: window.dispatchEvent.bind(window),
+      writable: true,
+    })
 
     // React act environment flag
     g.IS_REACT_ACT_ENVIRONMENT = true

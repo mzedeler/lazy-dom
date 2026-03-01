@@ -1,4 +1,7 @@
 import { NodeTypes } from "../types/NodeTypes"
+import { Future } from "../types/Future"
+import { Listeners } from "../types/Listeners"
+import { Listener } from "../types/Listener"
 import valueNotSetError from "../utils/valueNotSetError"
 
 import { Element } from "./Element"
@@ -9,7 +12,6 @@ import { DocumentFragment } from "./DocumentFragment"
 import { ProcessingInstruction } from "./ProcessingInstruction"
 import { Attr } from "./Attr"
 import { EventTarget } from "../types/EventTarget"
-import { Listener } from "../types/Listener"
 import { Event } from "./Event"
 import { HTMLDivElement } from "./elements/HTMLDivElement"
 import { HTMLImageElement } from "./elements/HTMLImageElement"
@@ -69,6 +71,7 @@ import * as NodeRegistry from "../wasm/NodeRegistry"
 
 export class DocumentStore {
   wasmDocId: number
+  eventListeners: Future<Listeners> = () => ({})
 
   documentElement: () => HTMLHtmlElement = () => {
     throw valueNotSetError('documentElement')
@@ -391,16 +394,49 @@ export class Document implements EventTarget {
       .find(elementMatchingId) || null
   }
 
-  dispatchEvent(_event: Event) {
-
+  dispatchEvent(event: Event): boolean {
+    try {
+      event.eventStore.target()
+    } catch {
+      event.eventStore.target = () => this as unknown as Node
+    }
+    const listeners = this.documentStore.eventListeners()
+    const queue = listeners[event.type]
+    if (queue && queue.length) {
+      queue.forEach((listener: Listener) => listener(event))
+    }
+    return !event.defaultPrevented
   }
 
-  addEventListener(_type: string, _listener: Listener) {
-
+  addEventListener(type: string, listener: Listener) {
+    if (!listener) return
+    const previousEventListenersFuture = this.documentStore.eventListeners
+    this.documentStore.eventListeners = () => {
+      const previousEventListeners = previousEventListenersFuture()
+      let queue = previousEventListeners[type]
+      if (!queue) {
+        queue = []
+      }
+      queue.push(listener)
+      previousEventListeners[type] = queue
+      return previousEventListeners
+    }
   }
 
-  removeEventListener() {
-
+  removeEventListener(type: string, listener: Listener) {
+    if (!listener) return
+    const previousEventListenersFuture = this.documentStore.eventListeners
+    this.documentStore.eventListeners = () => {
+      const previousEventListeners = previousEventListenersFuture()
+      const queue = previousEventListeners[type]
+      if (queue) {
+        const idx = queue.indexOf(listener)
+        if (idx !== -1) {
+          queue.splice(idx, 1)
+        }
+      }
+      return previousEventListeners
+    }
   }
 
   querySelectorAll(query: string) {

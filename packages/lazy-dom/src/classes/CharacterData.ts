@@ -22,6 +22,10 @@ export abstract class CharacterData extends Node {
     return this.data
   }
 
+  set textContent(value: string) {
+    this.data = value
+  }
+
   get length(): number {
     return this.data.length
   }

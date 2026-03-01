@@ -24,7 +24,7 @@ export class ChildNodeList extends NodeList {
         if (typeof prop === 'string') {
           const index = Number(prop);
           if (!isNaN(index) && index >= 0) {
-            return index < target.nodeStore.getChildCount();
+            return target.nodeStore.getChildNode(index) !== undefined;
           }
         }
         return Reflect.has(target, prop);

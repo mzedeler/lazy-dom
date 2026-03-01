@@ -1,11 +1,60 @@
 import { Future } from "../types/Future"
 
+// Convert camelCase to kebab-case: "textDecoration" → "text-decoration"
+function camelToKebab(str: string): string {
+  return str.replace(/[A-Z]/g, m => '-' + m.toLowerCase())
+}
+
 class CSSStyleDeclarationStore {
   properties: Future<Map<string, string>> = () => new Map()
 }
 
+// Known methods and properties that should NOT be treated as CSS property access
+const ownMembers = new Set([
+  'cssStyleDeclarationStore',
+  'setProperty',
+  'getPropertyValue',
+  'removeProperty',
+  'cssText',
+  'length',
+  'item',
+])
+
 export class CSSStyleDeclaration {
   cssStyleDeclarationStore = new CSSStyleDeclarationStore()
+
+  constructor() {
+    return new Proxy(this, {
+      get(target, prop, receiver) {
+        if (typeof prop === 'symbol' || ownMembers.has(prop as string)) {
+          return Reflect.get(target, prop, receiver)
+        }
+        // For any string property not in ownMembers, treat as a CSS property lookup
+        const key = prop as string
+        // Convert camelCase to kebab-case for the internal map
+        const kebab = camelToKebab(key)
+        return target.cssStyleDeclarationStore.properties().get(kebab) ?? ''
+      },
+      set(target, prop, value, receiver) {
+        if (typeof prop === 'symbol' || ownMembers.has(prop as string)) {
+          return Reflect.set(target, prop, value, receiver)
+        }
+        const key = prop as string
+        const kebab = camelToKebab(key)
+        const previousPropertiesFuture = target.cssStyleDeclarationStore.properties
+        target.cssStyleDeclarationStore.properties = () => {
+          const properties = previousPropertiesFuture()
+          if (value === null || value === '') {
+            properties.delete(kebab)
+          } else {
+            properties.set(kebab, String(value))
+          }
+          return properties
+        }
+        return true
+      },
+    })
+  }
 
   setProperty(property: string, value: string | null) {
     const previousPropertiesFuture = this.cssStyleDeclarationStore.properties

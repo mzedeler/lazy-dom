@@ -184,7 +184,7 @@ export class Element extends Node implements EventTarget {
     // Stub: event listener removal not fully implemented
   }
 
-  dispatchEvent(event: Event) {
+  dispatchEvent(event: Event): boolean {
     // Set the target to the element that originally received the event
     try {
       event.eventStore.target()
@@ -203,6 +203,7 @@ export class Element extends Node implements EventTarget {
         parent.dispatchEvent(event)
       }
     }
+    return !event.defaultPrevented
   }
 
   click() {
