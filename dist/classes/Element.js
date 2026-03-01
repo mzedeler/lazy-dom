@@ -173,8 +173,7 @@ class Element extends Node_1.Node {
             };
         };
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    removeEventListener(type, listener) {
+    removeEventListener(_type, _listener) {
         // Stub: event listener removal not fully implemented
     }
     dispatchEvent(event) {
@@ -434,6 +433,7 @@ class Element extends Node_1.Node {
     focus() { }
     blur() { }
     closest(selectors) {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         let current = this;
         while (current) {
             if (current.matches(selectors))

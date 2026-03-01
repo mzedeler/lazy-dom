@@ -34,7 +34,7 @@ export declare class Element extends Node implements EventTarget {
     setAttribute(localName: string, value: string): void;
     removeAttribute(qualifiedName: string): void;
     get addEventListener(): EventTarget['addEventListener'];
-    removeEventListener(type: string, listener: unknown): void;
+    removeEventListener(_type: string, _listener: unknown): void;
     dispatchEvent(event: Event): void;
     click(): void;
     get hidden(): boolean;

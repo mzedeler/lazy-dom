@@ -1,7 +1,7 @@
 export declare class Window {
     private _location;
-    get location(): any;
-    set location(value: any);
+    get location(): string | Record<string, string>;
+    set location(value: string | Record<string, string>);
     getComputedStyle(): {
         getPropertyValue(): string;
     };

@@ -4,4 +4,3 @@ node_modules
 build/wasm/
 .claude
 vendor/wpt/
-dist/

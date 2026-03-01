@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JSDOM = void 0;
 const lazyDom_1 = __importDefault(require("./lazyDom"));
 class JSDOM {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _window;
     constructor(_html = "", _options = {}) {
         const { window } = (0, lazyDom_1.default)();
@@ -14,7 +15,7 @@ class JSDOM {
         this._window.navigator = {
             userAgent: `Node.js/${process.versions.node}`,
         };
-        if (_options.url) {
+        if (typeof _options.url === 'string') {
             this._window.location = { href: _options.url };
         }
     }

@@ -238,8 +238,7 @@ class Document {
     get body() {
         return this.documentStore.body();
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    createElementNS(namespaceURI, qualifiedName, options) {
+    createElementNS(namespaceURI, qualifiedName, _options) {
         // Parse prefix:localName
         let prefix = null;
         let localName = qualifiedName;
@@ -343,11 +342,9 @@ class Document {
             .elements
             .find(elementMatchingId) || null;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    dispatchEvent(event) {
+    dispatchEvent(_event) {
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    addEventListener(type, listener) {
+    addEventListener(_type, _listener) {
     }
     removeEventListener() {
     }

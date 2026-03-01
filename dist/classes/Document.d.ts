@@ -33,7 +33,7 @@ export declare class Document implements EventTarget {
     constructor();
     get all(): Element[];
     get body(): HTMLBodyElement;
-    createElementNS(namespaceURI: string | null, qualifiedName: string, options?: {
+    createElementNS(namespaceURI: string | null, qualifiedName: string, _options?: {
         is: string;
     }): HTMLElement | SVGElement;
     createElement(localName: string): Element;
@@ -48,8 +48,8 @@ export declare class Document implements EventTarget {
     private _setOwnerDocument;
     getElementsByTagName(tagName: string): Element[];
     getElementById(id: string): Element | null;
-    dispatchEvent(event: Event): void;
-    addEventListener(type: string, listener: Listener): void;
+    dispatchEvent(_event: Event): void;
+    addEventListener(_type: string, _listener: Listener): void;
     removeEventListener(): void;
     querySelectorAll(query: string): Element[];
     querySelector(selectors: string): Element | null;
@@ -61,10 +61,10 @@ export declare class Document implements EventTarget {
     };
     get nodeType(): NodeTypes;
     get nodeName(): string;
-    get nodeValue(): any;
-    set nodeValue(_value: any);
+    get nodeValue(): string | null;
+    set nodeValue(_value: string | null);
     get attributes(): null;
-    get location(): any;
+    get location(): string | Record<string, string>;
     get referrer(): string;
     get head(): HTMLElement;
     get documentElement(): HTMLHtmlElement;

@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DocumentFragment = void 0;
 const NodeTypes_1 = require("../types/NodeTypes");
 const Node_1 = require("./Node/Node");
+const Element_1 = require("./Element");
+const CharacterData_1 = require("./CharacterData");
 class DocumentFragment extends Node_1.Node {
     nodeName = '#document-fragment';
     constructor() {
@@ -17,9 +19,9 @@ class DocumentFragment extends Node_1.Node {
     get textContent() {
         return this.nodeStore.getChildNodesArray()
             .map(child => {
-            if ('textContent' in child)
+            if (child instanceof Element_1.Element)
                 return child.textContent;
-            if ('data' in child)
+            if (child instanceof CharacterData_1.CharacterData)
                 return child.data;
             return '';
         })

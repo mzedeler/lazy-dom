@@ -1,1 +1,1 @@
-export declare const emptyIterator: IterableIterator<any>;
+export declare const emptyIterator: IterableIterator<never>;
