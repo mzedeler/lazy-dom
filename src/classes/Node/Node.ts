@@ -10,9 +10,11 @@ import * as NodeRegistry from "../../wasm/NodeRegistry"
 import { DOMException } from "../DOMException"
 
 // Forward reference resolved at runtime to avoid circular imports
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let DocumentFragment: any
 function getDocumentFragment() {
   if (!DocumentFragment) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     DocumentFragment = require("../DocumentFragment").DocumentFragment
   }
   return DocumentFragment

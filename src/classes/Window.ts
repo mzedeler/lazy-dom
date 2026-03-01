@@ -13,7 +13,7 @@ export class Window {
     return this._location
   }
 
-  set location(value: any) {
+  set location(value: string | Record<string, string>) {
     if (typeof value === 'string') {
       this._location.href = value
     } else {

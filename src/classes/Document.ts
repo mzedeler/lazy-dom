@@ -105,7 +105,7 @@ export class DocumentStore {
   }
 }
 
-type Constructor = new (...args: any[]) => HTMLElement | SVGElement
+type Constructor = new (...args: unknown[]) => HTMLElement | SVGElement
 
 const constructors: Record<string, Record<string, Constructor>> = {
   'http://www.w3.org/1999/xhtml': {
@@ -239,8 +239,7 @@ export class Document implements EventTarget {
     return this.documentStore.body()
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  createElementNS(namespaceURI: string | null, qualifiedName: string, options?: { is: string }) {
+  createElementNS(namespaceURI: string | null, qualifiedName: string, _options?: { is: string }) {
     // Parse prefix:localName
     let prefix: string | null = null
     let localName = qualifiedName
@@ -390,13 +389,11 @@ export class Document implements EventTarget {
       .find(elementMatchingId) || null
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  dispatchEvent(event: Event) {
+  dispatchEvent(_event: Event) {
 
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  addEventListener(type: string, listener: Listener) {
+  addEventListener(_type: string, _listener: Listener) {
 
   }
 
@@ -463,7 +460,7 @@ export class Document implements EventTarget {
     return null
   }
 
-  set nodeValue(_value: any) {
+  set nodeValue(_value: string | null) {
     // Setting nodeValue on Document has no effect per spec
   }
 

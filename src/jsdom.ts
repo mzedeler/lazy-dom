@@ -1,9 +1,10 @@
 import lazyDom from "./lazyDom"
 
 export class JSDOM {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _window: any
 
-  constructor(_html = "", _options: Record<string, any> = {}) {
+  constructor(_html = "", _options: Record<string, unknown> = {}) {
     const { window } = lazyDom()
     this._window = window
 
@@ -12,7 +13,7 @@ export class JSDOM {
       userAgent: `Node.js/${process.versions.node}`,
     }
 
-    if (_options.url) {
+    if (typeof _options.url === 'string') {
       this._window.location = { href: _options.url }
     }
   }

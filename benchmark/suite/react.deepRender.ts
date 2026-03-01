@@ -1,7 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import * as React from 'react'
 
-// @ts-expect-error TODO
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 /**

@@ -14,7 +14,6 @@ import { outerHTMLWideTree, outerHTMLDeepTree, outerHTMLRealisticTree, innerHTML
 import { bulkTreeSmall, bulkTreeMedium, bulkTreeLarge } from './suite/dom.bulkTreeConstruction'
 import { reactDeepRender, reactDeepRenderWithSnapshot, reactDeepRenderRerender } from './suite/react.deepRender'
 
-// @ts-expect-error TODO
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const bench = new Bench({ time: 200 })

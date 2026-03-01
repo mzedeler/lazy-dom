@@ -176,8 +176,7 @@ export class Element extends Node implements EventTarget {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  removeEventListener(type: string, listener: unknown) {
+  removeEventListener(_type: string, _listener: unknown) {
     // Stub: event listener removal not fully implemented
   }
 
@@ -503,6 +502,7 @@ export class Element extends Node implements EventTarget {
   blur() {}
 
   closest(selectors: string): Element | null {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     let current: Element | null = this
     while (current) {
       if (current.matches(selectors)) return current

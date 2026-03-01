@@ -34,7 +34,6 @@ export class NamedNodeMap {
     const removed = currentItems[name] ?? null
     const previousItems = this.namedNodeMapStore.itemsLookup
     this.namedNodeMapStore.itemsLookup = () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const {[name]: _deleted_, ...result } = previousItems()
       return result
     }
@@ -92,7 +91,6 @@ export class NamedNodeMap {
       const name = targetName
       const previousItems = this.namedNodeMapStore.itemsLookup
       this.namedNodeMapStore.itemsLookup = () => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const {[name]: _deleted_, ...result } = previousItems()
         return result
       }

@@ -1,5 +1,7 @@
 import { NodeTypes } from "../types/NodeTypes"
 import { Node } from "./Node/Node"
+import { Element } from "./Element"
+import { CharacterData } from "./CharacterData"
 
 export class DocumentFragment extends Node {
   readonly nodeName = '#document-fragment'
@@ -12,15 +14,15 @@ export class DocumentFragment extends Node {
     return null
   }
 
-  set nodeValue(_value: any) {
+  set nodeValue(_value: string | null) {
     // Setting nodeValue on DocumentFragment has no effect per spec
   }
 
   get textContent(): string {
     return this.nodeStore.getChildNodesArray()
       .map(child => {
-        if ('textContent' in child) return (child as any).textContent
-        if ('data' in child) return (child as any).data
+        if (child instanceof Element) return child.textContent
+        if (child instanceof CharacterData) return child.data
         return ''
       })
       .join('')
