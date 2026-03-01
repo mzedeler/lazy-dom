@@ -3,6 +3,7 @@
 Start out by reading these files:
 
  * @README.md
+ * @STYLE.md
  * @ARCHITECTURE.md
 
 If you need to work on a improving performance, also read
