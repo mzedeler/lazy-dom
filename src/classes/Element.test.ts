@@ -101,10 +101,10 @@ describe('Element', () => {
       expect(root.querySelector('.child')).to.eq(child)
     })
 
-    it.skip('can find a grandchild based on class', () => {
+    it('can find a grandchild based on class', () => {
       const grandchild = div('grandchild')
       grandchild.setAttribute('class', 'grandchild')
-      const child = div('child')
+      const child = div('child', grandchild)
       const root = div('root', child)
 
       expect(root.querySelector('.grandchild')).to.eq(grandchild)
