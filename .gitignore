@@ -2,8 +2,6 @@ node_modules
 *~
 .pnpm-store
 build/wasm/
-pro
-jsdom
 .claude
 vendor/wpt/
 dist/
