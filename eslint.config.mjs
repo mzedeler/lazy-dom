@@ -6,7 +6,7 @@ import mochaPlugin from 'eslint-plugin-mocha'
 export default tseslint.config(
   { ignores: ['**/dist/', 'packages/lazy-dom/test/ported/', 'packages/lazy-dom/src/assembly/',
               'packages/test-wpt/vendor/', 'packages/test-react-source/',
-              'packages/lazy-dom/build/', 'pro/'] },
+              'packages/lazy-dom/build/', 'pro/', 'jsdom/'] },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   { files: ["**/*.{js,mjs,cjs,ts}"] },
