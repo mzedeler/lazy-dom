@@ -57,4 +57,10 @@ export class HTMLElement extends Element {
   set draggable(value: boolean) {
     this.setAttribute('draggable', String(value))
   }
+
+  get offsetWidth(): number { return 0 }
+  get offsetHeight(): number { return 0 }
+  get offsetTop(): number { return 0 }
+  get offsetLeft(): number { return 0 }
+  get offsetParent(): Element | null { return null }
 }

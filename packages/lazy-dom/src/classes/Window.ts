@@ -9,6 +9,10 @@ class WindowStore {
 
 export class Window {
   private windowStore = new WindowStore()
+
+  innerWidth = 1024
+  innerHeight = 768
+
   private _location: Record<string, string> = {
     href: 'http://localhost:9009/b',
     protocol: 'http:',
@@ -111,6 +115,8 @@ export class Window {
       return previousEventListeners
     }
   }
+
+  open(): null { return null }
 
   get localStorage() {
     return {

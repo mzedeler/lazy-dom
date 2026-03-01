@@ -44,7 +44,7 @@ export class CSSStyleDeclaration {
         const previousPropertiesFuture = target.cssStyleDeclarationStore.properties
         target.cssStyleDeclarationStore.properties = () => {
           const properties = previousPropertiesFuture()
-          if (value === null || value === '') {
+          if (value === null || value === undefined || value === '') {
             properties.delete(kebab)
           } else {
             properties.set(kebab, String(value))

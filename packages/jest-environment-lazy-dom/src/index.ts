@@ -32,7 +32,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     Object.defineProperty(g, "navigator", {
       configurable: true,
       enumerable: true,
-      value: { userAgent: "" },
+      value: { userAgent: "Mozilla/5.0 (lazy-dom, jsdom-compatible)" },
       writable: true,
     })
 
@@ -296,6 +296,24 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       })
     }
 
+    Object.defineProperty(g, "innerWidth", {
+      configurable: true,
+      enumerable: true,
+      value: window.innerWidth,
+      writable: true,
+    })
+    Object.defineProperty(g, "innerHeight", {
+      configurable: true,
+      enumerable: true,
+      value: window.innerHeight,
+      writable: true,
+    })
+    Object.defineProperty(g, "open", {
+      configurable: true,
+      enumerable: true,
+      value: window.open.bind(window),
+      writable: true,
+    })
     Object.defineProperty(g, "dispatchEvent", {
       configurable: true,
       enumerable: true,

@@ -579,6 +579,16 @@ export class Element extends Node implements EventTarget {
     }
   }
 
+  get clientWidth(): number { return 0 }
+  get clientHeight(): number { return 0 }
+  get scrollWidth(): number { return 0 }
+  get scrollHeight(): number { return 0 }
+
+  get scrollTop(): number { return 0 }
+  set scrollTop(_value: number) {}
+  get scrollLeft(): number { return 0 }
+  set scrollLeft(_value: number) {}
+
   getBoundingClientRect() {
     return { top: 0, right: 0, bottom: 0, left: 0, width: 0, height: 0, x: 0, y: 0, toJSON() { return {} } }
   }

@@ -6,3 +6,5 @@
    possible:
    * Avoid type assertions like `const foo = bar as baz`.
    * Avoid using `any` over the type actually used.
+ * Co-locate test files with their classes. A test for `Foo.ts` should be
+   named `Foo.test.ts` and placed in the same directory.
