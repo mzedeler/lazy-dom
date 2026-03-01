@@ -1,6 +1,6 @@
 import { Bench } from 'tinybench'
 import { JSDOM } from 'jsdom'
-import lazyDom from '../src/lazyDom'
+import lazyDom from '../lazyDom'
 import { domRemoveChild } from './suite/dom.removeChild'
 import { reactCreateElement } from './suite/react.createElement'
 import { reactEventHandling } from './suite/react.eventHandling'

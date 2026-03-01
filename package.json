@@ -12,10 +12,10 @@
     "./register": "./dist/register.js"
   },
   "scripts": {
-    "benchmark:watch": "tsx watch benchmark/benchmark.ts",
-    "benchmark": "pnpm build:wasm && tsx benchmark/benchmark.ts",
-    "benchmark:optimizing-stores": "nodemon -e ts --exec pnpm exec tsx experiments/optimizingStores/optimizingStores.ts",
-    "build:wasm": "asc assembly/index.ts --outFile build/wasm/lazy-dom.wasm --optimize --exportRuntime",
+    "benchmark:watch": "tsx watch src/benchmark/benchmark.ts",
+    "benchmark": "pnpm build:wasm && tsx src/benchmark/benchmark.ts",
+    "benchmark:optimizing-stores": "nodemon -e ts --exec pnpm exec tsx src/experiments/optimizingStores/optimizingStores.ts",
+    "build:wasm": "asc src/assembly/index.ts --outFile build/wasm/lazy-dom.wasm --optimize --exportRuntime",
     "build": "pnpm build:wasm && tsc -p tsconfig.build.json",
     "build:watch": "pnpm exec tsc --watch ./src/lazyDom.ts --outDir dist",
     "dev:watch": "nodemon --config nodemon.dev.json",

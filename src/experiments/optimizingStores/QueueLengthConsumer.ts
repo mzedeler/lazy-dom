@@ -1,30 +1,30 @@
-import { Future } from '../../src/types/Future'
+import { Future } from '../../types/Future'
 import { Consumer } from './Consumer'
 
 class NaiveStore {
   lookupFuture: Future<Record<string, string>> = () => ({})
-  dirty: boolean = false
+  queueLength: number = 0
 }
 
-export class DirtyNaiveConsumer implements Consumer {
+export class QueueLengthConsumer implements Consumer {
   naiveStore = new NaiveStore()
 
   setValue(key: string, value: string) {
     const lookupFuture = this.naiveStore.lookupFuture
-    this.naiveStore.dirty = true
     this.naiveStore.lookupFuture = () => {
       const lookup = lookupFuture()
       lookup[key] = value
       return lookup
     }
+    this.naiveStore.queueLength++
   }
 
   getValue(key: string) {
-    if (this.naiveStore.dirty) {
+    if (this.naiveStore.queueLength > 1) {
+      this.naiveStore.queueLength = 0
       const result = this.naiveStore.lookupFuture();
       this.naiveStore.lookupFuture = () => result
-      this.naiveStore.dirty = false
-      return result[key]
+      return result[key]  
     }
     return this.naiveStore.lookupFuture()[key]
   }

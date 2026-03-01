@@ -4,7 +4,7 @@ import tseslint from "typescript-eslint";
 import mochaPlugin from 'eslint-plugin-mocha'
 
 export default tseslint.config(
-  { ignores: ['dist/', 'test/ported/', 'assembly/', 'jsdom/', 'vendor/', 'build/'] },
+  { ignores: ['dist/', 'test/ported/', 'src/assembly/', 'jsdom/', 'vendor/', 'build/'] },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   { files: ["**/*.{js,mjs,cjs,ts}"] },
