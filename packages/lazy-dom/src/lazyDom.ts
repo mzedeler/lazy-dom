@@ -1,7 +1,7 @@
 // Hierarchy: https://stackoverflow.com/questions/55924114/where-can-i-find-a-complete-description-of-javascript-dom-class-hierarchy
 
 import { Window } from "./classes/Window"
-import { Document } from "./classes/Document"
+import { Document, Range } from "./classes/Document"
 import { Node } from "./classes/Node"
 import { Element } from "./classes/Element"
 import { Text } from "./classes/Text"
@@ -72,6 +72,7 @@ const lazyDom = () => {
     HTMLAnchorElement,
     HTMLImageElement,
     SVGElement,
+    Range,
   }
   Object.assign(window, instances, classes)
   Object.assign(global, { window, document }, classes)

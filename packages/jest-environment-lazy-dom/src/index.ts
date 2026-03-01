@@ -82,6 +82,31 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       value: localStorageStub,
       writable: true,
     })
+    // sessionStorage: separate Map-backed storage
+    const sessionStore = new Map<string, string>()
+    const sessionStorageStub = {
+      getItem(key: string) { return sessionStore.get(key) ?? null },
+      setItem(key: string, value: string) { sessionStore.set(key, String(value)) },
+      removeItem(key: string) { sessionStore.delete(key) },
+      clear() { sessionStore.clear() },
+      get length() { return sessionStore.size },
+      key(index: number) {
+        const keys = Array.from(sessionStore.keys())
+        return keys[index] ?? null
+      },
+    }
+    Object.defineProperty(g, "sessionStorage", {
+      configurable: true,
+      enumerable: true,
+      value: sessionStorageStub,
+      writable: true,
+    })
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      enumerable: true,
+      value: sessionStorageStub,
+      writable: true,
+    })
     Object.defineProperty(g, "location", {
       configurable: true,
       enumerable: true,
@@ -187,6 +212,15 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       toString() {
         return ""
       },
+      setBaseAndExtent() {},
+      extend() {},
+      setPosition() {},
+      collapse() {},
+      collapseToStart() {},
+      collapseToEnd() {},
+      selectAllChildren() {},
+      deleteFromDocument() {},
+      containsNode() { return false },
     })
 
     // getSelection is accessed as both window.getSelection() and document.getSelection()
@@ -228,17 +262,24 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       SHOW_NOTATION: 0x800,
     })
 
-    // Provide timer functions on the lazy-dom window object so that
+    // Provide timer functions on the lazy-dom window object and jest global so that
     // libraries accessing them via ownerDocument.defaultView work correctly
     const timerNames = ["setTimeout", "clearTimeout", "setInterval", "clearInterval",
                         "requestAnimationFrame", "cancelAnimationFrame"] as const
     for (const name of timerNames) {
       const fn = globalThis[name]
       if (fn) {
+        const bound = fn.bind(globalThis)
         Object.defineProperty(window, name, {
           configurable: true,
           enumerable: true,
-          value: fn.bind(globalThis),
+          value: bound,
+          writable: true,
+        })
+        Object.defineProperty(g, name, {
+          configurable: true,
+          enumerable: true,
+          value: bound,
           writable: true,
         })
       }

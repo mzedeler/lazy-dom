@@ -101,6 +101,37 @@ describe('Document', () => {
     })
   })
 
+  describe('document.cookie', () => {
+    it('returns empty string by default', () => {
+      expect(document.cookie).to.eq('')
+    })
+
+    it('does not throw when setting a cookie', () => {
+      expect(() => { document.cookie = 'foo=bar' }).not.to.throw
+    })
+  })
+
+  describe('document.implementation.createHTMLDocument', () => {
+    it('returns a Document', () => {
+      const doc = document.implementation.createHTMLDocument('test')
+      expect(doc).to.exist
+      expect(doc.nodeType).to.eq(9)
+    })
+
+    it('has head and body elements', () => {
+      const doc = document.implementation.createHTMLDocument('test')
+      expect(doc.head).to.exist
+      expect(doc.body).to.exist
+    })
+
+    it('sets the title when provided', () => {
+      const doc = document.implementation.createHTMLDocument('My Title')
+      const titleEl = doc.head.querySelector('title')
+      expect(titleEl).to.exist
+      expect(titleEl!.textContent).to.eq('My Title')
+    })
+  })
+
   describe('getElementsByTagNameNS', () => {
     it('has getElementsByTagNameNS()', () => {
       const namespace = 'http://www.w3.org/1999/xhtml'

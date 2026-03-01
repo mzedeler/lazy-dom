@@ -278,6 +278,61 @@ describe('Element', () => {
     })
   })
 
+  describe('setAttribute coercion', () => {
+    it('coerces objects to string', () => {
+      const el = document.createElement('div')
+      el.setAttribute('src', {} as unknown as string)
+      expect(el.getAttribute('src')).to.eq('[object Object]')
+    })
+
+    it('coerces undefined to string', () => {
+      const el = document.createElement('div')
+      el.setAttribute('data-x', undefined as unknown as string)
+      expect(el.getAttribute('data-x')).to.eq('undefined')
+    })
+  })
+
+  describe('CSS selector error tolerance', () => {
+    it('querySelector returns null for malformed selectors', () => {
+      const el = document.createElement('div')
+      expect(el.querySelector('div[name="x"')).to.be.null
+    })
+
+    it('querySelectorAll returns empty array for malformed selectors', () => {
+      const el = document.createElement('div')
+      expect(el.querySelectorAll('div[name="x"')).to.have.lengthOf(0)
+    })
+
+    it('matches returns false for malformed selectors', () => {
+      const el = document.createElement('div')
+      expect(el.matches('div[name="x"')).to.be.false
+    })
+  })
+
+  describe('style attribute in serialized output', () => {
+    it('includes style attr when style properties are set', () => {
+      const el = document.createElement('div')
+      el.style.color = 'red'
+      const attrs = Array.from(el.attributes)
+      const styleAttr = attrs.find(a => a.localName === 'style')
+      expect(styleAttr).to.exist
+      expect(styleAttr!.value).to.include('color: red')
+    })
+
+    it('setAttribute style updates CSSStyleDeclaration', () => {
+      const el = document.createElement('div')
+      el.setAttribute('style', 'color: red')
+      expect(el.style.color).to.eq('red')
+    })
+
+    it('does not include style attr when no style properties are set', () => {
+      const el = document.createElement('div')
+      const attrs = Array.from(el.attributes)
+      const styleAttr = attrs.find(a => a.localName === 'style')
+      expect(styleAttr).to.be.undefined
+    })
+  })
+
   describe('textContent', () => {
     it('can set text content on an empty element', () => {
       const textContent = 'some text'

@@ -22,6 +22,10 @@ export class Text extends CharacterData {
     return this.textStore.data()
   }
 
+  set textContent(value: string) {
+    this.textStore.data = () => value
+  }
+
   get data() {
     return this.textStore.data()
   }

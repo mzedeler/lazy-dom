@@ -32,6 +32,55 @@ class ElementStore {
   namespaceURI: Future<string | null> = () => null
 }
 
+class StyleAwareNamedNodeMap extends NamedNodeMap {
+  private _elementStore: ElementStore
+
+  constructor(inner: NamedNodeMap, elementStore: ElementStore) {
+    super()
+    this._elementStore = elementStore
+    // Share the same store so mutations go through
+    this.namedNodeMapStore = inner.namedNodeMapStore
+  }
+
+  private _getStyleAttr(): Attr | null {
+    const cssText = this._elementStore.style().cssText
+    if (cssText) {
+      return new Attr(null, 'style', cssText)
+    }
+    return null
+  }
+
+  get length() {
+    return super.length + (this._getStyleAttr() ? 1 : 0)
+  }
+
+  item(index: number): Attr | null {
+    const baseLength = super.length
+    if (index < baseLength) {
+      return super.item(index)
+    }
+    if (index === baseLength && this._getStyleAttr()) {
+      return this._getStyleAttr()
+    }
+    return null
+  }
+
+  getNamedItem(name: string): Attr | null {
+    if (name === 'style') {
+      return this._getStyleAttr()
+    }
+    return super.getNamedItem(name)
+  }
+
+  *[Symbol.iterator]() {
+    yield* super[Symbol.iterator]()
+    const styleAttr = this._getStyleAttr()
+    if (styleAttr) {
+      yield styleAttr
+    }
+  }
+}
+
 const isEventTarget = (node: unknown): node is EventTarget =>
   Boolean(node && (node as EventTarget).addEventListener && (node as EventTarget).dispatchEvent)
 
@@ -86,8 +135,7 @@ export class Element extends Node implements EventTarget {
   }
 
   get outerHTML() {
-    const attributes = Object
-      .values(this.elementStore.attributes().namedNodeMapStore.itemsLookup())
+    const attributes = Array.from(this.attributes)
       .map((attr: Attr) => ' ' + attr.localName + '="' + attr.value + '"')
       .join('')
 
@@ -97,7 +145,9 @@ export class Element extends Node implements EventTarget {
   }
 
   get style() {
-    return this.elementStore.style()
+    const result = this.elementStore.style()
+    this.elementStore.style = () => result
+    return result
   }
 
   get nodeValue(): null {
@@ -137,14 +187,22 @@ export class Element extends Node implements EventTarget {
   get attributes() {
     const result = this.elementStore.attributes()
     this.elementStore.attributes = () => result
-    return result
+    return new StyleAwareNamedNodeMap(result, this.elementStore)
   }
 
   setAttribute(localName: string, value: string) {
+    const coercedValue = String(value)
+    if (localName === 'style') {
+      // Force memoization then update cssText
+      const style = this.elementStore.style()
+      this.elementStore.style = () => style
+      style.cssText = coercedValue
+      return
+    }
     const previousAttributesFuture = this.elementStore.attributes
     this.elementStore.attributes = () => {
       const previousAttributes: NamedNodeMap = previousAttributesFuture()
-      const attr = new Attr(this, localName, value)
+      const attr = new Attr(this, localName, coercedValue)
       previousAttributes.setNamedItem(attr)
       return previousAttributes
     }
@@ -186,14 +244,17 @@ export class Element extends Node implements EventTarget {
 
   dispatchEvent(event: Event): boolean {
     // Set the target to the element that originally received the event
-    try {
-      event.eventStore.target()
-    } catch {
-      event.eventStore.target = () => this
+    if (event.eventStore) {
+      try {
+        event.eventStore.target()
+      } catch {
+        event.eventStore.target = () => this
+      }
     }
 
+    const type = event.eventStore ? event.eventStore.type() : event.type
     const listeners = this.elementStore.eventListeners()
-    const queue = listeners[event.type]
+    const queue = listeners[type]
     if (queue && queue.length) {
       queue.forEach(listener => listener(event))
     } else {
@@ -226,6 +287,10 @@ export class Element extends Node implements EventTarget {
   }
 
   getAttribute(qualifiedName: string) {
+    if (qualifiedName === 'style') {
+      const cssText = this.elementStore.style().cssText
+      return cssText || null
+    }
     return this.attributes.getNamedItem(qualifiedName)?.value ?? null
   }
 
@@ -332,7 +397,8 @@ export class Element extends Node implements EventTarget {
       )
     }
 
-    const attr = new Attr(this, localName, value, namespaceURI, prefix)
+    const coercedValue = String(value)
+    const attr = new Attr(this, localName, coercedValue, namespaceURI, prefix)
     const previousAttributesFuture = this.elementStore.attributes
     this.elementStore.attributes = () => {
       const previousAttributes: NamedNodeMap = previousAttributesFuture()
@@ -431,18 +497,30 @@ export class Element extends Node implements EventTarget {
   }
 
   querySelectorAll(query: string): Element[] {
-    return CSSselect.selectAll(query, this, { adapter }).filter(
-      (node): node is Element => node instanceof Element
-    )
+    try {
+      return CSSselect.selectAll(query, this, { adapter }).filter(
+        (node): node is Element => node instanceof Element
+      )
+    } catch {
+      return []
+    }
   }
 
   matches(selectors: string): boolean {
-    return CSSselect.is(this, selectors, { adapter })
+    try {
+      return CSSselect.is(this, selectors, { adapter })
+    } catch {
+      return false
+    }
   }
 
   querySelector(selectors: string): Element | null {
-    const result = CSSselect.selectOne(selectors, this, { adapter })
-    return result instanceof Element ? result : null
+    try {
+      const result = CSSselect.selectOne(selectors, this, { adapter })
+      return result instanceof Element ? result : null
+    } catch {
+      return null
+    }
   }
 
   append(...nodes: (Node | string)[]) {

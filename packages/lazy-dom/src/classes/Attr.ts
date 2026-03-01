@@ -47,4 +47,14 @@ export class Attr {
   set nodeValue(val: string) {
     this.value = val
   }
+
+  toJSON() {
+    return {
+      name: this.name,
+      value: this.value,
+      localName: this.localName,
+      prefix: this.prefix,
+      namespaceURI: this.namespaceURI,
+    }
+  }
 }
