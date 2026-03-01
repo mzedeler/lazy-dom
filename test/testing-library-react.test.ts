@@ -35,7 +35,7 @@ describe('@testing-library/react', () => {
       stub.callsFake(() => {})
     })
   
-    it.skip('supports screen.debug()', () => {
+    it('supports screen.debug()', () => {
       render(React.createElement('img', { alt: 'hello' }))
   
       screen.debug()
