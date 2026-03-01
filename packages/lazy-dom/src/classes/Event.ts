@@ -4,6 +4,12 @@ import valueNotSetError from "../utils/valueNotSetError"
 import { Node } from './Node/Node'
 import { EventType } from '../types/EventType'
 
+interface EventInit {
+  bubbles?: boolean
+  cancelable?: boolean
+  composed?: boolean
+}
+
 class EventStore {
   type: Future<EventType> = () => {
     throw valueNotSetError('type')
@@ -19,6 +25,22 @@ export class Event {
   cancelBubble = false
   bubbles = false
   cancelable = false
+  composed = false
+  currentTarget: Node | null = null
+  eventPhase = 0
+  isTrusted = false
+  timeStamp = Date.now()
+
+  constructor(type?: EventType, eventInitDict?: EventInit) {
+    if (type !== undefined) {
+      this.eventStore.type = () => type
+    }
+    if (eventInitDict) {
+      if (eventInitDict.bubbles !== undefined) this.bubbles = eventInitDict.bubbles
+      if (eventInitDict.cancelable !== undefined) this.cancelable = eventInitDict.cancelable
+      if (eventInitDict.composed !== undefined) this.composed = eventInitDict.composed
+    }
+  }
 
   get target(): Node {
     return this.eventStore.target()

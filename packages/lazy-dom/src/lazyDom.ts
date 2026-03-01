@@ -11,6 +11,7 @@ import { CharacterData } from "./classes/CharacterData"
 import { Attr } from "./classes/Attr"
 import { NamedNodeMap } from "./classes/NamedNodeMap"
 import { DOMException } from "./classes/DOMException"
+import { CSSStyleDeclaration } from "./classes/CSSStyleDeclaration"
 import { HTMLCollection } from "./classes/HTMLCollection"
 import { NodeList } from "./classes/NodeList"
 import { HTMLElement } from "./classes/elements/HTMLElement"
@@ -25,6 +26,8 @@ import { HTMLAnchorElement } from "./classes/elements/HTMLAnchorElement"
 import { HTMLImageElement } from "./classes/elements/HTMLImageElement"
 import { SVGElement } from "./classes/elements/SVGElement"
 import { HTMLIFrameElement } from "./classes/elements/HTMLIFrameElement"
+import { Event } from "./classes/Event"
+import { UIEvent, MouseEvent, KeyboardEvent, InputEvent, FocusEvent, PointerEvent } from "./classes/PointerEvent"
 
 export { JSDOM } from "./jsdom"
 
@@ -48,6 +51,14 @@ const lazyDom = () => {
     DOMException,
     HTMLCollection,
     NodeList,
+    Event,
+    UIEvent,
+    MouseEvent,
+    KeyboardEvent,
+    InputEvent,
+    FocusEvent,
+    PointerEvent,
+    CSSStyleDeclaration,
     EventTarget: globalThis.EventTarget,
     HTMLElement,
     HTMLDivElement,

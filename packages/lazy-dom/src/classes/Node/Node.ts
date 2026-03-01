@@ -289,6 +289,78 @@ export abstract class Node {
     }
   }
 
+  static readonly DOCUMENT_POSITION_DISCONNECTED = 0x01
+  static readonly DOCUMENT_POSITION_PRECEDING = 0x02
+  static readonly DOCUMENT_POSITION_FOLLOWING = 0x04
+  static readonly DOCUMENT_POSITION_CONTAINS = 0x08
+  static readonly DOCUMENT_POSITION_CONTAINED_BY = 0x10
+  static readonly DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 0x20
+
+  readonly DOCUMENT_POSITION_DISCONNECTED = 0x01
+  readonly DOCUMENT_POSITION_PRECEDING = 0x02
+  readonly DOCUMENT_POSITION_FOLLOWING = 0x04
+  readonly DOCUMENT_POSITION_CONTAINS = 0x08
+  readonly DOCUMENT_POSITION_CONTAINED_BY = 0x10
+  readonly DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 0x20
+
+  compareDocumentPosition(other: Node): number {
+    if (this === other) return 0
+
+    // Get ancestor chains for both nodes
+    const getAncestors = (node: Node): Node[] => {
+      const result: Node[] = []
+      let current: Node | null = node
+      while (current) {
+        result.unshift(current)
+        current = current.parent
+      }
+      return result
+    }
+
+    const thisAncestors = getAncestors(this)
+    const otherAncestors = getAncestors(other)
+
+    // If they don't share a root, they're disconnected
+    if (thisAncestors[0] !== otherAncestors[0]) {
+      return Node.DOCUMENT_POSITION_DISCONNECTED |
+        Node.DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC |
+        (this.wasmId < other.wasmId ? Node.DOCUMENT_POSITION_FOLLOWING : Node.DOCUMENT_POSITION_PRECEDING)
+    }
+
+    // Check for containment
+    if (this.contains(other)) {
+      return Node.DOCUMENT_POSITION_CONTAINED_BY | Node.DOCUMENT_POSITION_FOLLOWING
+    }
+    if (other.contains(this)) {
+      return Node.DOCUMENT_POSITION_CONTAINS | Node.DOCUMENT_POSITION_PRECEDING
+    }
+
+    // Find the common ancestor and compare sibling order
+    let commonDepth = 0
+    while (commonDepth < thisAncestors.length && commonDepth < otherAncestors.length &&
+           thisAncestors[commonDepth] === otherAncestors[commonDepth]) {
+      commonDepth++
+    }
+
+    const thisBranch = thisAncestors[commonDepth]
+    const otherBranch = otherAncestors[commonDepth]
+    const commonParent = thisAncestors[commonDepth - 1]
+
+    // Find which branch comes first among the parent's children
+    const childIds = nodeOps.getChildIds(commonParent.wasmId)
+    const thisIndex = childIds.indexOf(thisBranch.wasmId)
+    const otherIndex = childIds.indexOf(otherBranch.wasmId)
+
+    if (thisIndex < otherIndex) {
+      return Node.DOCUMENT_POSITION_FOLLOWING
+    }
+    return Node.DOCUMENT_POSITION_PRECEDING
+  }
+
+  isSameNode(other: Node | null): boolean {
+    return this === other
+  }
+
   getRootNode(): Node | Document {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let current: Node = this

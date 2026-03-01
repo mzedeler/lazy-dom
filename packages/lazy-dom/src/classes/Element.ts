@@ -4,6 +4,7 @@ import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 
 import { Text } from "./Text"
+import { CharacterData } from "./CharacterData"
 import { Node } from "./Node/Node"
 import { Event } from "./Event"
 import { EventTarget } from "../types/EventTarget"
@@ -17,6 +18,7 @@ import * as NodeRegistry from "../wasm/NodeRegistry"
 import { DOMTokenList } from "./DOMTokenList"
 import { DOMStringMap } from "./DOMStringMap"
 import { DOMException } from "./DOMException"
+import { CSSStyleDeclaration } from "./CSSStyleDeclaration"
 
 const adapter = new CssSelectAdapter()
 
@@ -25,7 +27,7 @@ class ElementStore {
   tagName: Future<string> = () => {
     throw valueNotSetError('tagName')
   }
-  style: Future<Record<string, unknown>> = () => ({})
+  style: Future<CSSStyleDeclaration> = () => new CSSStyleDeclaration()
   attributes: Future<NamedNodeMap> = () => new NamedNodeMap()
   namespaceURI: Future<string | null> = () => null
 }
@@ -109,9 +111,11 @@ export class Element extends Node implements EventTarget {
   get textContent(): string {
     const children = this.nodeStore.getChildNodesArray()
     const fragments = []
-    for (const value of children) {
-      if (value instanceof Text) {
-        fragments.push(value.nodeValue)
+    for (const child of children) {
+      if (child instanceof Element) {
+        fragments.push(child.textContent)
+      } else if (child instanceof CharacterData) {
+        fragments.push(child.data)
       }
     }
 
@@ -181,6 +185,13 @@ export class Element extends Node implements EventTarget {
   }
 
   dispatchEvent(event: Event) {
+    // Set the target to the element that originally received the event
+    try {
+      event.eventStore.target()
+    } catch {
+      event.eventStore.target = () => this
+    }
+
     const listeners = this.elementStore.eventListeners()
     const queue = listeners[event.type]
     if (queue && queue.length) {
@@ -521,6 +532,54 @@ export class Element extends Node implements EventTarget {
 
   get children() {
     return this.nodeStore.getChildNodesArray().filter(node => node instanceof Element)
+  }
+
+  insertAdjacentElement(position: string, element: Element): Element | null {
+    switch (position.toLowerCase()) {
+      case 'beforebegin': {
+        const parent = this.parentNode
+        if (!parent) return null
+        parent.insertBefore(element, this)
+        return element
+      }
+      case 'afterbegin':
+        this.insertBefore(element, this.firstChild)
+        return element
+      case 'beforeend':
+        this.appendChild(element)
+        return element
+      case 'afterend': {
+        const parent = this.parentNode
+        if (!parent) return null
+        parent.insertBefore(element, this.nextSibling)
+        return element
+      }
+      default:
+        return null
+    }
+  }
+
+  insertAdjacentHTML(position: string, text: string) {
+    // Minimal implementation: creates a text node with the HTML string
+    const textNode = this.ownerDocument.createTextNode(text)
+    switch (position.toLowerCase()) {
+      case 'beforebegin': {
+        const parent = this.parentNode
+        if (parent) parent.insertBefore(textNode, this)
+        break
+      }
+      case 'afterbegin':
+        this.insertBefore(textNode, this.firstChild)
+        break
+      case 'beforeend':
+        this.appendChild(textNode)
+        break
+      case 'afterend': {
+        const parent = this.parentNode
+        if (parent) parent.insertBefore(textNode, this.nextSibling)
+        break
+      }
+    }
   }
 
   protected _cloneNodeShallow(): Element {

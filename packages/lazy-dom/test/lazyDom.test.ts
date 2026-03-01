@@ -82,6 +82,35 @@ describe('main', () => {
     })
   })
 
+  describe('Element.dispatchEvent', () => {
+    before(function () {
+      // Skip under JSDOM: JSDOM rejects non-JSDOM Event instances
+      if (!globalThis.__LAZY_DOM__) this.skip()
+    })
+
+    it('sets target to the dispatched element', () => {
+      const div = document.createElement('div')
+      const event = new Event('click')
+      let receivedTarget: unknown = null
+      div.addEventListener('click', (e: Event) => {
+        receivedTarget = e.target
+      })
+      div.dispatchEvent(event)
+      expect(receivedTarget).to.equal(div)
+    })
+
+    it('sets target on externally constructed events', () => {
+      const btn = document.createElement('button')
+      const event = new Event('focus', { bubbles: true })
+      let receivedTarget: unknown = null
+      btn.addEventListener('focus', (e: Event) => {
+        receivedTarget = e.target
+      })
+      btn.dispatchEvent(event)
+      expect(receivedTarget).to.equal(btn)
+    })
+  })
+
   describe('Body', () => {
     it('has tagName', () => {
       expect(document.body).to.have.property('tagName', 'BODY')

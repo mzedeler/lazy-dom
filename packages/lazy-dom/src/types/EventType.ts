@@ -1,1 +1,1 @@
-export type EventType = 'click'
+export type EventType = string

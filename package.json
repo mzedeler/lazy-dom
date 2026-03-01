@@ -6,7 +6,8 @@
     "test:jsdom": "pnpm -r test:jsdom",
     "test:lazydom": "pnpm build && pnpm -r test:lazydom",
     "typecheck": "pnpm -r typecheck",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "bench:pro": "pnpm --filter lazy-dom build && pnpm --filter jest-environment-lazy-dom build && pnpm --filter @lazy-dom/bench-pro compare"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",

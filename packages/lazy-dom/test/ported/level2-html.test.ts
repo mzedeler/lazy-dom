@@ -776,6 +776,27 @@ describe('level2/html', () => {
       expect(div.textContent).to.equal('hello world')
     })
 
+    it('element_textContent - recurses into nested elements', () => {
+      const outer = document.createElement('div')
+      const inner = document.createElement('span')
+      inner.appendChild(document.createTextNode('hello'))
+      outer.appendChild(inner)
+      outer.appendChild(document.createTextNode(' world'))
+      expect(outer.textContent).to.equal('hello world')
+    })
+
+    it('element_textContent - recurses into deeply nested elements', () => {
+      const root = document.createElement('div')
+      const level1 = document.createElement('p')
+      const level2 = document.createElement('em')
+      level2.appendChild(document.createTextNode('deep'))
+      level1.appendChild(document.createTextNode('one '))
+      level1.appendChild(level2)
+      level1.appendChild(document.createTextNode(' end'))
+      root.appendChild(level1)
+      expect(root.textContent).to.equal('one deep end')
+    })
+
     it('element_innerHTML - produces HTML from mixed children', () => {
       const div = document.createElement('div')
       const span = document.createElement('span')

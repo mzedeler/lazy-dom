@@ -62,6 +62,8 @@ import { HTMLCollection } from "./HTMLCollection"
 import { DOMImplementation } from "./DOMImplementation"
 import { DOMException } from "./DOMException"
 import { Window } from "./Window"
+import { CSSStyleSheet } from "./CSSStyleSheet"
+import { TreeWalker } from "./TreeWalker"
 import * as nodeOps from "../wasm/nodeOps"
 import * as NodeRegistry from "../wasm/NodeRegistry"
 
@@ -482,5 +484,15 @@ export class Document implements EventTarget {
 
   get documentElement(): HTMLHtmlElement {
     return this.documentStore.documentElement()
+  }
+
+  get styleSheets(): CSSStyleSheet[] {
+    return this.documentStore.elements
+      .filter((el): el is HTMLStyleElement => el instanceof HTMLStyleElement)
+      .map(el => el.sheet)
+  }
+
+  createTreeWalker(root: Node, whatToShow?: number, filter?: { acceptNode: (node: Node) => number } | null): TreeWalker {
+    return new TreeWalker(root, whatToShow ?? 0xFFFFFFFF, filter ?? null)
   }
 }

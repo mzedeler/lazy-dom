@@ -1,6 +1,13 @@
 import { HTMLElement } from "./HTMLElement"
+import { CSSStyleSheet } from "../CSSStyleSheet"
 
 export class HTMLStyleElement extends HTMLElement {
+  private _sheet = new CSSStyleSheet()
+
+  get sheet(): CSSStyleSheet {
+    return this._sheet
+  }
+
   get disabled() {
     return this.hasAttribute('disabled')
   }
