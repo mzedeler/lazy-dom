@@ -64,17 +64,4 @@ describe('@testing-library/react', () => {
     expect(spanElement).to.be.instanceOf(window.HTMLSpanElement)
     React.act(() => spanElement.click())
   })
-
-  // it('supports act', async () => {
-  //   let callback:
-  //   const subscribe = (cb) => { callback = cb }
-  //   const Component = () => {
-  //     const count = useSyncExternalStore(subscribe, getSnapshot)
-  //     return React.createElement('input', { value, onChange: setValue })
-  //   }
-
-  //   const { container } = render(React.createElement(Component))
-    
-  //   console.log(screen.debug(container))
-  // })
 })
