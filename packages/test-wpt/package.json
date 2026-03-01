@@ -1,0 +1,24 @@
+{
+  "name": "@lazy-dom/test-wpt",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test:jsdom": "echo '*** JSDOM ***'; tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js || (echo '*** failure in JSDOM test ***' && exit -1)",
+    "test:lazydom": "echo '*** lazyDom ***'; tsx --import lazy-dom/register ./node_modules/mocha/bin/mocha.js || (echo '*** failure in lazyDom test ***' && exit -1)",
+    "test": "pnpm test:jsdom && pnpm test:lazydom",
+    "typecheck": "pnpm tsc --noEmit",
+    "wpt:sync": "bash bin/sync-wpt.sh"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.12.11",
+    "chai": "^5.2.0",
+    "global-jsdom": "^24.0.0",
+    "jsdom": "^24.0.0",
+    "lazy-dom": "workspace:*",
+    "mocha": "^10.4.0",
+    "tsx": "^4.11.0",
+    "typescript": "^5.6.2"
+  }
+}

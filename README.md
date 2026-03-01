@@ -1,19 +1,39 @@
 # lazyDom
 Lazy HTML DOM implementation that is intended to make it possible to run fast tests.
 
+# Monorepo structure
+
+This is a pnpm workspace monorepo with three packages:
+
+ * `packages/lazy-dom` - the core lazy-dom library
+ * `packages/test-react` - React and testing-library tests
+ * `packages/test-wpt` - Web Platform Tests
+
 # Development
 To get started:
 
 ```
 pnpm i
 
-pnpm dev:watch
+pnpm --filter lazy-dom dev:watch
 ```
 
 # Testing
 
 ```
-pnpm test && pnpm typecheck
+# Run all tests (builds first)
+pnpm test
+
+# Run tests for a specific package
+pnpm --filter lazy-dom test
+pnpm --filter @lazy-dom/test-react test
+pnpm --filter @lazy-dom/test-wpt test
+
+# Typecheck all packages
+pnpm typecheck
+
+# Lint
+pnpm lint
 ```
 
 # Benchmarks

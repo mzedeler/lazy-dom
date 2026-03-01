@@ -1,0 +1,33 @@
+{
+  "name": "@lazy-dom/test-react",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test:jsdom": "echo '*** JSDOM ***'; tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js || (echo '*** failure in JSDOM test ***' && exit -1)",
+    "test:lazydom": "echo '*** lazyDom ***'; tsx --import lazy-dom/register ./node_modules/mocha/bin/mocha.js || (echo '*** failure in lazyDom test ***' && exit -1)",
+    "test": "pnpm test:jsdom && pnpm test:lazydom",
+    "typecheck": "pnpm tsc --noEmit"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.1.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.12.11",
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.0",
+    "@types/sinon": "^17.0.3",
+    "@types/sinon-chai": "^3.2.12",
+    "chai": "^5.2.0",
+    "global-jsdom": "^24.0.0",
+    "jsdom": "^24.0.0",
+    "lazy-dom": "workspace:*",
+    "mocha": "^10.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sinon": "^18.0.0",
+    "sinon-chai": "^3.7.0",
+    "tsx": "^4.11.0",
+    "typescript": "^5.6.2"
+  }
+}

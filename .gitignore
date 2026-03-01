@@ -1,6 +1,7 @@
 node_modules
 *~
 .pnpm-store
-build/wasm/
+packages/lazy-dom/build/wasm/
+packages/lazy-dom/dist/
+packages/test-wpt/vendor/wpt/
 .claude
-vendor/wpt/

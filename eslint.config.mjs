@@ -4,7 +4,8 @@ import tseslint from "typescript-eslint";
 import mochaPlugin from 'eslint-plugin-mocha'
 
 export default tseslint.config(
-  { ignores: ['dist/', 'test/ported/', 'src/assembly/', 'jsdom/', 'vendor/', 'build/'] },
+  { ignores: ['**/dist/', 'packages/lazy-dom/test/ported/', 'packages/lazy-dom/src/assembly/',
+              'packages/test-wpt/vendor/', 'packages/lazy-dom/build/'] },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   { files: ["**/*.{js,mjs,cjs,ts}"] },
@@ -32,7 +33,7 @@ export default tseslint.config(
     }
   },
   {
-    files: ['test/wpt/**/*.ts'],
+    files: ['packages/test-wpt/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unused-expressions': 'off',
       'mocha/no-setup-in-describe': 'off',

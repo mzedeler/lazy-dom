@@ -1,8 +1,0 @@
-{
-  "extensions": [
-    "ts"
-  ],
-  "spec": ["**/*.test.ts"],
-  "ignore": ["pro/**", "test/wpt/**"],
-  "recursive": true
-}

@@ -17,4 +17,3 @@ If you need to work on a improving performance, also read
    else fails. In stead, look up and use the correct types to use, so the
    type system can be actively used to verify whether the implementation is
    correct.
-
