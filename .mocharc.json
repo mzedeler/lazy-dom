@@ -3,6 +3,6 @@
     "ts"
   ],
   "spec": ["**/*.test.ts"],
-  "ignore": ["pro/**"],
+  "ignore": ["pro/**", "test/wpt/**"],
   "recursive": true
 }

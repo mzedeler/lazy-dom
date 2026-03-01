@@ -5,3 +5,5 @@ build/wasm/
 pro
 jsdom
 .claude
+vendor/wpt/
+dist/

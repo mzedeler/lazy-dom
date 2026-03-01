@@ -25,7 +25,11 @@
     "test:lazydom": "echo '*** lazyDom ***'; pnpm build:wasm && tsx --import ./src/register.ts ./node_modules/mocha/bin/mocha.js || (echo '*** failure in lazyDom test ***' && exit -1)",
     "test:watch": "nodemon --config nodemon.test.json --",
     "test": "pnpm test:jsdom && pnpm test:lazydom",
-    "typecheck": "pnpm tsc --noEmit"
+    "typecheck": "pnpm tsc --noEmit",
+    "wpt:sync": "bash bin/sync-wpt.sh",
+    "test:wpt:lazydom": "pnpm build:wasm && tsx --import ./src/register.ts ./node_modules/mocha/bin/mocha.js --config .mocharc.wpt.json",
+    "test:wpt:jsdom": "tsx --import global-jsdom/register ./node_modules/mocha/bin/mocha.js --config .mocharc.wpt.json",
+    "test:wpt": "pnpm test:wpt:jsdom && pnpm test:wpt:lazydom"
   },
   "keywords": [],
   "author": "",

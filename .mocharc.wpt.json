@@ -1,0 +1,6 @@
+{
+  "extensions": ["ts"],
+  "spec": ["test/wpt/**/*.test.ts"],
+  "recursive": true,
+  "timeout": 10000
+}
