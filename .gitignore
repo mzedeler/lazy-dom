@@ -3,5 +3,7 @@ node_modules
 .pnpm-store
 packages/lazy-dom/build/wasm/
 packages/lazy-dom/dist/
+packages/jest-environment-lazy-dom/dist/
 packages/test-wpt/vendor/wpt/
+packages/test-react-source/vendor/react/
 .claude

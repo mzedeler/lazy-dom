@@ -1,0 +1,22 @@
+{
+  "name": "jest-environment-lazy-dom",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lazy-dom": "workspace:*"
+  },
+  "peerDependencies": {
+    "jest-environment-node": ">=29.0.0"
+  },
+  "devDependencies": {
+    "@jest/environment": "^29.7.0",
+    "@types/node": "^20.12.11",
+    "jest-environment-node": "^29.7.0",
+    "typescript": "^5.6.2"
+  }
+}
