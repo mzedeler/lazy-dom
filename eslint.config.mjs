@@ -28,7 +28,7 @@ export default tseslint.config(
     files: ['**/*.test.ts'],
     rules: {
       '@typescript-eslint/no-unused-expressions': 'off',
-      'mocha/no-skipped-tests': 'warn',
+      'mocha/no-skipped-tests': 'error',
     }
   },
   {
