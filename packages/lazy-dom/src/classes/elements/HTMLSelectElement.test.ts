@@ -47,13 +47,13 @@ describe('HTMLSelectElement', () => {
   })
 
   describe('selectedIndex', () => {
-    it('returns -1 when no option is selected', () => {
+    it('returns 0 when no option is selected', () => {
       const select = document.createElement('select')
       const option = document.createElement('option')
       select.appendChild(option)
       document.body.appendChild(select)
 
-      expect(select.selectedIndex).to.eq(-1)
+      expect(select.selectedIndex).to.eq(0)
     })
 
     it('returns the index of the selected option', () => {

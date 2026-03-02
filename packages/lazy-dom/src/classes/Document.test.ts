@@ -135,12 +135,12 @@ describe('Document', () => {
   describe('createEvent', () => {
     it('creates an Event for "Event" interface', () => {
       const event = document.createEvent('Event')
-      expect(event).to.be.instanceOf(Event)
+      expect(event).to.be.instanceOf(window.Event)
     })
 
     it('creates an Event for "HTMLEvents" interface', () => {
       const event = document.createEvent('HTMLEvents')
-      expect(event).to.be.instanceOf(Event)
+      expect(event).to.be.instanceOf(window.Event)
     })
 
     it('creates a MouseEvent for "MouseEvent" interface', () => {
