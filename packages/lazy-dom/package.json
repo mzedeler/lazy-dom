@@ -36,9 +36,37 @@
     "test": "pnpm test:jsdom && pnpm test:lazydom",
     "typecheck": "pnpm tsc --noEmit"
   },
-  "keywords": [],
+  "keywords": [
+    "dom",
+    "jsdom",
+    "testing",
+    "react",
+    "lazy",
+    "fast",
+    "wasm",
+    "test-environment",
+    "jsdom-alternative"
+  ],
   "author": "Michael Zedeler <michael@zedeler.dk>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mzedeler/lazy-dom",
+    "directory": "packages/lazy-dom"
+  },
+  "homepage": "https://github.com/mzedeler/lazy-dom#readme",
+  "bugs": {
+    "url": "https://github.com/mzedeler/lazy-dom/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "build/wasm",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@assemblyscript/loader": "^0.28.9",
     "css-select": "^5.1.0",

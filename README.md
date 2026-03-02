@@ -1,67 +1,179 @@
-# lazyDom
-Lazy HTML DOM implementation that is intended to make it possible to run fast tests.
+# lazy-dom
 
-# Monorepo structure
+A fast, lazy-evaluated HTML DOM for JavaScript testing. Drop-in JSDOM replacement, 2-4x faster.
 
-This is a pnpm workspace monorepo with three packages:
+[![CI](https://github.com/mzedeler/lazy-dom/actions/workflows/ci.yml/badge.svg)](https://github.com/mzedeler/lazy-dom/actions/workflows/ci.yml)
 
- * `packages/lazy-dom` - the core lazy-dom library
- * `packages/test-react` - React and testing-library tests
- * `packages/test-wpt` - Web Platform Tests
+## Why lazy-dom?
 
-# Development
-To get started:
+JSDOM is the standard DOM implementation for Node.js testing, but it eagerly evaluates every DOM mutation. In a test environment, most of the DOM tree is never read — yet JSDOM computes it all anyway.
 
+lazy-dom stores DOM state as thunks (lazy functions) instead of concrete values. A chain of DOM mutations builds up a chain of deferred computations, and only the final state is evaluated when something reads it. Combined with a WASM-backed child node manager, this makes lazy-dom **2-4x faster** than JSDOM for typical React test workloads.
+
+## Quick Start
+
+### Jest
+
+```bash
+npm install --save-dev lazy-dom jest-environment-lazy-dom
 ```
-pnpm i
 
-pnpm --filter lazy-dom dev:watch
+```js
+// jest.config.js
+module.exports = {
+  testEnvironment: "jest-environment-lazy-dom",
+};
 ```
 
-# Testing
+### Mocha
 
+```bash
+npm install --save-dev lazy-dom
 ```
-# Run all tests (builds first)
+
+```bash
+mocha --import lazy-dom/register
+```
+
+### Programmatic
+
+```js
+import lazyDom from "lazy-dom";
+
+const { window, document, classes } = lazyDom();
+```
+
+### JSDOM Compatibility
+
+```js
+import { JSDOM } from "lazy-dom";
+
+const dom = new JSDOM("<!DOCTYPE html><p>Hello</p>");
+const document = dom.window.document;
+```
+
+## Supported APIs
+
+### Core DOM
+
+Node, Element, Document, DocumentFragment, Text, Comment, CharacterData, ProcessingInstruction, Attr, NamedNodeMap, Range, TreeWalker, NodeList, HTMLCollection, DOMTokenList, DOMStringMap
+
+### HTML Elements
+
+~40 element classes including HTMLDivElement, HTMLInputElement, HTMLButtonElement, HTMLFormElement, HTMLSelectElement, HTMLTextAreaElement, HTMLAnchorElement, HTMLImageElement, HTMLTableElement, HTMLIFrameElement, HTMLCanvasElement, and more.
+
+### SVG
+
+SVGElement, SVGPathElement
+
+### Events
+
+Event, UIEvent, MouseEvent, PointerEvent, KeyboardEvent, InputEvent, FocusEvent — with full `addEventListener`, `removeEventListener`, and `dispatchEvent` support.
+
+### CSS
+
+CSSStyleDeclaration with Proxy-based property access (`style.backgroundColor`), `cssText`, `setProperty`, `getPropertyValue`, `removeProperty`.
+
+### Selectors
+
+`querySelector`, `querySelectorAll`, `matches`, `closest` — powered by css-select.
+
+### HTML Serialization
+
+`innerHTML` (get/set), `outerHTML` (get) — with HTML parsing via htmlparser2.
+
+### React Compatibility
+
+React 18 with `@testing-library/react` and `@testing-library/dom`.
+
+## Migrating from JSDOM
+
+### Jest
+
+Replace the test environment:
+
+```diff
+// jest.config.js
+module.exports = {
+-  testEnvironment: "jest-environment-jsdom",
++  testEnvironment: "jest-environment-lazy-dom",
+};
+```
+
+### Mocha
+
+Replace the `--import` flag:
+
+```diff
+- mocha --import global-jsdom/register
++ mocha --import lazy-dom/register
+```
+
+### What's Not Supported
+
+lazy-dom implements the subset of DOM APIs needed by React and testing libraries. It does not support:
+
+- Layout, rendering, or `getBoundingClientRect`
+- Navigation or network APIs (`fetch`, `XMLHttpRequest`)
+- Full W3C spec compliance
+- XML parsing
+- Deprecated elements (`HTMLFrameElement`, `HTMLFontElement`, etc.)
+
+If your tests rely on these APIs, they will need stubs or should continue using JSDOM.
+
+## How It Works
+
+DOM state is stored as thunks (`Future<T> = () => T`) rather than concrete values. When a property is set, a new function closes over the previous one. The value is only computed when read:
+
+```typescript
+// Setting a property creates a new thunk — no computation happens
+this.nodeStore.childNodes = () => lazyAppend(previousChildNodesFuture(), node);
+
+// Computation only happens here, when the value is actually needed
+const children = nodeStore.childNodes();
+```
+
+Every `*Store` class (`NodeStore`, `ElementStore`, `DocumentStore`, etc.) follows this pattern. Child node relationships are managed by a WebAssembly module for fast structural mutations.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
+
+## Benchmarks
+
+| Operation | lazy-dom (ops/sec) | JSDOM (ops/sec) | Speedup |
+|---|---|---|---|
+| React.createRoot | 13,702 | 6,064 | 2.3x |
+| React.createRoot + createElement | 13,284 | 5,921 | 2.2x |
+| Event handling | 10,836 | 4,301 | 2.5x |
+| Removing child | 344,269 | 82,319 | 4.2x |
+
+## Development
+
+This is a pnpm workspace monorepo:
+
+- `packages/lazy-dom` — Core DOM implementation
+- `packages/jest-environment-lazy-dom` — Jest test environment
+- `packages/test-react` — React and @testing-library tests
+- `packages/test-wpt` — Web Platform Tests
+
+```bash
+pnpm install
+pnpm build
+
+# Run all tests (both JSDOM and lazy-dom backends)
 pnpm test
 
-# Run tests for a specific package
-pnpm --filter lazy-dom test
-pnpm --filter @lazy-dom/test-react test
-pnpm --filter @lazy-dom/test-wpt test
+# Run only the lazy-dom backend (faster during development)
+pnpm --filter lazy-dom test:lazydom
 
-# Typecheck all packages
+# Typecheck and lint
 pnpm typecheck
-
-# Lint
 pnpm lint
 ```
 
-# Benchmarks
-(Probably outdated.)
+## Contributing
 
-```
-┌─────────┬───────────────────────────────────────────────────┬───────────┬────────────────────┬───────────┬─────────┐
-│ (index) │ Task Name                                         │ ops/sec   │ Average Time (ns)  │ Margin    │ Samples │
-├─────────┼───────────────────────────────────────────────────┼───────────┼────────────────────┼───────────┼─────────┤
-│ 0       │ 'lazyDom: React.createRoot'                       │ '13,702'  │ 72980.66010211612  │ '±27.61%' │ 1371    │
-│ 1       │ 'JSDOM: React.createRoot'                         │ '6,064'   │ 164901.9489291599  │ '±25.62%' │ 607     │
-│ 2       │ 'lazyDom: React.createRoot + React.createElement' │ '13,284'  │ 75274.42061700366  │ '±25.82%' │ 1329    │
-│ 3       │ 'JSDOM: React.createRoot + React.createElement'   │ '5,921'   │ 168886.75777414296 │ '±27.19%' │ 611     │
-│ 4       │ 'lazyDom: event handling'                         │ '10,836'  │ 92277.3356953098   │ '±26.58%' │ 1129    │
-│ 5       │ 'JSDOM: event handling'                           │ '4,301'   │ 232489.9409090924  │ '±25.06%' │ 440     │
-│ 6       │ 'lazyDom: removing child'                         │ '344,269' │ 2904.697359631149  │ '±41.36%' │ 34427   │
-│ 7       │ 'JSDOM: removing child'                           │ '82,319'  │ 12147.72266763641  │ '±11.72%' │ 8232    │
-└─────────┴───────────────────────────────────────────────────┴───────────┴────────────────────┴───────────┴─────────┘
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-# Author
-Michael Zedeler <michael@zedeler.dk>
+## License
 
-# License
-Copyright 2024 Michael Zedeler
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+MIT — see [LICENSE](LICENSE).

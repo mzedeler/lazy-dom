@@ -1,6 +1,31 @@
 {
   "name": "jest-environment-lazy-dom",
   "version": "0.1.0",
+  "description": "Jest test environment powered by lazy-dom for fast DOM testing",
+  "license": "MIT",
+  "author": "Michael Zedeler <michael@zedeler.dk>",
+  "keywords": [
+    "jest",
+    "jest-environment",
+    "dom",
+    "lazy-dom",
+    "testing",
+    "jsdom-alternative"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mzedeler/lazy-dom",
+    "directory": "packages/jest-environment-lazy-dom"
+  },
+  "homepage": "https://github.com/mzedeler/lazy-dom#jest-environment",
+  "bugs": {
+    "url": "https://github.com/mzedeler/lazy-dom/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
