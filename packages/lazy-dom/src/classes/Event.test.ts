@@ -26,6 +26,39 @@ describe('Event', () => {
     expect(event.preventDefault).to.be.instanceOf(Function)
   })
 
+  describe('stopPropagation', () => {
+    it('sets cancelBubble to true', () => {
+      const event = new Event('click')
+      event.stopPropagation()
+
+      expect(event.cancelBubble).to.be.true
+    })
+  })
+
+  describe('stopImmediatePropagation', () => {
+    it('sets cancelBubble to true', () => {
+      const event = new Event('click')
+      event.stopImmediatePropagation()
+
+      expect(event.cancelBubble).to.be.true
+    })
+
+    it('prevents subsequent listeners on the same element from firing', () => {
+      const el = document.createElement('div')
+      const log: string[] = []
+      el.addEventListener('click', (e: Event) => {
+        log.push('first')
+        e.stopImmediatePropagation()
+      })
+      el.addEventListener('click', () => {
+        log.push('second')
+      })
+      el.dispatchEvent(new Event('click', { bubbles: true }))
+
+      expect(log).to.eql(['first'])
+    })
+  })
+
   describe('initEvent', () => {
     it('sets type, bubbles, and cancelable', () => {
       const event = new Event('_')

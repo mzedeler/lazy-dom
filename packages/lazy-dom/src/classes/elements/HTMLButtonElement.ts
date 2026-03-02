@@ -30,6 +30,34 @@ export class HTMLButtonElement extends HTMLElement {
     else this.removeAttribute('disabled')
   }
 
+  get formAction() {
+    return this.getAttribute('formaction') ?? ''
+  }
+  set formAction(value: string) {
+    this.setAttribute('formaction', value)
+  }
+
+  get formEnctype() {
+    return this.getAttribute('formenctype') ?? ''
+  }
+  set formEnctype(value: string) {
+    this.setAttribute('formenctype', value)
+  }
+
+  get formMethod() {
+    return this.getAttribute('formmethod') ?? ''
+  }
+  set formMethod(value: string) {
+    this.setAttribute('formmethod', value)
+  }
+
+  get formTarget() {
+    return this.getAttribute('formtarget') ?? ''
+  }
+  set formTarget(value: string) {
+    this.setAttribute('formtarget', value)
+  }
+
   get form() {
     return null
   }

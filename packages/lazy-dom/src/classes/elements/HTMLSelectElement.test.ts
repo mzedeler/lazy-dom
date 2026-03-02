@@ -86,6 +86,74 @@ describe('HTMLSelectElement', () => {
     })
   })
 
+  describe('value', () => {
+    it('returns the value of the first option by default (single select)', () => {
+      const select = document.createElement('select')
+      const option1 = document.createElement('option')
+      option1.setAttribute('value', 'alpha')
+      const option2 = document.createElement('option')
+      option2.setAttribute('value', 'beta')
+      select.appendChild(option1)
+      select.appendChild(option2)
+      document.body.appendChild(select)
+
+      expect(select.value).to.eq('alpha')
+    })
+
+    it('returns the value of the selected option', () => {
+      const select = document.createElement('select')
+      const option1 = document.createElement('option')
+      option1.setAttribute('value', 'alpha')
+      const option2 = document.createElement('option')
+      option2.setAttribute('value', 'beta')
+      option2.selected = true
+      select.appendChild(option1)
+      select.appendChild(option2)
+      document.body.appendChild(select)
+
+      expect(select.value).to.eq('beta')
+    })
+
+    it('returns empty string when there are no options', () => {
+      const select = document.createElement('select')
+      document.body.appendChild(select)
+
+      expect(select.value).to.eq('')
+    })
+
+    it('setting value selects the matching option', () => {
+      const select = document.createElement('select')
+      const option1 = document.createElement('option')
+      option1.setAttribute('value', 'alpha')
+      const option2 = document.createElement('option')
+      option2.setAttribute('value', 'beta')
+      select.appendChild(option1)
+      select.appendChild(option2)
+      document.body.appendChild(select)
+
+      select.value = 'beta'
+
+      expect(select.selectedIndex).to.eq(1)
+    })
+  })
+
+  describe('selectedIndex setter', () => {
+    it('selects the option at the given index', () => {
+      const select = document.createElement('select')
+      const option1 = document.createElement('option')
+      option1.setAttribute('value', 'a')
+      const option2 = document.createElement('option')
+      option2.setAttribute('value', 'b')
+      select.appendChild(option1)
+      select.appendChild(option2)
+      document.body.appendChild(select)
+
+      select.selectedIndex = 1
+
+      expect(select.value).to.eq('b')
+    })
+  })
+
   describe('length', () => {
     it('returns the number of option elements', () => {
       const select = document.createElement('select')

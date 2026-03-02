@@ -132,6 +132,54 @@ describe('Document', () => {
     })
   })
 
+  describe('document.write with full HTML', () => {
+    it('replaces document content when writing a full HTML document', () => {
+      const doc = document.implementation.createHTMLDocument('')
+      doc.open()
+      doc.write('<html><head><title>hello</title></head><body>world</body></html>')
+      doc.close()
+      const titleEl = doc.head.querySelector('title')
+      expect(titleEl).to.exist
+      expect(titleEl!.textContent).to.eq('hello')
+      expect(doc.body.textContent).to.eq('world')
+    })
+
+    it('handles frameset documents replacing body', () => {
+      const doc = document.implementation.createHTMLDocument('')
+      doc.open()
+      doc.write('<html><head></head><frameset><frame src="javascript:notfine"></frameset></html>')
+      doc.close()
+      const html = doc.documentElement
+      expect(html.childNodes).to.have.length(2)
+      const frameset = html.lastChild as Element
+      expect(frameset.tagName).to.eq('FRAMESET')
+      const frame = frameset.firstChild as Element
+      expect(frame.tagName).to.eq('FRAME')
+      expect(frame.getAttribute('src')).to.eq('javascript:notfine')
+    })
+
+    it('clears previous content on open()', () => {
+      const doc = document.implementation.createHTMLDocument('old')
+      expect(doc.head.querySelector('title')!.textContent).to.eq('old')
+      doc.open()
+      expect(doc.head.childNodes).to.have.length(0)
+    })
+  })
+
+  describe('removeChild with null argument', () => {
+    it('throws TypeError when node argument is null', () => {
+      const el = document.createElement('div')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => el.removeChild(null as any)).to.throw(TypeError)
+    })
+
+    it('throws TypeError when node argument is undefined', () => {
+      const el = document.createElement('div')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => el.removeChild(undefined as any)).to.throw(TypeError)
+    })
+  })
+
   describe('createEvent', () => {
     it('creates an Event for "Event" interface', () => {
       const event = document.createEvent('Event')
@@ -163,6 +211,111 @@ describe('Document', () => {
       expect(event.type).to.eq('click')
       expect(event.bubbles).to.be.true
       expect(event.cancelable).to.be.true
+    })
+  })
+
+  describe('on* event handler properties', () => {
+    it('oninput property exists on document', () => {
+      expect('oninput' in document).to.be.true
+    })
+
+    it('onclick property exists on document', () => {
+      expect('onclick' in document).to.be.true
+    })
+
+    it('onchange property exists on document', () => {
+      expect('onchange' in document).to.be.true
+    })
+
+    it('on* properties default to null', () => {
+      expect(document.onclick).to.be.null
+      expect(document.oninput).to.be.null
+    })
+  })
+
+  describe('Node-like methods', () => {
+    it('appendChild appends to documentElement', () => {
+      const el = document.createElement('div')
+      document.appendChild(el)
+
+      expect(document.documentElement.lastChild).to.eq(el)
+      document.removeChild(el)
+    })
+
+    it('removeChild removes from documentElement', () => {
+      const el = document.createElement('div')
+      document.appendChild(el)
+      document.removeChild(el)
+
+      expect(document.documentElement.contains(el)).to.be.false
+    })
+
+    it('contains returns true for contained elements', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+
+      expect(document.contains(el)).to.be.true
+    })
+
+    it('contains returns false for detached elements', () => {
+      const el = document.createElement('div')
+
+      expect(document.contains(el)).to.be.false
+    })
+  })
+
+  describe('activeElement', () => {
+    it('defaults to body', () => {
+      expect(document.activeElement).to.eq(document.body)
+    })
+
+    it('tracks focused element', () => {
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.focus()
+
+      expect(document.activeElement).to.eq(input)
+
+      input.blur()
+    })
+
+    it('returns to body after blur', () => {
+      const input = document.createElement('input')
+      document.body.appendChild(input)
+      input.focus()
+      input.blur()
+
+      expect(document.activeElement).to.eq(document.body)
+    })
+  })
+
+  describe('open/close/write', () => {
+    it('has open as a function', () => {
+      expect(document.open).to.be.instanceOf(Function)
+    })
+
+    it('has close as a function', () => {
+      expect(document.close).to.be.instanceOf(Function)
+    })
+
+    it('has write as a function', () => {
+      expect(document.write).to.be.instanceOf(Function)
+    })
+
+    it('has writeln as a function', () => {
+      expect(document.writeln).to.be.instanceOf(Function)
+    })
+
+    it('open returns the document', () => {
+      expect(document.open()).to.eq(document)
+    })
+  })
+
+  describe('namespaceURI', () => {
+    it('createElement sets XHTML namespace', () => {
+      const el = document.createElement('div')
+
+      expect(el.namespaceURI).to.eq('http://www.w3.org/1999/xhtml')
     })
   })
 

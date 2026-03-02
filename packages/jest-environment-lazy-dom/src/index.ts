@@ -126,6 +126,16 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       writable: true,
     })
 
+    // Wire the lazy-dom Window's console to the jest global's console,
+    // so that console.error calls from error reporting are captured by test spies.
+    // Use a getter so it always resolves the CURRENT g.console (which Jest may
+    // replace after the environment constructor runs).
+    Object.defineProperty(window, "console", {
+      configurable: true,
+      enumerable: true,
+      get() { return g.console },
+    })
+
     // document.defaultView is already set to the lazy-dom Window by lazyDom()
 
     // Restore Node.js globals that jest-fixed-jsdom also restores

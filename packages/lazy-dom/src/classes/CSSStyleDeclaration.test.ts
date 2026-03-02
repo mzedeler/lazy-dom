@@ -6,6 +6,44 @@ describe('CSSStyleDeclaration', () => {
     document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
+  describe('cssText serialization', () => {
+    it('includes trailing semicolons on each property', () => {
+      const div = document.createElement('div')
+      div.style.color = 'red'
+      expect(div.style.cssText).to.eq('color: red;')
+    })
+
+    it('separates multiple properties with space', () => {
+      const div = document.createElement('div')
+      div.style.color = 'red'
+      div.style.setProperty('text-decoration', 'none')
+      expect(div.style.cssText).to.eq('color: red; text-decoration: none;')
+    })
+
+    it('getAttribute returns raw attribute value when set via setAttribute', function () {
+      if (!globalThis.__LAZY_DOM__) this.skip()
+      const div = document.createElement('div')
+      div.setAttribute('style', 'color:red;width:30px')
+      expect(div.getAttribute('style')).to.eq('color:red;width:30px')
+      expect(div.style.color).to.eq('red')
+      expect(div.style.width).to.eq('30px')
+    })
+
+    it('getAttribute returns cssText when style set via JS API', function () {
+      if (!globalThis.__LAZY_DOM__) this.skip()
+      const div = document.createElement('div')
+      div.style.color = 'red'
+      expect(div.getAttribute('style')).to.eq('color: red;')
+    })
+
+    it('normalizes 0 to 0px for length properties', function () {
+      if (!globalThis.__LAZY_DOM__) this.skip()
+      const div = document.createElement('div')
+      div.style.left = '0'
+      expect(div.style.left).to.eq('0px')
+    })
+  })
+
   describe('undefined handling', () => {
     it('does not store undefined as the string "undefined"', () => {
       const div = document.createElement('div')

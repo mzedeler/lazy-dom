@@ -1,4 +1,7 @@
 import { HTMLElement } from "./HTMLElement"
+import { HTMLInputElement } from "./HTMLInputElement"
+import { HTMLTextAreaElement } from "./HTMLTextAreaElement"
+import { HTMLSelectElement } from "./HTMLSelectElement"
 
 export class HTMLFormElement extends HTMLElement {
   get action() {
@@ -48,5 +51,32 @@ export class HTMLFormElement extends HTMLElement {
   }
 
   submit() {}
-  reset() {}
+
+  reset() {
+    // Reset all form elements to their default values
+    const elements = this.querySelectorAll('input, textarea, select')
+    for (let i = 0; i < elements.length; i++) {
+      const el = elements[i]
+      if (el instanceof HTMLInputElement) {
+        el.value = el.defaultValue
+        el.checked = el.defaultChecked
+      } else if (el instanceof HTMLTextAreaElement) {
+        el.value = el.defaultValue
+      } else if (el instanceof HTMLSelectElement) {
+        // Reset to default selection
+        el.selectedIndex = -1
+        const options = el.querySelectorAll('option')
+        for (let j = 0; j < options.length; j++) {
+          const opt = options[j]
+          if (opt.hasAttribute('selected')) {
+            el.selectedIndex = j
+            break
+          }
+        }
+        if (el.selectedIndex === -1 && options.length > 0) {
+          el.selectedIndex = 0
+        }
+      }
+    }
+  }
 }

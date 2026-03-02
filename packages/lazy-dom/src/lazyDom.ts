@@ -27,6 +27,42 @@ import { HTMLAnchorElement } from "./classes/elements/HTMLAnchorElement"
 import { HTMLImageElement } from "./classes/elements/HTMLImageElement"
 import { SVGElement } from "./classes/elements/SVGElement"
 import { HTMLIFrameElement } from "./classes/elements/HTMLIFrameElement"
+import { HTMLTextAreaElement } from "./classes/elements/HTMLTextAreaElement"
+import { HTMLSelectElement } from "./classes/elements/HTMLSelectElement"
+import { HTMLOptionElement } from "./classes/elements/HTMLOptionElement"
+import { HTMLOptGroupElement } from "./classes/elements/HTMLOptGroupElement"
+import { HTMLTableElement } from "./classes/elements/HTMLTableElement"
+import { HTMLTableRowElement } from "./classes/elements/HTMLTableRowElement"
+import { HTMLTableCellElement } from "./classes/elements/HTMLTableCellElement"
+import { HTMLTableSectionElement } from "./classes/elements/HTMLTableSectionElement"
+import { HTMLTableCaptionElement } from "./classes/elements/HTMLTableCaptionElement"
+import { HTMLTableColElement } from "./classes/elements/HTMLTableColElement"
+import { HTMLBodyElement } from "./classes/elements/HTMLBodyElement"
+import { HTMLUnknownElement } from "./classes/elements/HTMLUnknownElement"
+import { HTMLHtmlElement } from "./classes/elements/HTMLHtmlElement"
+import { HTMLHeadingElement } from "./classes/elements/HTMLHeadingElement"
+import { HTMLLabelElement } from "./classes/elements/HTMLLabelElement"
+import { HTMLFieldSetElement } from "./classes/elements/HTMLFieldSetElement"
+import { HTMLLegendElement } from "./classes/elements/HTMLLegendElement"
+import { HTMLAreaElement } from "./classes/elements/HTMLAreaElement"
+import { HTMLBRElement } from "./classes/elements/HTMLBRElement"
+import { HTMLBaseElement } from "./classes/elements/HTMLBaseElement"
+import { HTMLDListElement } from "./classes/elements/HTMLDListElement"
+import { HTMLHRElement } from "./classes/elements/HTMLHRElement"
+import { HTMLLinkElement } from "./classes/elements/HTMLLinkElement"
+import { HTMLMapElement } from "./classes/elements/HTMLMapElement"
+import { HTMLMetaElement } from "./classes/elements/HTMLMetaElement"
+import { HTMLModElement } from "./classes/elements/HTMLModElement"
+import { HTMLOListElement } from "./classes/elements/HTMLOListElement"
+import { HTMLObjectElement } from "./classes/elements/HTMLObjectElement"
+import { HTMLParamElement } from "./classes/elements/HTMLParamElement"
+import { HTMLQuoteElement } from "./classes/elements/HTMLQuoteElement"
+import { HTMLScriptElement } from "./classes/elements/HTMLScriptElement"
+import { HTMLStyleElement } from "./classes/elements/HTMLStyleElement"
+import { HTMLTitleElement } from "./classes/elements/HTMLTitleElement"
+import { HTMLParagraphElement } from "./classes/elements/HTMLParagraphElement"
+import { HTMLPreElement } from "./classes/elements/HTMLPreElement"
+import { HTMLUListElement } from "./classes/elements/HTMLUListElement"
 import { Event } from "./classes/Event"
 import { UIEvent } from "./classes/UIEvent"
 import { MouseEvent } from "./classes/MouseEvent"
@@ -34,10 +70,28 @@ import { KeyboardEvent } from "./classes/KeyboardEvent"
 import { InputEvent } from "./classes/InputEvent"
 import { FocusEvent } from "./classes/FocusEvent"
 import { PointerEvent } from "./classes/PointerEvent"
+import { ProgressEvent } from "./classes/ProgressEvent"
+import { ErrorEvent } from "./classes/ErrorEvent"
+import { CustomEvent } from "./classes/CustomEvent"
+import { CompositionEvent } from "./classes/CompositionEvent"
 
 export { JSDOM } from "./jsdom"
 
-class Navigator {}
+class Navigator {
+  private _userAgent = ''
+  private _platform = ''
+
+  get userAgent() { return this._userAgent }
+  set userAgent(v: string) { this._userAgent = v }
+
+  get platform() { return this._platform }
+  set platform(v: string) { this._platform = v }
+
+  get language() { return 'en-US' }
+  get languages() { return ['en-US'] }
+  get onLine() { return true }
+  get cookieEnabled() { return true }
+}
 
 const lazyDom = () => {
   const window = new Window()
@@ -64,6 +118,10 @@ const lazyDom = () => {
     InputEvent,
     FocusEvent,
     PointerEvent,
+    ProgressEvent,
+    ErrorEvent,
+    CustomEvent,
+    CompositionEvent,
     CSSStyleDeclaration,
     EventTarget: globalThis.EventTarget,
     HTMLElement,
@@ -77,8 +135,45 @@ const lazyDom = () => {
     HTMLFormElement,
     HTMLAnchorElement,
     HTMLImageElement,
+    HTMLTextAreaElement,
+    HTMLSelectElement,
+    HTMLOptionElement,
+    HTMLOptGroupElement,
+    HTMLTableElement,
+    HTMLTableRowElement,
+    HTMLTableCellElement,
+    HTMLTableSectionElement,
+    HTMLTableCaptionElement,
+    HTMLTableColElement,
+    HTMLBodyElement,
+    HTMLUnknownElement,
+    HTMLHtmlElement,
+    HTMLHeadingElement,
+    HTMLLabelElement,
+    HTMLFieldSetElement,
+    HTMLLegendElement,
+    HTMLAreaElement,
+    HTMLBRElement,
+    HTMLBaseElement,
+    HTMLDListElement,
+    HTMLHRElement,
+    HTMLLinkElement,
+    HTMLMapElement,
+    HTMLMetaElement,
+    HTMLModElement,
+    HTMLOListElement,
+    HTMLObjectElement,
+    HTMLParamElement,
+    HTMLQuoteElement,
+    HTMLScriptElement,
+    HTMLStyleElement,
+    HTMLTitleElement,
+    HTMLParagraphElement,
+    HTMLPreElement,
+    HTMLUListElement,
     SVGElement,
     Range,
+    Document,
   }
   Object.assign(window, instances, classes)
   Object.assign(global, { window, document }, classes)

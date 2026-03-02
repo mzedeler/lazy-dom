@@ -30,6 +30,7 @@ export class Event {
   eventPhase = 0
   isTrusted = false
   timeStamp = Date.now()
+  _stopImmediatePropagation = false
 
   constructor(type?: EventType, eventInitDict?: EventInit) {
     if (type !== undefined) {
@@ -60,6 +61,7 @@ export class Event {
 
   stopImmediatePropagation() {
     this.cancelBubble = true
+    this._stopImmediatePropagation = true
   }
 
   initEvent(type: EventType, bubbles = false, cancelable = false) {

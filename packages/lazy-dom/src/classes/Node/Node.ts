@@ -117,6 +117,9 @@ export abstract class Node {
   }
 
   removeChild(node: Node): Node {
+    if (node == null) {
+      throw new TypeError("Failed to execute 'removeChild' on 'Node': 1 argument required, but only 0 present.")
+    }
     // Check that node is actually a child
     const childIds = nodeOps.getChildIds(this.wasmId)
     if (!childIds.includes(node.wasmId)) {

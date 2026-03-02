@@ -1,8 +1,9 @@
 import { NodeTypes } from "../types/NodeTypes"
 import { Future } from "../types/Future"
-import { Listeners } from "../types/Listeners"
+import { Listeners, AddEventListenerOptions } from "../types/Listeners"
 import { Listener } from "../types/Listener"
 import valueNotSetError from "../utils/valueNotSetError"
+import { parseHTML } from "../utils/parseHTML"
 
 import { Element } from "./Element"
 import { HTMLBodyElement } from "./elements/HTMLBodyElement"
@@ -32,6 +33,7 @@ import { HTMLAnchorElement } from "./elements/HTMLAnchorElement"
 import { HTMLPreElement } from "./elements/HTMLPreElement"
 import { HTMLParagraphElement } from "./elements/HTMLParagraphElement"
 import { HTMLElement } from "./elements/HTMLElement"
+import { HTMLUnknownElement } from "./elements/HTMLUnknownElement"
 import { SVGPathElement } from "./elements/SVGPathElement"
 import { SVGElement } from "./elements/SVGElement"
 import { HTMLLIElement } from "./elements/HTMLLIElement"
@@ -40,6 +42,7 @@ import { HTMLBRElement } from "./elements/HTMLBRElement"
 import { HTMLBaseElement } from "./elements/HTMLBaseElement"
 import { HTMLDListElement } from "./elements/HTMLDListElement"
 import { HTMLFieldSetElement } from "./elements/HTMLFieldSetElement"
+import { HTMLFrameElement } from "./elements/HTMLFrameElement"
 import { HTMLHRElement } from "./elements/HTMLHRElement"
 import { HTMLHtmlElement } from "./elements/HTMLHtmlElement"
 import { HTMLIFrameElement } from "./elements/HTMLIFrameElement"
@@ -69,6 +72,9 @@ import { HTMLCollection } from "./HTMLCollection"
 import { DOMImplementation } from "./DOMImplementation"
 import { DOMException } from "./DOMException"
 import { Window } from "./Window"
+import { ErrorEvent } from "./ErrorEvent"
+import { CustomEvent } from "./CustomEvent"
+import { CompositionEvent } from "./CompositionEvent"
 import { CSSStyleSheet } from "./CSSStyleSheet"
 import { TreeWalker } from "./TreeWalker"
 import { Range } from "./Range"
@@ -79,6 +85,7 @@ export class DocumentStore {
   wasmDocId: number
   eventListeners: Future<Listeners> = () => ({})
   cookie: Future<string> = () => ''
+  activeElement: Future<Element | null> = () => null
 
   documentElement: () => HTMLHtmlElement = () => {
     throw valueNotSetError('documentElement')
@@ -179,6 +186,25 @@ const constructors: Record<string, Record<string, Constructor>> = {
     CANVAS: HTMLElement,
     BODY: HTMLBodyElement,
     HEAD: HTMLElement,
+    // Common valid HTML elements that don't have specific classes
+    ABBR: HTMLElement, ADDRESS: HTMLElement, ARTICLE: HTMLElement,
+    ASIDE: HTMLElement, B: HTMLElement, BDI: HTMLElement, BDO: HTMLElement,
+    CITE: HTMLElement, DATA: HTMLElement, DD: HTMLElement, DETAILS: HTMLElement,
+    DFN: HTMLElement, DIALOG: HTMLElement, DT: HTMLElement, EM: HTMLElement,
+    FIGCAPTION: HTMLElement, FIGURE: HTMLElement, FOOTER: HTMLElement,
+    HEADER: HTMLElement, HGROUP: HTMLElement, I: HTMLElement,
+    KBD: HTMLElement, MAIN: HTMLElement, MARK: HTMLElement,
+    NAV: HTMLElement, NOSCRIPT: HTMLElement, OUTPUT: HTMLElement,
+    PICTURE: HTMLElement, RP: HTMLElement, RT: HTMLElement, RUBY: HTMLElement,
+    S: HTMLElement, SAMP: HTMLElement, SEARCH: HTMLElement,
+    SECTION: HTMLElement, SMALL: HTMLElement, STRONG: HTMLElement,
+    SUB: HTMLElement, SUMMARY: HTMLElement, SUP: HTMLElement,
+    TEMPLATE: HTMLElement, TIME: HTMLElement, U: HTMLElement,
+    VAR: HTMLElement, VIDEO: HTMLElement, AUDIO: HTMLElement,
+    SOURCE: HTMLElement, TRACK: HTMLElement, WBR: HTMLElement,
+    EMBED: HTMLElement, PROGRESS: HTMLElement, METER: HTMLElement,
+    MENU: HTMLElement, SLOT: HTMLElement, DATALIST: HTMLElement,
+    FONT: HTMLElement, FRAME: HTMLFrameElement, FRAMESET: HTMLElement,
   },
   'http://www.w3.org/2000/svg': {
     PATH: SVGPathElement,
@@ -191,6 +217,34 @@ export class Document implements EventTarget {
   defaultView: Window | null = null
   readonly implementation = new DOMImplementation(() => new Document())
 
+  // on* event handler properties — needed so `'oninput' in document` returns
+  // true, which React's isEventSupported uses to detect input event support.
+  onclick: ((ev: Event) => void) | null = null
+  ondblclick: ((ev: Event) => void) | null = null
+  onmousedown: ((ev: Event) => void) | null = null
+  onmouseup: ((ev: Event) => void) | null = null
+  onmousemove: ((ev: Event) => void) | null = null
+  onmouseover: ((ev: Event) => void) | null = null
+  onmouseout: ((ev: Event) => void) | null = null
+  onkeydown: ((ev: Event) => void) | null = null
+  onkeyup: ((ev: Event) => void) | null = null
+  onkeypress: ((ev: Event) => void) | null = null
+  onfocus: ((ev: Event) => void) | null = null
+  onblur: ((ev: Event) => void) | null = null
+  onchange: ((ev: Event) => void) | null = null
+  oninput: ((ev: Event) => void) | null = null
+  onsubmit: ((ev: Event) => void) | null = null
+  onreset: ((ev: Event) => void) | null = null
+  onscroll: ((ev: Event) => void) | null = null
+  onresize: ((ev: Event) => void) | null = null
+  onload: ((ev: Event) => void) | null = null
+  onerror: ((ev: Event) => void) | null = null
+  onselect: ((ev: Event) => void) | null = null
+  ontouchstart: ((ev: Event) => void) | null = null
+  ontouchmove: ((ev: Event) => void) | null = null
+  ontouchend: ((ev: Event) => void) | null = null
+  ontouchcancel: ((ev: Event) => void) | null = null
+
   debug() {
     return this.documentStore.elements
   }
@@ -200,13 +254,16 @@ export class Document implements EventTarget {
     const initTree = () => {
       const html = new HTMLHtmlElement()
       html.elementStore.tagName = () => 'HTML'
+      html.elementStore.namespaceURI = () => 'http://www.w3.org/1999/xhtml'
       html.nodeStore.ownerDocument = () => this
 
       const head = new HTMLElement()
       head.elementStore.tagName = () => 'HEAD'
+      head.elementStore.namespaceURI = () => 'http://www.w3.org/1999/xhtml'
       head.nodeStore.ownerDocument = () => this
 
       const body = new HTMLBodyElement()
+      body.elementStore.namespaceURI = () => 'http://www.w3.org/1999/xhtml'
       body.nodeStore.ownerDocument = () => this
 
       // Build tree: html > head + body
@@ -245,6 +302,10 @@ export class Document implements EventTarget {
 
   get all(): Element[] {
     return this.documentStore.elements.filter(x => x.parent)
+  }
+
+  get activeElement(): Element | null {
+    return this.documentStore.activeElement() ?? this.body
   }
 
   get body(): HTMLBodyElement {
@@ -286,7 +347,9 @@ export class Document implements EventTarget {
       )
     }
 
-    const constructor = (namespaceURI ? constructors[namespaceURI]?.[localName.toUpperCase()] : null) ?? HTMLElement
+    const xhtmlNS = 'http://www.w3.org/1999/xhtml'
+    const constructor = (namespaceURI ? constructors[namespaceURI]?.[localName.toUpperCase()] : null)
+      ?? (namespaceURI === xhtmlNS ? HTMLUnknownElement : HTMLElement)
 
     const element = new constructor()
     element.elementStore.tagName = () => qualifiedName
@@ -297,10 +360,20 @@ export class Document implements EventTarget {
   }
 
   createElement(localName: string): Element {
-    const constructor = constructors['http://www.w3.org/1999/xhtml'][localName.toUpperCase()] ?? HTMLElement
+    // Validate tag name per spec
+    if (!localName || !/^[a-zA-Z][a-zA-Z0-9-]*$/.test(localName)) {
+      throw new DOMException(
+        `The tag name provided ('${localName}') is not a valid name.`,
+        'InvalidCharacterError',
+        DOMException.INVALID_CHARACTER_ERR
+      )
+    }
+
+    const constructor = constructors['http://www.w3.org/1999/xhtml'][localName.toUpperCase()] ?? HTMLUnknownElement
 
     const element = new constructor()
     element.elementStore.tagName = () => localName
+    element.elementStore.namespaceURI = () => 'http://www.w3.org/1999/xhtml'
     element.nodeStore.ownerDocument = () => this
 
     return element
@@ -422,39 +495,91 @@ export class Document implements EventTarget {
     const listeners = this.documentStore.eventListeners()
     const queue = listeners[type]
     if (queue && queue.length) {
-      queue.forEach((listener: Listener) => listener(event))
+      const snapshot = queue.slice()
+      for (const entry of snapshot) {
+        if (event._stopImmediatePropagation || event.cancelBubble) break
+        try {
+          entry.listener(event)
+        } catch (err) {
+          this._dispatchErrorToWindow(err)
+        }
+      }
     }
     return !event.defaultPrevented
   }
 
-  addEventListener(type: string, listener: Listener) {
-    if (!listener) return
-    const previousEventListenersFuture = this.documentStore.eventListeners
-    this.documentStore.eventListeners = () => {
-      const previousEventListeners = previousEventListenersFuture()
-      let queue = previousEventListeners[type]
-      if (!queue) {
-        queue = []
+  /** Fire only listeners matching the given capture flag. */
+  _fireListeners(type: string, event: Event, capture: boolean) {
+    const listeners = this.documentStore.eventListeners()
+    const queue = listeners[type]
+    if (!queue || queue.length === 0) return
+    const snapshot = queue.slice()
+    for (const entry of snapshot) {
+      if (event._stopImmediatePropagation || event.cancelBubble) break
+      if (entry.capture === capture) {
+        try {
+          entry.listener(event)
+        } catch (err) {
+          // Browser behavior: errors in event listeners fire ErrorEvent on window
+          this._dispatchErrorToWindow(err)
+        }
       }
-      queue.push(listener)
-      previousEventListeners[type] = queue
-      return previousEventListeners
     }
   }
 
-  removeEventListener(type: string, listener: Listener) {
-    if (!listener) return
-    const previousEventListenersFuture = this.documentStore.eventListeners
-    this.documentStore.eventListeners = () => {
-      const previousEventListeners = previousEventListenersFuture()
-      const queue = previousEventListeners[type]
-      if (queue) {
-        const idx = queue.indexOf(listener)
-        if (idx !== -1) {
-          queue.splice(idx, 1)
+  private _dispatchErrorToWindow(err: unknown) {
+    try {
+      const win = this.defaultView
+      if (win) {
+        const errObj = err as { message?: string }
+        const message = (typeof errObj?.message === 'string') ? errObj.message : String(err)
+        const errorEvent = new ErrorEvent('error', {
+          message,
+          error: err,
+          cancelable: true,
+        })
+        const handled = !win.dispatchEvent(errorEvent)
+        if (!handled) {
+          win.console.error(`Error: Uncaught [${err}]`, err)
         }
       }
-      return previousEventListeners
+    } catch {
+      // If window dispatch fails, silently swallow
+    }
+  }
+
+  private _memoizeListeners(): Listeners {
+    const listeners = this.documentStore.eventListeners()
+    this.documentStore.eventListeners = () => listeners
+    return listeners
+  }
+
+  addEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {
+    if (!listener) return
+    const capture = typeof options === 'boolean' ? options : (options?.capture ?? false)
+    const passive = typeof options === 'boolean' ? false : (options?.passive ?? false)
+    const once = typeof options === 'boolean' ? false : (options?.once ?? false)
+    const listeners = this._memoizeListeners()
+    let queue = listeners[type]
+    if (!queue) {
+      queue = []
+      listeners[type] = queue
+    }
+    queue.push({ listener, capture, passive, once })
+  }
+
+  removeEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {
+    if (!listener) return
+    const capture = typeof options === 'boolean' ? options : (options?.capture ?? false)
+    const listeners = this._memoizeListeners()
+    const queue = listeners[type]
+    if (queue) {
+      const idx = queue.findIndex(
+        entry => entry.listener === listener && entry.capture === capture
+      )
+      if (idx !== -1) {
+        queue.splice(idx, 1)
+      }
     }
   }
 
@@ -505,6 +630,16 @@ export class Document implements EventTarget {
     return new ByTagNameNSCollection(filter)
   }
 
+  // Node-like properties and methods for React compatibility
+  readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
+  readonly ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE
+  readonly TEXT_NODE = NodeTypes.TEXT_NODE
+  readonly PROCESSING_INSTRUCTION_NODE = NodeTypes.PROCESSING_INSTRUCTION_NODE
+  readonly COMMENT_NODE = NodeTypes.COMMENT_NODE
+  readonly DOCUMENT_NODE = NodeTypes.DOCUMENT_NODE
+  readonly DOCUMENT_TYPE_NODE = NodeTypes.DOCUMENT_TYPE_NODE
+  readonly DOCUMENT_FRAGMENT_NODE = NodeTypes.DOCUMENT_FRAGMENT_NODE
+
   get nodeType() {
     return NodeTypes.DOCUMENT_NODE
   }
@@ -523,6 +658,91 @@ export class Document implements EventTarget {
 
   get attributes() {
     return null
+  }
+
+  get ownerDocument(): null {
+    return null
+  }
+
+  get parentNode(): null {
+    return null
+  }
+
+  get parentElement(): null {
+    return null
+  }
+
+  get childNodes(): Node[] {
+    return [this.documentElement]
+  }
+
+  get firstChild(): Node {
+    return this.documentElement
+  }
+
+  get lastChild(): Node {
+    return this.documentElement
+  }
+
+  get nextSibling(): null {
+    return null
+  }
+
+  get previousSibling(): null {
+    return null
+  }
+
+  hasChildNodes(): boolean {
+    return true
+  }
+
+  get isConnected(): boolean {
+    return true
+  }
+
+  get textContent(): null {
+    return null
+  }
+
+  set textContent(_value: string | null) {
+    // Setting textContent on Document has no effect per spec
+  }
+
+  appendChild(node: Node): Node {
+    return this.documentElement.appendChild(node)
+  }
+
+  insertBefore(newNode: Node, referenceNode: Node | null): Node {
+    return this.documentElement.insertBefore(newNode, referenceNode)
+  }
+
+  removeChild(node: Node): Node {
+    return this.documentElement.removeChild(node)
+  }
+
+  replaceChild(newChild: Node, oldChild: Node): Node {
+    return this.documentElement.replaceChild(newChild, oldChild)
+  }
+
+  contains(other: Node | null): boolean {
+    if (!other) return false
+    return this.documentElement.contains(other)
+  }
+
+  cloneNode(_deep: boolean = false): Document {
+    return new Document()
+  }
+
+  compareDocumentPosition(other: Node): number {
+    return this.documentElement.compareDocumentPosition(other)
+  }
+
+  isSameNode(other: unknown): boolean {
+    return this === other
+  }
+
+  getRootNode(): Document {
+    return this
   }
 
   get location() {
@@ -551,6 +771,95 @@ export class Document implements EventTarget {
     return new TreeWalker(root, whatToShow ?? 0xFFFFFFFF, filter ?? null)
   }
 
+  open() {
+    // Clear the document's head and body children for rewriting
+    const head = this.head
+    if (head) {
+      while (head.firstChild) head.removeChild(head.firstChild)
+    }
+    const body = this.body
+    if (body) {
+      while (body.firstChild) body.removeChild(body.firstChild)
+    }
+    return this
+  }
+
+  close() {}
+
+  write(html: string) {
+    // Parse the HTML and append nodes to the document
+    if (!html) return
+    const nodes = parseHTML(html, this)
+
+    // Check if the parsed HTML contains an <html> element (full-document write)
+    for (const node of nodes) {
+      if (node instanceof Element && node.tagName.toLowerCase() === 'html') {
+        // Merge the parsed <html> element's children into the document structure
+        this._mergeDocumentChildren(node as Element)
+        return
+      }
+    }
+
+    // No <html> found — append to body (default behavior)
+    let target: Node = this.body
+    if (!target) {
+      try {
+        target = this.documentElement
+      } catch {
+        return
+      }
+    }
+    for (const node of nodes) {
+      target.appendChild(node)
+    }
+  }
+
+  /** Merge children of a parsed <html> element into the document's head and body. */
+  private _mergeDocumentChildren(htmlElement: Element) {
+    // Copy attributes from parsed <html> to documentElement
+    for (const attr of Array.from(htmlElement.attributes)) {
+      this.documentElement.setAttribute(attr.name, attr.value)
+    }
+
+    // Snapshot children since appendChild moves nodes
+    const children = htmlElement.nodeStore.getChildNodesArray()
+    for (const child of children) {
+      if (child instanceof Element) {
+        const tag = child.tagName.toLowerCase()
+        if (tag === 'head') {
+          const head = this.head
+          if (head) {
+            const headChildren = child.nodeStore.getChildNodesArray()
+            for (const hc of headChildren) {
+              head.appendChild(hc)
+            }
+          }
+        } else if (tag === 'body') {
+          const body = this.body
+          if (body) {
+            const bodyChildren = child.nodeStore.getChildNodesArray()
+            for (const bc of bodyChildren) {
+              body.appendChild(bc)
+            }
+          }
+        } else if (tag === 'frameset') {
+          // <frameset> replaces <body> in the document structure
+          const body = this.body
+          if (body) {
+            this.documentElement.removeChild(body)
+          }
+          this.documentElement.appendChild(child)
+        } else {
+          this.body.appendChild(child)
+        }
+      }
+    }
+  }
+
+  writeln(html: string) {
+    this.write(html + '\n')
+  }
+
   createRange() {
     return new Range()
   }
@@ -568,6 +877,9 @@ export class Document implements EventTarget {
       KeyboardEvents: KeyboardEvent,
       FocusEvent,
       InputEvent,
+      CustomEvent,
+      ErrorEvent,
+      CompositionEvent,
     }
     const Ctor = eventConstructors[eventInterface]
     if (!Ctor) {

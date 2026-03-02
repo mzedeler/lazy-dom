@@ -58,6 +58,17 @@ export class HTMLElement extends Element {
     this.setAttribute('draggable', String(value))
   }
 
+  get autofocus() {
+    return this.hasAttribute('autofocus')
+  }
+  set autofocus(value: boolean) {
+    if (value) {
+      this.setAttribute('autofocus', '')
+    } else {
+      this.removeAttribute('autofocus')
+    }
+  }
+
   get offsetWidth(): number { return 0 }
   get offsetHeight(): number { return 0 }
   get offsetTop(): number { return 0 }

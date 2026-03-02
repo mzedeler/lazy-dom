@@ -28,19 +28,30 @@ export class HTMLSelectElement extends HTMLElement {
     for (let i = 0; i < opts.length; i++) {
       if (opts[i].selected) return i
     }
-    // Per spec, a single-select with options defaults to the first option
-    if (!this.hasAttribute('multiple') && opts.length > 0) return 0
+    // Per spec: single-select with size <= 1 defaults to first option
+    // With size > 1 or multiple, no default selection
+    const size = this.size
+    if (!this.hasAttribute('multiple') && (size <= 1) && opts.length > 0) return 0
     return -1
   }
-  set selectedIndex(_value: number) {
-    // minimal implementation
+  set selectedIndex(value: number) {
+    const opts = collectOptions(this)
+    for (let i = 0; i < opts.length; i++) {
+      opts[i].selected = i === value
+    }
   }
 
-  get value() {
-    return this.getAttribute('value') ?? ''
+  get value(): string {
+    const idx = this.selectedIndex
+    if (idx < 0) return ''
+    const opts = collectOptions(this)
+    return opts[idx]?.value ?? ''
   }
   set value(v: string) {
-    this.setAttribute('value', v)
+    const opts = collectOptions(this)
+    for (let i = 0; i < opts.length; i++) {
+      opts[i].selected = opts[i].value === v
+    }
   }
 
   get length() {

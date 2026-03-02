@@ -2,7 +2,15 @@ import { HTMLElement } from "./HTMLElement"
 
 export class HTMLImageElement extends HTMLElement {
   get src() {
-    return this.getAttribute('src') ?? ''
+    const raw = this.getAttribute('src')
+    if (raw === null) return ''
+    try {
+      const loc = this.ownerDocument?.defaultView?.location
+      const base = (typeof loc === 'object' ? loc?.href : loc) ?? 'http://localhost/'
+      return new URL(raw, base).href
+    } catch {
+      return raw
+    }
   }
   set src(value: string) {
     this.setAttribute('src', value)
