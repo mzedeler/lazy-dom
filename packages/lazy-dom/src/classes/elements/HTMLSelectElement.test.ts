@@ -56,6 +56,23 @@ describe('HTMLSelectElement', () => {
       expect(select.selectedIndex).to.eq(0)
     })
 
+    it('returns -1 when there are no options', () => {
+      const select = document.createElement('select')
+      document.body.appendChild(select)
+
+      expect(select.selectedIndex).to.eq(-1)
+    })
+
+    it('returns -1 for a multiple select with no selection', () => {
+      const select = document.createElement('select')
+      select.setAttribute('multiple', '')
+      const option = document.createElement('option')
+      select.appendChild(option)
+      document.body.appendChild(select)
+
+      expect(select.selectedIndex).to.eq(-1)
+    })
+
     it('returns the index of the selected option', () => {
       const select = document.createElement('select')
       const option1 = document.createElement('option')

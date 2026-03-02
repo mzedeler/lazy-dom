@@ -28,6 +28,8 @@ export class HTMLSelectElement extends HTMLElement {
     for (let i = 0; i < opts.length; i++) {
       if (opts[i].selected) return i
     }
+    // Per spec, a single-select with options defaults to the first option
+    if (!this.hasAttribute('multiple') && opts.length > 0) return 0
     return -1
   }
   set selectedIndex(_value: number) {
