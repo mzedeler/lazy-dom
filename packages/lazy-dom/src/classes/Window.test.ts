@@ -32,16 +32,11 @@ describe('Window', () => {
   })
 
   describe('EventTarget', () => {
-    before(function () {
-      // Skip under JSDOM: JSDOM rejects non-JSDOM Event instances
-      if (!globalThis.__LAZY_DOM__) this.skip()
-    })
-
     it('addEventListener registers a listener that receives dispatched events', () => {
       let received = false
       const listener = () => { received = true }
       window.addEventListener('scroll', listener)
-      window.dispatchEvent(new Event('scroll'))
+      window.dispatchEvent(new window.Event('scroll'))
       expect(received).to.be.true
       window.removeEventListener('scroll', listener)
     })
@@ -52,7 +47,7 @@ describe('Window', () => {
       const listenerB = () => { count++ }
       window.addEventListener('resize', listenerA)
       window.addEventListener('resize', listenerB)
-      window.dispatchEvent(new Event('resize'))
+      window.dispatchEvent(new window.Event('resize'))
       expect(count).to.equal(2)
       window.removeEventListener('resize', listenerA)
       window.removeEventListener('resize', listenerB)
@@ -62,7 +57,7 @@ describe('Window', () => {
       let received = false
       const listener = () => { received = true }
       window.addEventListener('focus', listener)
-      window.dispatchEvent(new Event('blur'))
+      window.dispatchEvent(new window.Event('blur'))
       expect(received).to.be.false
       window.removeEventListener('focus', listener)
     })
@@ -71,21 +66,21 @@ describe('Window', () => {
       let count = 0
       const listener = () => { count++ }
       window.addEventListener('scroll', listener)
-      window.dispatchEvent(new Event('scroll'))
+      window.dispatchEvent(new window.Event('scroll'))
       expect(count).to.equal(1)
       window.removeEventListener('scroll', listener)
-      window.dispatchEvent(new Event('scroll'))
+      window.dispatchEvent(new window.Event('scroll'))
       expect(count).to.equal(1)
     })
 
     it('dispatchEvent returns true when event is not cancelled', () => {
-      expect(window.dispatchEvent(new Event('scroll'))).to.be.true
+      expect(window.dispatchEvent(new window.Event('scroll'))).to.be.true
     })
 
     it('dispatchEvent returns false when a listener calls preventDefault', () => {
       const listener = (e: Event) => { e.preventDefault() }
       window.addEventListener('scroll', listener)
-      const result = window.dispatchEvent(new Event('scroll', { cancelable: true }))
+      const result = window.dispatchEvent(new window.Event('scroll', { cancelable: true }))
       expect(result).to.be.false
       window.removeEventListener('scroll', listener)
     })

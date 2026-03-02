@@ -237,11 +237,6 @@ describe('Element', () => {
   })
 
   describe('innerHTML setter', () => {
-    before(function () {
-      // Skip under JSDOM: different parsing behavior
-      if (!globalThis.__LAZY_DOM__) this.skip()
-    })
-
     it('parses a simple HTML element', () => {
       const container = document.createElement('div')
       container.innerHTML = '<span>hello</span>'
@@ -437,14 +432,9 @@ describe('Element', () => {
   })
 
   describe('dispatchEvent', () => {
-    before(function () {
-      // Skip under JSDOM: JSDOM rejects non-JSDOM Event instances
-      if (!globalThis.__LAZY_DOM__) this.skip()
-    })
-
     it('sets target to the dispatched element', () => {
       const el = document.createElement('div')
-      const event = new Event('click')
+      const event = new window.Event('click')
       let receivedTarget: unknown = null
       el.addEventListener('click', (e: Event) => {
         receivedTarget = e.target
@@ -455,7 +445,7 @@ describe('Element', () => {
 
     it('sets target on externally constructed events', () => {
       const btn = document.createElement('button')
-      const event = new Event('focus', { bubbles: true })
+      const event = new window.Event('focus', { bubbles: true })
       let receivedTarget: unknown = null
       btn.addEventListener('focus', (e: Event) => {
         receivedTarget = e.target
@@ -466,13 +456,13 @@ describe('Element', () => {
 
     it('returns true when event is not cancelled', () => {
       const el = document.createElement('div')
-      const event = new Event('click', { cancelable: true })
+      const event = new window.Event('click', { cancelable: true })
       expect(el.dispatchEvent(event)).to.be.true
     })
 
     it('returns false when event is cancelled via preventDefault', () => {
       const el = document.createElement('div')
-      const event = new Event('click', { cancelable: true })
+      const event = new window.Event('click', { cancelable: true })
       el.addEventListener('click', (e: Event) => {
         e.preventDefault()
       })
