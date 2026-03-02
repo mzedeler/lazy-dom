@@ -61,4 +61,10 @@ export class Event {
   stopImmediatePropagation() {
     this.cancelBubble = true
   }
+
+  initEvent(type: EventType, bubbles = false, cancelable = false) {
+    this.eventStore.type = () => type
+    this.bubbles = bubbles
+    this.cancelable = cancelable
+  }
 }

@@ -1,7 +1,8 @@
 // Hierarchy: https://stackoverflow.com/questions/55924114/where-can-i-find-a-complete-description-of-javascript-dom-class-hierarchy
 
 import { Window } from "./classes/Window"
-import { Document, Range } from "./classes/Document"
+import { Document } from "./classes/Document"
+import { Range } from "./classes/Range"
 import { Node } from "./classes/Node"
 import { Element } from "./classes/Element"
 import { Text } from "./classes/Text"
@@ -27,7 +28,12 @@ import { HTMLImageElement } from "./classes/elements/HTMLImageElement"
 import { SVGElement } from "./classes/elements/SVGElement"
 import { HTMLIFrameElement } from "./classes/elements/HTMLIFrameElement"
 import { Event } from "./classes/Event"
-import { UIEvent, MouseEvent, KeyboardEvent, InputEvent, FocusEvent, PointerEvent } from "./classes/PointerEvent"
+import { UIEvent } from "./classes/UIEvent"
+import { MouseEvent } from "./classes/MouseEvent"
+import { KeyboardEvent } from "./classes/KeyboardEvent"
+import { InputEvent } from "./classes/InputEvent"
+import { FocusEvent } from "./classes/FocusEvent"
+import { PointerEvent } from "./classes/PointerEvent"
 
 export { JSDOM } from "./jsdom"
 

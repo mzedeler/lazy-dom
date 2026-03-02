@@ -19,6 +19,7 @@ import { DOMTokenList } from "./DOMTokenList"
 import { DOMStringMap } from "./DOMStringMap"
 import { DOMException } from "./DOMException"
 import { CSSStyleDeclaration } from "./CSSStyleDeclaration"
+import { parseHTML } from "../utils/parseHTML"
 
 const adapter = new CssSelectAdapter()
 
@@ -125,12 +126,14 @@ export class Element extends Node implements EventTarget {
     // Clear all existing children
     nodeOps.clearChildren(this.wasmId)
 
-    // If non-empty, set as text content (no HTML parsing)
     if (html.length) {
       const ownerDocument = this.nodeStore.ownerDocument()
-      const textNode = ownerDocument.createTextNode(html)
-      nodeOps.setParentId(textNode.wasmId, this.wasmId)
-      nodeOps.appendChild(this.wasmId, textNode.wasmId)
+      const nodes = parseHTML(html, ownerDocument)
+      for (const node of nodes) {
+        nodeOps.setParentId(node.wasmId, this.wasmId)
+        nodeOps.appendChild(this.wasmId, node.wasmId)
+        ownerDocument.documentStore.connect(node)
+      }
     }
   }
 

@@ -19,7 +19,9 @@ describe('CSSStyleDeclaration', () => {
       expect(div.style.cssText).to.equal('')
     })
 
-    it('removes a previously set property when set to undefined', () => {
+    it('removes a previously set property when set to undefined', function () {
+      // JSDOM does not clear a style property when set to undefined
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const div = document.createElement('div')
       div.style.overflow = 'hidden'
       expect(div.style.overflow).to.equal('hidden')

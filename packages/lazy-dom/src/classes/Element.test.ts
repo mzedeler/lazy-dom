@@ -236,6 +236,80 @@ describe('Element', () => {
     })
   })
 
+  describe('innerHTML setter', () => {
+    before(function () {
+      // Skip under JSDOM: different parsing behavior
+      if (!globalThis.__LAZY_DOM__) this.skip()
+    })
+
+    it('parses a simple HTML element', () => {
+      const container = document.createElement('div')
+      container.innerHTML = '<span>hello</span>'
+
+      expect(container.firstChild).to.be.instanceOf(HTMLSpanElement)
+      expect(container.firstChild!.textContent).to.eq('hello')
+    })
+
+    it('parses nested elements', () => {
+      const container = document.createElement('div')
+      container.innerHTML = '<div><span>inner</span></div>'
+
+      const child = container.firstChild as HTMLDivElement
+      expect(child.tagName).to.eq('DIV')
+      expect(child.firstChild).to.be.instanceOf(HTMLSpanElement)
+    })
+
+    it('parses elements with attributes', () => {
+      const container = document.createElement('div')
+      container.innerHTML = '<input type="text" name="field" />'
+
+      const input = container.firstChild as HTMLInputElement
+      expect(input.getAttribute('type')).to.eq('text')
+      expect(input.getAttribute('name')).to.eq('field')
+    })
+
+    it('parses multiple sibling elements', () => {
+      const container = document.createElement('div')
+      container.innerHTML = '<span>a</span><span>b</span>'
+
+      expect(container.childNodes).to.have.length(2)
+    })
+
+    it('parses mixed text and element content', () => {
+      const container = document.createElement('div')
+      container.innerHTML = 'text<span>element</span>more'
+
+      expect(container.childNodes).to.have.length(3)
+      expect(container.textContent).to.eq('textelementmore')
+    })
+
+    it('clears existing children before parsing', () => {
+      const container = document.createElement('div')
+      container.appendChild(document.createElement('p'))
+      container.innerHTML = '<span>new</span>'
+
+      expect(container.childNodes).to.have.length(1)
+      expect(container.firstChild).to.be.instanceOf(HTMLSpanElement)
+    })
+
+    it('handles empty string by clearing children', () => {
+      const container = document.createElement('div')
+      container.appendChild(document.createElement('p'))
+      container.innerHTML = ''
+
+      expect(container.childNodes).to.have.length(0)
+    })
+
+    it('parsed elements have getAttribute and hasAttribute', () => {
+      const container = document.createElement('div')
+      container.innerHTML = '<div class="foo" data-x="bar"></div>'
+
+      const child = container.firstChild as HTMLDivElement
+      expect(child.getAttribute('class')).to.eq('foo')
+      expect(child.hasAttribute('data-x')).to.be.true
+    })
+  })
+
   describe('dataset', () => {
     it('reflects data- attributes via getAttribute', () => {
       const el = document.createElement('div')
@@ -427,14 +501,18 @@ describe('Element', () => {
       expect(el.scrollHeight).to.equal(0)
     })
 
-    it('scrollTop returns 0 and is settable', () => {
+    it('scrollTop returns 0 and is settable', function () {
+      // JSDOM stores scroll values; lazy-dom stubs always return 0
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const el = document.createElement('div')
       expect(el.scrollTop).to.equal(0)
       el.scrollTop = 100
       expect(el.scrollTop).to.equal(0)
     })
 
-    it('scrollLeft returns 0 and is settable', () => {
+    it('scrollLeft returns 0 and is settable', function () {
+      // JSDOM stores scroll values; lazy-dom stubs always return 0
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const el = document.createElement('div')
       expect(el.scrollLeft).to.equal(0)
       el.scrollLeft = 50

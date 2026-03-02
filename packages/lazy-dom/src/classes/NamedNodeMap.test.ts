@@ -13,6 +13,21 @@ describe('NamedNodeMap', () => {
     expect(Array.from(namedNodeMap)).to.eql([attr])
   })
 
+  it('supports numeric index access', () => {
+    const element = new Element()
+    const namedNodeMap = new NamedNodeMap()
+    const attr1 = new Attr(element, 'id', 'foo')
+    const attr2 = new Attr(element, 'class', 'bar')
+    namedNodeMap.setNamedItem(attr1)
+    namedNodeMap.setNamedItem(attr2)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const map = namedNodeMap as any
+    expect(map[0]).to.be.instanceOf(Attr)
+    expect(map[1]).to.be.instanceOf(Attr)
+    expect(map[2]).to.be.undefined
+  })
+
   describe('Attr', () => {
     describe('toJSON', () => {
       it('does not throw on JSON.stringify when ownerElement is set', () => {

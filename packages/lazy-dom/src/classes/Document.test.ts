@@ -132,6 +132,40 @@ describe('Document', () => {
     })
   })
 
+  describe('createEvent', () => {
+    it('creates an Event for "Event" interface', () => {
+      const event = document.createEvent('Event')
+      expect(event).to.be.instanceOf(Event)
+    })
+
+    it('creates an Event for "HTMLEvents" interface', () => {
+      const event = document.createEvent('HTMLEvents')
+      expect(event).to.be.instanceOf(Event)
+    })
+
+    it('creates a MouseEvent for "MouseEvent" interface', () => {
+      const event = document.createEvent('MouseEvent')
+      expect(event).to.be.instanceOf(MouseEvent)
+    })
+
+    it('creates a KeyboardEvent for "KeyboardEvent" interface', () => {
+      const event = document.createEvent('KeyboardEvent')
+      expect(event).to.be.instanceOf(KeyboardEvent)
+    })
+
+    it('throws for unknown event interface', () => {
+      expect(() => document.createEvent('UnknownEvent')).to.throw
+    })
+
+    it('returns an event that supports initEvent', () => {
+      const event = document.createEvent('Event')
+      event.initEvent('click', true, true)
+      expect(event.type).to.eq('click')
+      expect(event.bubbles).to.be.true
+      expect(event.cancelable).to.be.true
+    })
+  })
+
   describe('getElementsByTagNameNS', () => {
     it('has getElementsByTagNameNS()', () => {
       const namespace = 'http://www.w3.org/1999/xhtml'

@@ -25,4 +25,24 @@ describe('Event', () => {
 
     expect(event.preventDefault).to.be.instanceOf(Function)
   })
+
+  describe('initEvent', () => {
+    it('sets type, bubbles, and cancelable', () => {
+      const event = new Event('_')
+      event.initEvent('click', true, true)
+
+      expect(event.type).to.eq('click')
+      expect(event.bubbles).to.be.true
+      expect(event.cancelable).to.be.true
+    })
+
+    it('defaults bubbles and cancelable to false', () => {
+      const event = new Event('_')
+      event.initEvent('focus')
+
+      expect(event.type).to.eq('focus')
+      expect(event.bubbles).to.be.false
+      expect(event.cancelable).to.be.false
+    })
+  })
 })

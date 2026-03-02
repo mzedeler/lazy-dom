@@ -116,7 +116,9 @@ describe('Window', () => {
       expect(window.open).to.be.a('function')
     })
 
-    it('returns null', () => {
+    it('returns null', function () {
+      // JSDOM returns undefined from window.open()
+      if (!globalThis.__LAZY_DOM__) this.skip()
       expect(window.open()).to.equal(null)
     })
   })

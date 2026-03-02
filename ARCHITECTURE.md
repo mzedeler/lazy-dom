@@ -15,7 +15,7 @@ this.nodeStore.childNodes = () => lazyAppend(previousChildNodesFuture(), node)
 
 This means a long sequence of DOM mutations (appending children, removing children, setting attributes) builds up a chain of thunks. If nothing ever reads the intermediate states, that work is never done. In a test environment, large parts of the DOM tree go unread, so this saves significant computation.
 
-Every `*Store` class (`NodeStore`, `ElementStore`, `DocumentStore`) follows this pattern: all fields are `Future<T>` values that default to a throw or an empty value and get overwritten with new thunks as state changes.
+Every `*Store` class (`NodeStore`, `ElementStore`, `DocumentStore`, `TextStore`, `EventStore`, `CSSStyleDeclarationStore`, `WindowStore`) follows this pattern: all fields are `Future<T>` values that default to a throw or an empty value and get overwritten with new thunks as state changes.
 
 ## WASM-Backed Child Management
 
@@ -46,15 +46,28 @@ Node (abstract base)
 ├── DocumentFragment (lightweight container)
 └── ProcessingInstruction (target + data)
 
+Event (base event class)
+├── UIEvent
+│   ├── MouseEvent
+│   │   └── PointerEvent
+│   ├── KeyboardEvent
+│   ├── InputEvent
+│   └── FocusEvent
+
 Document (element factory, element registry, querySelector delegation)
 ├── DOMImplementation (hasFeature)
 Window (minimal global object)
 Attr (attribute node with name, value, namespaceURI)
 NamedNodeMap (attribute collection with NS methods)
 DOMException (error codes: HIERARCHY_REQUEST_ERR, NOT_FOUND_ERR, etc.)
+CSSStyleDeclaration (Proxy-based CSS property access)
+DOMTokenList (classList: add, remove, contains, toggle)
+DOMStringMap (dataset: camelCase ↔ data-* attribute mapping)
+TreeWalker (whatToShow filtering, custom filter, node traversal)
+Range (setStart, setEnd, collapse, createContextualFragment)
 ```
 
-Each class has a companion store (`NodeStore`, `ElementStore`, `DocumentStore`) that holds the lazy state. The class itself exposes getters that evaluate the store's thunks.
+Each class has a companion store (`NodeStore`, `ElementStore`, `DocumentStore`, `TextStore`, `EventStore`, `CSSStyleDeclarationStore`, `WindowStore`) that holds the lazy state. The class itself exposes getters that evaluate the store's thunks.
 
 ## Document as Element Registry
 
@@ -68,17 +81,49 @@ Each class has a companion store (`NodeStore`, `ElementStore`, `DocumentStore`) 
 
 `querySelector` and `matches` are implemented via the `css-select` library with a custom `CssSelectAdapter` that maps css-select's tree-walking interface onto lazy-dom's node structure.
 
+## Event System
+
+Events are implemented as a class hierarchy: `Event` → `UIEvent` → `MouseEvent`/`KeyboardEvent`/`FocusEvent`/`InputEvent`, and `MouseEvent` → `PointerEvent`. `addEventListener`, `removeEventListener`, and `dispatchEvent` are supported on both `Element` and `Window`. Event state is stored lazily via `EventStore`.
+
+## CSSStyleDeclaration
+
+`CSSStyleDeclaration` uses a `Proxy` for property-style access (e.g., `style.backgroundColor`). It supports `setProperty`, `getPropertyValue`, `removeProperty`, `cssText`, and integrates with the element's `style` attribute. State is stored in `CSSStyleDeclarationStore`.
+
+## DOMTokenList and DOMStringMap
+
+`DOMTokenList` backs `element.classList` with `add`, `remove`, `contains`, `toggle`, and `replace` methods. `DOMStringMap` backs `element.dataset` with a `Proxy` that maps camelCase property names to `data-*` attributes.
+
+## Window
+
+`Window` provides `innerWidth`/`innerHeight`, a `location` stub, `getComputedStyle`, `matchMedia`, `history`, and `EventTarget` support. State is stored in `WindowStore`.
+
+## TreeWalker
+
+`TreeWalker` supports `whatToShow` filtering, custom node filters, and traversal via `firstChild`, `lastChild`, `nextSibling`, `previousSibling`, `nextNode`, and `previousNode`.
+
+## HTML Serialization
+
+`innerHTML` getter/setter and `outerHTML` getter are implemented on `Element`. The getter serializes the DOM subtree to an HTML string; the setter parses HTML and replaces the element's children.
+
 ## Namespace Support
 
 Elements and attributes support XML namespaces via `createElementNS`, `setAttributeNS`, `getAttributeNS`, `removeAttributeNS`, and related methods. Namespace validation follows W3C rules for `xml:` and `xmlns:` prefixes.
+
+## JSDOM API Compatibility
+
+The goal is 100% API compatibility with JSDOM for the subset of APIs lazy-dom implements. All tests should pass against both lazy-dom and JSDOM.
+
+Tests that are skipped under JSDOM (e.g., via `if (!globalThis.__LAZY_DOM__) this.skip()`) represent bugs — either in lazy-dom's behavior or in the test's assumptions — and should be fixed so they pass against both backends.
+
+The dual-backend testing strategy is the primary mechanism for verifying compatibility.
 
 ## Testing Strategy
 
 The same test suite runs against both JSDOM and lazy-dom:
 
-- `pnpm test` — runs both suites (lazydom first, then jsdom)
+- `pnpm test` — runs both suites (jsdom first, then lazydom)
 - `pnpm test:jsdom` — runs tests with JSDOM as the DOM backend
-- `pnpm test:lazydom` — runs the same tests with lazy-dom via `src/register.js`
+- `pnpm test:lazydom` — runs the same tests with lazy-dom via `src/register.ts`
 
 This ensures lazy-dom is a drop-in replacement for the subset of DOM APIs it implements. Tests cover:
 

@@ -1,9 +1,4 @@
-export class CSSRule {
-  cssText: string
-  constructor(cssText: string) {
-    this.cssText = cssText
-  }
-}
+import { CSSRule } from './CSSRule'
 
 export class CSSStyleSheet {
   private _cssRules: CSSRule[] = []

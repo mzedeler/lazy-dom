@@ -17,7 +17,9 @@
   },
   "typesVersions": {
     "*": {
-      "utils/invariant": ["dist/utils/invariant.d.ts"]
+      "utils/invariant": [
+        "dist/utils/invariant.d.ts"
+      ]
     }
   },
   "scripts": {
@@ -39,7 +41,8 @@
   "license": "MIT",
   "dependencies": {
     "@assemblyscript/loader": "^0.28.9",
-    "css-select": "^5.1.0"
+    "css-select": "^5.1.0",
+    "htmlparser2": "^10.1.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.1.0",
@@ -60,11 +63,11 @@
     "mocha": "^10.4.0",
     "nanoid": "^5.0.7",
     "nodemon": "^3.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "sinon": "^18.0.0",
     "sinon-chai": "^3.7.0",
     "source-map-support": "^0.5.21",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "tinybench": "^2.8.0",
     "tsx": "^4.11.0",
     "typescript": "^5.6.2"

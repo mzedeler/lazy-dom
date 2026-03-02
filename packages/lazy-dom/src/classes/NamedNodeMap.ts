@@ -8,6 +8,20 @@ class NamedNodeMapStore {
 export class NamedNodeMap {
   namedNodeMapStore = new NamedNodeMapStore()
 
+  constructor() {
+    return new Proxy(this, {
+      get(target, prop, receiver) {
+        if (typeof prop === 'string') {
+          const index = Number(prop)
+          if (Number.isInteger(index) && index >= 0) {
+            return target.item(index) ?? undefined
+          }
+        }
+        return Reflect.get(target, prop, receiver)
+      },
+    })
+  }
+
   get length() {
     return Object.keys(this.namedNodeMapStore.itemsLookup()).length
   }
