@@ -1,3 +1,5 @@
+import { writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { Bench } from 'tinybench'
 import { JSDOM } from 'jsdom'
 import lazyDom from '../lazyDom'
@@ -16,9 +18,14 @@ import { reactDeepRender, reactDeepRenderWithSnapshot, reactDeepRenderRerender }
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+// Save native Event before any DOM setup overwrites it.
+// tinybench uses native EventTarget.dispatchEvent() internally,
+// which requires the native Event constructor.
+const NativeEvent = globalThis.Event
+
 const bench = new Bench({ time: 200 })
 
-const lazyDomOptions = { beforeAll: () => { lazyDom() } }
+const lazyDomOptions = { beforeAll: () => { lazyDom(); globalThis.Event = NativeEvent } }
 const JSDOMOptions = { beforeAll: () => {
   const dom = new JSDOM(``, {
     url: "https://example.org/",
@@ -31,6 +38,7 @@ const JSDOMOptions = { beforeAll: () => {
   // @ts-expect-error TODO
   global.window = dom.window
   global.document = dom.window.document
+  globalThis.Event = NativeEvent
 }}
 
 bench
@@ -98,10 +106,74 @@ bench
   .add('lazyDom: React deep render + rerender', reactDeepRenderRerender, lazyDomOptions)
   .add('JSDOM: React deep render + rerender', reactDeepRenderRerender, JSDOMOptions)
 
+function formatOps(hz: number): string {
+  return Math.round(hz).toLocaleString('en-US')
+}
+
+function getCategory(name: string): string {
+  if (name.startsWith('React') || name === 'event handling') return 'React'
+  if (name.startsWith('getByRole')) return 'Testing Library'
+  if (name.startsWith('outerHTML') || name.startsWith('innerHTML')) return 'Serialization'
+  return 'DOM'
+}
+
+function generateMarkdown(tasks: Bench['tasks']): string {
+  const rows: Array<{ category: string; name: string; lazyHz: number; jsdomHz: number }> = []
+
+  for (let i = 0; i < tasks.length; i += 2) {
+    const lazyTask = tasks[i]
+    const jsdomTask = tasks[i + 1]
+    const name = lazyTask.name.replace(/^lazyDom: /, '')
+    const category = getCategory(name)
+    const lazyHz = lazyTask.result?.hz ?? 0
+    const jsdomHz = jsdomTask.result?.hz ?? 0
+    rows.push({ category, name, lazyHz, jsdomHz })
+  }
+
+  const categories = ['React', 'Testing Library', 'DOM', 'Serialization']
+  const lines: string[] = []
+
+  lines.push('# Benchmarks')
+  lines.push('')
+  lines.push(`> Generated on ${new Date().toISOString().split('T')[0]} | Node ${process.version} | ${process.platform} ${process.arch}`)
+  lines.push('')
+
+  for (const category of categories) {
+    const categoryRows = rows.filter(r => r.category === category)
+    if (categoryRows.length === 0) continue
+
+    lines.push(`## ${category}`)
+    lines.push('')
+    lines.push('| Benchmark | lazy-dom (ops/sec) | JSDOM (ops/sec) | Speedup |')
+    lines.push('|---|---:|---:|---:|')
+
+    for (const row of categoryRows) {
+      const speedup = row.jsdomHz > 0 ? `${(row.lazyHz / row.jsdomHz).toFixed(1)}x` : 'N/A'
+      lines.push(`| ${row.name} | ${formatOps(row.lazyHz)} | ${formatOps(row.jsdomHz)} | ${speedup} |`)
+    }
+
+    lines.push('')
+  }
+
+  return lines.join('\n')
+}
+
 const main = async () => {
   await bench.warmup()
   await bench.run()
   console.table(bench.table())
+
+  const mdFlagIndex = process.argv.indexOf('--md')
+  if (mdFlagIndex !== -1) {
+    const mdPath = process.argv[mdFlagIndex + 1]
+    if (!mdPath) {
+      console.error('--md requires a file path argument')
+      process.exit(1)
+    }
+    const markdown = generateMarkdown(bench.tasks)
+    writeFileSync(resolve(mdPath), markdown)
+    console.log(`Benchmark results written to ${mdPath}`)
+  }
 }
 
 main()

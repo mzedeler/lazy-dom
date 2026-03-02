@@ -139,12 +139,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
 
 ## Benchmarks
 
-| Operation | lazy-dom (ops/sec) | JSDOM (ops/sec) | Speedup |
-|---|---|---|---|
-| React.createRoot | 13,702 | 6,064 | 2.3x |
-| React.createRoot + createElement | 13,284 | 5,921 | 2.2x |
-| Event handling | 10,836 | 4,301 | 2.5x |
-| Removing child | 344,269 | 82,319 | 4.2x |
+lazy-dom is typically **2-4x faster** than JSDOM across React rendering, DOM mutations, and serialization workloads.
+
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed results, updated automatically on each push to `main`.
 
 ## Development
 

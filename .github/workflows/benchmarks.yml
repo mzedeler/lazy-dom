@@ -1,0 +1,35 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      - run: pnpm --filter lazy-dom benchmark -- --md ../../BENCHMARKS.md
+
+      - name: Commit updated BENCHMARKS.md
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update BENCHMARKS.md [skip ci]"
+          file_pattern: BENCHMARKS.md

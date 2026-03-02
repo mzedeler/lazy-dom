@@ -7,6 +7,7 @@
     "test:lazydom": "pnpm build && pnpm -r test:lazydom",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
+    "benchmark": "pnpm --filter lazy-dom benchmark",
     "bench:pro": "pnpm --filter lazy-dom build && pnpm --filter jest-environment-lazy-dom build && pnpm --filter @lazy-dom/bench-pro compare"
   },
   "devDependencies": {
