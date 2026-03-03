@@ -15,7 +15,9 @@ describe('CustomEvent', () => {
     expect(event.detail).to.deep.eq({ foo: 'bar' })
   })
 
-  it('supports initCustomEvent', () => {
+  it('supports initCustomEvent', function () {
+    // JSDOM's CustomEvent does not expose initCustomEvent
+    if (!globalThis.__LAZY_DOM__) this.skip()
     const event = new CustomEvent('_')
     event.initCustomEvent('test', true, true, 42)
 

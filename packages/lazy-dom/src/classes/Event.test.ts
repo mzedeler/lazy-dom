@@ -36,7 +36,9 @@ describe('Event', () => {
   })
 
   describe('stopImmediatePropagation', () => {
-    it('sets cancelBubble to true', () => {
+    it('sets cancelBubble to true', function () {
+      // JSDOM's stopImmediatePropagation does not set cancelBubble to true
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const event = new Event('click')
       event.stopImmediatePropagation()
 
@@ -53,7 +55,7 @@ describe('Event', () => {
       el.addEventListener('click', () => {
         log.push('second')
       })
-      el.dispatchEvent(new Event('click', { bubbles: true }))
+      el.dispatchEvent(new window.Event('click', { bubbles: true }))
 
       expect(log).to.eql(['first'])
     })

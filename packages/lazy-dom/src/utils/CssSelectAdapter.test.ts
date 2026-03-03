@@ -5,11 +5,11 @@ import { div } from './div'
 
 describe('CssSelectAdapter', () => {
   afterEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   beforeEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   describe('selectOne', () => {

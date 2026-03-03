@@ -3,11 +3,11 @@ import { div } from '../utils/div'
 
 describe('Element', () => {
   beforeEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   afterEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   it('can be created', () => {
@@ -505,7 +505,7 @@ describe('Element', () => {
       child.addEventListener('click', () => log.push('child-capture'), true)
       child.addEventListener('click', () => log.push('child-bubble'), false)
 
-      child.dispatchEvent(new Event('click', { bubbles: true }))
+      child.dispatchEvent(new window.Event('click', { bubbles: true }))
 
       expect(log).to.eql([
         'parent-capture',
@@ -525,7 +525,7 @@ describe('Element', () => {
       parent.addEventListener('focus', () => log.push('parent-bubble'), false)
       child.addEventListener('focus', () => log.push('child-bubble'), false)
 
-      child.dispatchEvent(new Event('focus', { bubbles: false }))
+      child.dispatchEvent(new window.Event('focus', { bubbles: false }))
 
       expect(log).to.eql(['child-bubble'])
     })
@@ -543,7 +543,7 @@ describe('Element', () => {
         e.stopPropagation()
       }, false)
 
-      child.dispatchEvent(new Event('click', { bubbles: true }))
+      child.dispatchEvent(new window.Event('click', { bubbles: true }))
 
       expect(log).to.eql(['child'])
     })
@@ -562,7 +562,7 @@ describe('Element', () => {
       child.addEventListener('click', () => log.push('child-2'), false)
       parent.addEventListener('click', () => log.push('parent'), false)
 
-      child.dispatchEvent(new Event('click', { bubbles: true }))
+      child.dispatchEvent(new window.Event('click', { bubbles: true }))
 
       expect(log).to.eql(['child-1', 'child-2'])
     })
@@ -575,11 +575,11 @@ describe('Element', () => {
       const listener = () => { count++ }
 
       el.addEventListener('click', listener)
-      el.dispatchEvent(new Event('click'))
+      el.dispatchEvent(new window.Event('click'))
       expect(count).to.eq(1)
 
       el.removeEventListener('click', listener)
-      el.dispatchEvent(new Event('click'))
+      el.dispatchEvent(new window.Event('click'))
       expect(count).to.eq(1)
     })
 
@@ -592,7 +592,7 @@ describe('Element', () => {
       el.addEventListener('click', listener, false)
 
       el.removeEventListener('click', listener, true)
-      el.dispatchEvent(new Event('click'))
+      el.dispatchEvent(new window.Event('click'))
 
       expect(log).to.eql(['fired'])
     })
@@ -691,7 +691,7 @@ describe('Element', () => {
       input.type = 'checkbox'
       document.body.appendChild(input)
       expect(input.checked).to.be.false
-      input.dispatchEvent(new Event('click', { bubbles: true }))
+      input.dispatchEvent(new window.Event('click', { bubbles: true }))
       expect(input.checked).to.be.false
     })
 
@@ -709,7 +709,7 @@ describe('Element', () => {
       input.type = 'radio'
       document.body.appendChild(input)
       expect(input.checked).to.be.false
-      input.dispatchEvent(new Event('click', { bubbles: true }))
+      input.dispatchEvent(new window.Event('click', { bubbles: true }))
       expect(input.checked).to.be.false
     })
 
@@ -774,7 +774,7 @@ describe('Element', () => {
       }
       window.addEventListener('error', handler)
       el.addEventListener('click', () => { throw err })
-      el.dispatchEvent(new Event('click', { bubbles: true }))
+      el.dispatchEvent(new window.Event('click', { bubbles: true }))
       window.removeEventListener('error', handler)
       expect(errors).to.deep.equal([err])
     })
@@ -790,11 +790,13 @@ describe('Element', () => {
       parent.appendChild(el)
       document.body.appendChild(parent)
       parent.addEventListener('click', () => log.push('parent'))
-      el.dispatchEvent(new Event('click', { bubbles: true }))
+      el.dispatchEvent(new window.Event('click', { bubbles: true }))
       expect(log).to.include('parent')
     })
 
-    it('routes uncaught errors through window.console.error', () => {
+    it('routes uncaught errors through window.console.error', function () {
+      // lazy-dom catches listener errors and routes via console.error; JSDOM does not
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const el = document.createElement('div')
       document.body.appendChild(el)
       const logged: unknown[][] = []
@@ -802,26 +804,30 @@ describe('Element', () => {
       const origConsole = window.console
       window.console = { ...origConsole, error: (...args: unknown[]) => logged.push(args) }
       el.addEventListener('click', () => { throw new Error('Boom') })
-      el.dispatchEvent(new Event('click'))
+      el.dispatchEvent(new window.Event('click'))
       window.console = origConsole
       expect(logged.length).to.equal(1)
       expect(logged[0][0]).to.be.a('string').that.includes('Error: Uncaught')
       expect(logged[0][0]).to.include('Boom')
     })
 
-    it('invokes on* event handler properties during dispatch', () => {
+    it('invokes on* event handler properties during dispatch', function () {
+      // lazy-dom fires addEventListener before on*; JSDOM fires on* first
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const el = document.createElement('div')
       document.body.appendChild(el)
       const log: string[] = []
       el.onclick = () => log.push('onclick')
       el.addEventListener('click', () => log.push('addEventListener'))
-      el.dispatchEvent(new Event('click'))
+      el.dispatchEvent(new window.Event('click'))
       expect(log).to.deep.equal(['addEventListener', 'onclick'])
     })
   })
 
   describe('focus / blur event dispatch', () => {
-    it('focus() dispatches focusin and focus events', () => {
+    it('focus() dispatches focusin and focus events', function () {
+      // JSDOM fires focus before focusin; spec says focusin first
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const el = document.createElement('input')
       document.body.appendChild(el)
       const log: string[] = []
@@ -831,7 +837,9 @@ describe('Element', () => {
       expect(log).to.deep.equal(['focusin', 'focus'])
     })
 
-    it('blur() dispatches focusout and blur events', () => {
+    it('blur() dispatches focusout and blur events', function () {
+      // JSDOM fires blur before focusout; spec says focusout first
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const el = document.createElement('input')
       document.body.appendChild(el)
       el.focus() // give focus first

@@ -4,11 +4,11 @@ import { div } from '../utils/div'
 
 describe('Document', () => {
   beforeEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   afterEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   it('initializes correctly', () => {
@@ -158,7 +158,9 @@ describe('Document', () => {
       expect(frame.getAttribute('src')).to.eq('javascript:notfine')
     })
 
-    it('clears previous content on open()', () => {
+    it('clears previous content on open()', function () {
+      // JSDOM's open() destroys the document structure, making head/body null
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const doc = document.implementation.createHTMLDocument('old')
       expect(doc.head.querySelector('title')!.textContent).to.eq('old')
       doc.open()
@@ -297,7 +299,7 @@ describe('Document', () => {
       const newNode = document.createComment('new')
       const fakeRef = document.createComment('fake')
 
-      expect(() => document.insertBefore(newNode, fakeRef)).to.throw(/not a child/)
+      expect(() => document.insertBefore(newNode, fakeRef)).to.throw(/not a child|can not be found/)
     })
 
     it('contains returns true for contained elements', () => {
@@ -357,7 +359,8 @@ describe('Document', () => {
     })
 
     it('open returns the document', () => {
-      expect(document.open()).to.eq(document)
+      const doc = document.implementation.createHTMLDocument('')
+      expect(doc.open()).to.eq(doc)
     })
   })
 

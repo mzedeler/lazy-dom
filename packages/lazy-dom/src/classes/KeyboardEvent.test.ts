@@ -40,7 +40,9 @@ describe('KeyboardEvent', () => {
       expect(desc!.get).to.be.instanceOf(Function)
     })
 
-    it('which is defined on the prototype as a getter', () => {
+    it('which is defined on the prototype as a getter', function () {
+      // JSDOM does not define 'which' as a getter on KeyboardEvent.prototype
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const desc = Object.getOwnPropertyDescriptor(KeyboardEvent.prototype, 'which')
 
       expect(desc).to.exist

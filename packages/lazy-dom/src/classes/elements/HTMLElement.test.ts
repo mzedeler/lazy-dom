@@ -3,7 +3,7 @@ import { expect } from 'chai'
 
 describe('HTMLElement', () => {
   afterEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   describe('offset stubs', () => {

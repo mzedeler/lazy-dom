@@ -3,7 +3,7 @@ import { div } from '../../utils/div'
 
 describe('Node', () => {
   afterEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   describe('tre query and manipulation', () => {

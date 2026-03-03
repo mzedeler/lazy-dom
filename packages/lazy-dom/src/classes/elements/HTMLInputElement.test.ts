@@ -139,7 +139,7 @@ describe('HTMLInputElement', () => {
       const input = document.createElement('input') as HTMLInputElement
       input.type = 'checkbox'
       expect(input.checked).to.be.false
-      input.dispatchEvent(new Event('click', { bubbles: true }))
+      input.dispatchEvent(new window.Event('click', { bubbles: true }))
       expect(input.checked).to.be.false
     })
 

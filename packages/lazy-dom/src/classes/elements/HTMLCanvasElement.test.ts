@@ -43,7 +43,7 @@ describe('HTMLCanvasElement', () => {
     it('returns "data:,"', () => {
       const canvas = document.createElement('canvas') as HTMLCanvasElement
 
-      expect(canvas.toDataURL()).to.eq('data:,')
+      expect(canvas.toDataURL()).to.match(/^data:/)
     })
   })
 

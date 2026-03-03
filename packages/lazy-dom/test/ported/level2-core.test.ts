@@ -2,7 +2,7 @@ import { expect } from 'chai'
 
 describe('level2/core', () => {
   afterEach(() => {
-    document.body.childNodes.forEach(childNode => document.body.removeChild(childNode))
+    document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })
 
   // ---------------------------------------------------------------------------
