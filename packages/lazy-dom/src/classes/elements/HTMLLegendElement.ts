@@ -1,21 +1,13 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLLegendElement extends HTMLElement {
+  declare align: string
+
   get form() {
     return null
   }
-
-  get accessKey() {
-    return this.getAttribute('accesskey') ?? ''
-  }
-  set accessKey(value: string) {
-    this.setAttribute('accesskey', value)
-  }
-
-  get align() {
-    return this.getAttribute('align') ?? ''
-  }
-  set align(value: string) {
-    this.setAttribute('align', value)
-  }
 }
+defineStringReflections(HTMLLegendElement.prototype, [
+  ['align', 'align'],
+])

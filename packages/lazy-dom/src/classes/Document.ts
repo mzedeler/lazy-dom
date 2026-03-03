@@ -89,6 +89,8 @@ import {
   fireListenersAtTarget,
   fireOnHandler,
 } from "./EventTargetImpl"
+import { parseQualifiedName, validateNamespace } from "../utils/validateNamespace"
+import { dispatchErrorToWindow } from "../utils/dispatchErrorToWindow"
 
 export class DocumentStore {
   wasmDocId: number
@@ -344,30 +346,8 @@ export class Document implements EventTarget {
   }
 
   createElementNS(namespaceURI: string | null, qualifiedName: string, _options?: { is: string }) {
-    // Parse prefix:localName
-    let prefix: string | null = null
-    let localName = qualifiedName
-    const colonIndex = qualifiedName.indexOf(':')
-    if (colonIndex >= 0) {
-      prefix = qualifiedName.substring(0, colonIndex)
-      localName = qualifiedName.substring(colonIndex + 1)
-    }
-
-    // NAMESPACE_ERR checks
-    if (prefix !== null && namespaceURI === null) {
-      throw new DOMException(
-        "Namespace is null but prefix is not null.",
-        'NamespaceError',
-        DOMException.NAMESPACE_ERR
-      )
-    }
-    if (prefix === 'xml' && namespaceURI !== 'http://www.w3.org/XML/1998/namespace') {
-      throw new DOMException(
-        "Prefix 'xml' requires namespace 'http://www.w3.org/XML/1998/namespace'.",
-        'NamespaceError',
-        DOMException.NAMESPACE_ERR
-      )
-    }
+    const { prefix, localName } = parseQualifiedName(qualifiedName)
+    validateNamespace(prefix, namespaceURI, qualifiedName, false)
 
     const xhtmlNS = 'http://www.w3.org/1999/xhtml'
     const constructor = (namespaceURI ? constructors[namespaceURI]?.[localName.toUpperCase()] : null)
@@ -437,43 +417,8 @@ export class Document implements EventTarget {
   }
 
   createAttributeNS(namespaceURI: string | null, qualifiedName: string): Attr {
-    let prefix: string | null = null
-    let localName = qualifiedName
-    const colonIndex = qualifiedName.indexOf(':')
-    if (colonIndex >= 0) {
-      prefix = qualifiedName.substring(0, colonIndex)
-      localName = qualifiedName.substring(colonIndex + 1)
-    }
-
-    // NAMESPACE_ERR checks
-    if (prefix !== null && namespaceURI === null) {
-      throw new DOMException(
-        "Namespace is null but prefix is not null.",
-        'NamespaceError',
-        DOMException.NAMESPACE_ERR
-      )
-    }
-    if (prefix === 'xml' && namespaceURI !== 'http://www.w3.org/XML/1998/namespace') {
-      throw new DOMException(
-        "Prefix 'xml' requires namespace 'http://www.w3.org/XML/1998/namespace'.",
-        'NamespaceError',
-        DOMException.NAMESPACE_ERR
-      )
-    }
-    if (qualifiedName === 'xmlns' && namespaceURI !== 'http://www.w3.org/2000/xmlns/') {
-      throw new DOMException(
-        "'xmlns' requires namespace 'http://www.w3.org/2000/xmlns/'.",
-        'NamespaceError',
-        DOMException.NAMESPACE_ERR
-      )
-    }
-    if (prefix === 'xmlns' && namespaceURI !== 'http://www.w3.org/2000/xmlns/') {
-      throw new DOMException(
-        "Prefix 'xmlns' requires namespace 'http://www.w3.org/2000/xmlns/'.",
-        'NamespaceError',
-        DOMException.NAMESPACE_ERR
-      )
-    }
+    const { prefix, localName } = parseQualifiedName(qualifiedName)
+    validateNamespace(prefix, namespaceURI, qualifiedName)
 
     return new Attr(null, localName, '', namespaceURI, prefix)
   }
@@ -532,24 +477,7 @@ export class Document implements EventTarget {
   }
 
   private _dispatchErrorToWindow(err: unknown) {
-    try {
-      const win = this.defaultView
-      if (win) {
-        const errObj = err as { message?: string }
-        const message = (typeof errObj?.message === 'string') ? errObj.message : String(err)
-        const errorEvent = new ErrorEvent('error', {
-          message,
-          error: err,
-          cancelable: true,
-        })
-        const handled = !win.dispatchEvent(errorEvent)
-        if (!handled) {
-          win.console.error(`Error: Uncaught [${err}]`, err)
-        }
-      }
-    } catch {
-      // If window dispatch fails, silently swallow
-    }
+    dispatchErrorToWindow(() => this.defaultView, err)
   }
 
   addEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {

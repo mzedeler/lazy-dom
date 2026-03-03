@@ -2,14 +2,13 @@ import { HTMLElement } from "./HTMLElement"
 import { HTMLInputElement } from "./HTMLInputElement"
 import { HTMLTextAreaElement } from "./HTMLTextAreaElement"
 import { HTMLSelectElement } from "./HTMLSelectElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLFormElement extends HTMLElement {
-  get action() {
-    return this.getAttribute('action') ?? ''
-  }
-  set action(value: string) {
-    this.setAttribute('action', value)
-  }
+  declare action: string
+  declare target: string
+  declare name: string
+  declare acceptCharset: string
 
   get method() {
     return this.getAttribute('method') ?? 'get'
@@ -23,27 +22,6 @@ export class HTMLFormElement extends HTMLElement {
   }
   set enctype(value: string) {
     this.setAttribute('enctype', value)
-  }
-
-  get target() {
-    return this.getAttribute('target') ?? ''
-  }
-  set target(value: string) {
-    this.setAttribute('target', value)
-  }
-
-  get name() {
-    return this.getAttribute('name') ?? ''
-  }
-  set name(value: string) {
-    this.setAttribute('name', value)
-  }
-
-  get acceptCharset() {
-    return this.getAttribute('accept-charset') ?? ''
-  }
-  set acceptCharset(value: string) {
-    this.setAttribute('accept-charset', value)
   }
 
   get length() {
@@ -80,3 +58,9 @@ export class HTMLFormElement extends HTMLElement {
     }
   }
 }
+defineStringReflections(HTMLFormElement.prototype, [
+  ['action', 'action'],
+  ['target', 'target'],
+  ['name', 'name'],
+  ['acceptCharset', 'accept-charset'],
+])

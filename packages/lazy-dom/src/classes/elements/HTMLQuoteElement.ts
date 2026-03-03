@@ -1,10 +1,9 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLQuoteElement extends HTMLElement {
-  get cite() {
-    return this.getAttribute('cite') ?? ''
-  }
-  set cite(value: string) {
-    this.setAttribute('cite', value)
-  }
+  declare cite: string
 }
+defineStringReflections(HTMLQuoteElement.prototype, [
+  ['cite', 'cite'],
+])

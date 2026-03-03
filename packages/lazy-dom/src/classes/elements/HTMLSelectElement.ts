@@ -2,6 +2,7 @@ import { HTMLElement } from "./HTMLElement"
 import { HTMLOptionElement } from "./HTMLOptionElement"
 import { Node } from "../Node/Node"
 import { Element } from "../Element"
+import { defineStringReflections, defineBooleanReflections, defineNumericReflections } from "../../utils/reflectAttributes"
 
 function collectOptions(node: Node): HTMLOptionElement[] {
   const result: HTMLOptionElement[] = []
@@ -19,6 +20,12 @@ function collectOptions(node: Node): HTMLOptionElement[] {
 }
 
 export class HTMLSelectElement extends HTMLElement {
+  declare name: string
+  declare disabled: boolean
+  declare multiple: boolean
+  declare size: number
+  declare tabIndex: number
+
   get type() {
     return this.hasAttribute('multiple') ? 'select-multiple' : 'select-one'
   }
@@ -66,45 +73,17 @@ export class HTMLSelectElement extends HTMLElement {
     return null
   }
 
-  get disabled() {
-    return this.hasAttribute('disabled')
-  }
-  set disabled(value: boolean) {
-    if (value) this.setAttribute('disabled', '')
-    else this.removeAttribute('disabled')
-  }
-
-  get multiple() {
-    return this.hasAttribute('multiple')
-  }
-  set multiple(value: boolean) {
-    if (value) this.setAttribute('multiple', '')
-    else this.removeAttribute('multiple')
-  }
-
-  get name() {
-    return this.getAttribute('name') ?? ''
-  }
-  set name(value: string) {
-    this.setAttribute('name', value)
-  }
-
-  get size() {
-    const val = this.getAttribute('size')
-    return val ? parseInt(val, 10) : 0
-  }
-  set size(value: number) {
-    this.setAttribute('size', String(value))
-  }
-
-  get tabIndex() {
-    const val = this.getAttribute('tabindex')
-    return val ? parseInt(val, 10) : 0
-  }
-  set tabIndex(value: number) {
-    this.setAttribute('tabindex', String(value))
-  }
-
   add() {}
   remove() {}
 }
+defineStringReflections(HTMLSelectElement.prototype, [
+  ['name', 'name'],
+])
+defineBooleanReflections(HTMLSelectElement.prototype, [
+  ['disabled', 'disabled'],
+  ['multiple', 'multiple'],
+])
+defineNumericReflections(HTMLSelectElement.prototype, [
+  ['size', 'size'],
+  ['tabIndex', 'tabindex'],
+])

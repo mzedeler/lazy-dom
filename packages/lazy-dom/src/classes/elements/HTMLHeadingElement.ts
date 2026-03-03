@@ -1,10 +1,9 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLHeadingElement extends HTMLElement {
-  get align() {
-    return this.getAttribute('align') ?? ''
-  }
-  set align(value: string) {
-    this.setAttribute('align', value)
-  }
+  declare align: string
 }
+defineStringReflections(HTMLHeadingElement.prototype, [
+  ['align', 'align'],
+])

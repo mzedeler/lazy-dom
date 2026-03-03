@@ -1,6 +1,9 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLFrameElement extends HTMLElement {
+  declare name: string
+
   get src() {
     const raw = this.getAttribute('src')
     if (raw === null) return ''
@@ -15,11 +18,7 @@ export class HTMLFrameElement extends HTMLElement {
   set src(value: string) {
     this.setAttribute('src', value)
   }
-
-  get name() {
-    return this.getAttribute('name') ?? ''
-  }
-  set name(value: string) {
-    this.setAttribute('name', value)
-  }
 }
+defineStringReflections(HTMLFrameElement.prototype, [
+  ['name', 'name'],
+])

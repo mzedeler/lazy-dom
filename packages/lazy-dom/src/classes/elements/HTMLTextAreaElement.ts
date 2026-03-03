@@ -1,10 +1,18 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections, defineBooleanReflections, defineNumericReflections } from "../../utils/reflectAttributes"
 
 export class HTMLTextAreaElement extends HTMLElement {
   private _value = ''
   private _selectionStart: number = 0
   private _selectionEnd: number = 0
   private _selectionDirection: 'forward' | 'backward' | 'none' = 'none'
+
+  declare name: string
+  declare disabled: boolean
+  declare readOnly: boolean
+  declare cols: number
+  declare rows: number
+  declare tabIndex: number
 
   get form() {
     return null
@@ -15,60 +23,6 @@ export class HTMLTextAreaElement extends HTMLElement {
   }
   set defaultValue(value: string) {
     this.textContent = value
-  }
-
-  get accessKey() {
-    return this.getAttribute('accesskey') ?? ''
-  }
-  set accessKey(value: string) {
-    this.setAttribute('accesskey', value)
-  }
-
-  get cols() {
-    const val = this.getAttribute('cols')
-    return val ? parseInt(val, 10) : 20
-  }
-  set cols(value: number) {
-    this.setAttribute('cols', String(value))
-  }
-
-  get disabled() {
-    return this.hasAttribute('disabled')
-  }
-  set disabled(value: boolean) {
-    if (value) this.setAttribute('disabled', '')
-    else this.removeAttribute('disabled')
-  }
-
-  get name() {
-    return this.getAttribute('name') ?? ''
-  }
-  set name(value: string) {
-    this.setAttribute('name', value)
-  }
-
-  get readOnly() {
-    return this.hasAttribute('readonly')
-  }
-  set readOnly(value: boolean) {
-    if (value) this.setAttribute('readonly', '')
-    else this.removeAttribute('readonly')
-  }
-
-  get rows() {
-    const val = this.getAttribute('rows')
-    return val ? parseInt(val, 10) : 2
-  }
-  set rows(value: number) {
-    this.setAttribute('rows', String(value))
-  }
-
-  get tabIndex() {
-    const val = this.getAttribute('tabindex')
-    return val ? parseInt(val, 10) : 0
-  }
-  set tabIndex(value: number) {
-    this.setAttribute('tabindex', String(value))
   }
 
   get type() {
@@ -138,3 +92,15 @@ export class HTMLTextAreaElement extends HTMLElement {
     this.setSelectionRange(0, this.value.length)
   }
 }
+defineStringReflections(HTMLTextAreaElement.prototype, [
+  ['name', 'name'],
+])
+defineBooleanReflections(HTMLTextAreaElement.prototype, [
+  ['disabled', 'disabled'],
+  ['readOnly', 'readonly'],
+])
+defineNumericReflections(HTMLTextAreaElement.prototype, [
+  ['cols', 'cols', 20],
+  ['rows', 'rows', 2],
+  ['tabIndex', 'tabindex'],
+])

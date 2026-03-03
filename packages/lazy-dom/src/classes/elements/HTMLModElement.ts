@@ -1,17 +1,11 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLModElement extends HTMLElement {
-  get cite() {
-    return this.getAttribute('cite') ?? ''
-  }
-  set cite(value: string) {
-    this.setAttribute('cite', value)
-  }
-
-  get dateTime() {
-    return this.getAttribute('datetime') ?? ''
-  }
-  set dateTime(value: string) {
-    this.setAttribute('datetime', value)
-  }
+  declare cite: string
+  declare dateTime: string
 }
+defineStringReflections(HTMLModElement.prototype, [
+  ['cite', 'cite'],
+  ['dateTime', 'datetime'],
+])

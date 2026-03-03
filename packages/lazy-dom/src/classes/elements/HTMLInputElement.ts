@@ -1,4 +1,5 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections, defineBooleanReflections, defineNumericReflections } from "../../utils/reflectAttributes"
 
 export class HTMLInputElement extends HTMLElement {
   // Internal "dirty" state — once set programmatically, value/checked
@@ -11,18 +12,22 @@ export class HTMLInputElement extends HTMLElement {
   private _selectionEnd: number = 0
   private _selectionDirection: 'forward' | 'backward' | 'none' = 'none'
 
+  declare name: string
+  declare src: string
+  declare useMap: string
+  declare alt: string
+  declare accept: string
+  declare align: string
+  declare disabled: boolean
+  declare readOnly: boolean
+  declare maxLength: number
+  declare size: number
+
   get type() {
     return this.getAttribute('type') ?? 'text'
   }
   set type(value: string) {
     this.setAttribute('type', value)
-  }
-
-  get name() {
-    return this.getAttribute('name') ?? ''
-  }
-  set name(value: string) {
-    this.setAttribute('name', value)
   }
 
   // Per DOM spec: value is the element's "value" — once set directly it
@@ -95,73 +100,6 @@ export class HTMLInputElement extends HTMLElement {
     else this._removeAttributeInternal('checked')
   }
 
-  get disabled() {
-    return this.hasAttribute('disabled')
-  }
-  set disabled(val: boolean) {
-    if (val) this.setAttribute('disabled', '')
-    else this.removeAttribute('disabled')
-  }
-
-  get readOnly() {
-    return this.hasAttribute('readonly')
-  }
-  set readOnly(val: boolean) {
-    if (val) this.setAttribute('readonly', '')
-    else this.removeAttribute('readonly')
-  }
-
-  get maxLength() {
-    const val = this.getAttribute('maxlength')
-    return val !== null ? parseInt(val, 10) : -1
-  }
-  set maxLength(val: number) {
-    this.setAttribute('maxlength', String(val))
-  }
-
-  get size() {
-    const val = this.getAttribute('size')
-    return val !== null ? parseInt(val, 10) : 20
-  }
-  set size(val: number) {
-    this.setAttribute('size', String(val))
-  }
-
-  get src() {
-    return this.getAttribute('src') ?? ''
-  }
-  set src(val: string) {
-    this.setAttribute('src', val)
-  }
-
-  get useMap() {
-    return this.getAttribute('usemap') ?? ''
-  }
-  set useMap(val: string) {
-    this.setAttribute('usemap', val)
-  }
-
-  get alt() {
-    return this.getAttribute('alt') ?? ''
-  }
-  set alt(val: string) {
-    this.setAttribute('alt', val)
-  }
-
-  get accept() {
-    return this.getAttribute('accept') ?? ''
-  }
-  set accept(val: string) {
-    this.setAttribute('accept', val)
-  }
-
-  get align() {
-    return this.getAttribute('align') ?? ''
-  }
-  set align(val: string) {
-    this.setAttribute('align', val)
-  }
-
   get form() {
     return null
   }
@@ -225,3 +163,19 @@ export class HTMLInputElement extends HTMLElement {
   // Override not needed - Element.click() dispatches 'click' which triggers
   // the checkbox/radio activation behavior in Element.dispatchEvent
 }
+defineStringReflections(HTMLInputElement.prototype, [
+  ['name', 'name'],
+  ['src', 'src'],
+  ['useMap', 'usemap'],
+  ['alt', 'alt'],
+  ['accept', 'accept'],
+  ['align', 'align'],
+])
+defineBooleanReflections(HTMLInputElement.prototype, [
+  ['disabled', 'disabled'],
+  ['readOnly', 'readonly'],
+])
+defineNumericReflections(HTMLInputElement.prototype, [
+  ['maxLength', 'maxlength', -1],
+  ['size', 'size', 20],
+])

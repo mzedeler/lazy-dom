@@ -1,18 +1,13 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections, defineBooleanReflections } from "../../utils/reflectAttributes"
 
 export class HTMLUListElement extends HTMLElement {
-  get compact() {
-    return this.hasAttribute('compact')
-  }
-  set compact(val: boolean) {
-    if (val) this.setAttribute('compact', '')
-    else this.removeAttribute('compact')
-  }
-
-  get type() {
-    return this.getAttribute('type') ?? ''
-  }
-  set type(value: string) {
-    this.setAttribute('type', value)
-  }
+  declare compact: boolean
+  declare type: string
 }
+defineStringReflections(HTMLUListElement.prototype, [
+  ['type', 'type'],
+])
+defineBooleanReflections(HTMLUListElement.prototype, [
+  ['compact', 'compact'],
+])

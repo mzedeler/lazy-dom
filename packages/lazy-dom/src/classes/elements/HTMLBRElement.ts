@@ -1,10 +1,9 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLBRElement extends HTMLElement {
-  get clear() {
-    return this.getAttribute('clear') ?? ''
-  }
-  set clear(value: string) {
-    this.setAttribute('clear', value)
-  }
+  declare clear: string
 }
+defineStringReflections(HTMLBRElement.prototype, [
+  ['clear', 'clear'],
+])

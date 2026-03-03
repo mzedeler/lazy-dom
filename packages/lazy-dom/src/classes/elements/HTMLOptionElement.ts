@@ -1,10 +1,13 @@
 import { HTMLElement } from "./HTMLElement"
 import type { Element } from "../Element"
+import { defineStringReflections, defineBooleanReflections } from "../../utils/reflectAttributes"
 
 export class HTMLOptionElement extends HTMLElement {
   private _dirtySelected = false
   private _selected = false
   private _value = ''
+  declare label: string
+  declare disabled: boolean
 
   get form() {
     return null
@@ -24,21 +27,6 @@ export class HTMLOptionElement extends HTMLElement {
 
   get index() {
     return 0
-  }
-
-  get disabled() {
-    return this.hasAttribute('disabled')
-  }
-  set disabled(value: boolean) {
-    if (value) this.setAttribute('disabled', '')
-    else this.removeAttribute('disabled')
-  }
-
-  get label() {
-    return this.getAttribute('label') ?? ''
-  }
-  set label(value: string) {
-    this.setAttribute('label', value)
   }
 
   get selected() {
@@ -106,3 +94,9 @@ export class HTMLOptionElement extends HTMLElement {
     this.setAttribute('value', v)
   }
 }
+defineStringReflections(HTMLOptionElement.prototype, [
+  ['label', 'label'],
+])
+defineBooleanReflections(HTMLOptionElement.prototype, [
+  ['disabled', 'disabled'],
+])

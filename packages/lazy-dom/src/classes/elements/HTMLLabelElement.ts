@@ -1,12 +1,8 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLLabelElement extends HTMLElement {
-  get htmlFor() {
-    return this.getAttribute('for') ?? ''
-  }
-  set htmlFor(value: string) {
-    this.setAttribute('for', value)
-  }
+  declare htmlFor: string
 
   get form() {
     return null
@@ -20,3 +16,6 @@ export class HTMLLabelElement extends HTMLElement {
     return null
   }
 }
+defineStringReflections(HTMLLabelElement.prototype, [
+  ['htmlFor', 'for'],
+])

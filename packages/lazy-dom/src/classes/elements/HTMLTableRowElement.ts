@@ -1,6 +1,13 @@
 import { HTMLElement } from "./HTMLElement"
+import { defineStringReflections } from "../../utils/reflectAttributes"
 
 export class HTMLTableRowElement extends HTMLElement {
+  declare align: string
+  declare bgColor: string
+  declare ch: string
+  declare chOff: string
+  declare vAlign: string
+
   get rowIndex() {
     return -1
   }
@@ -9,41 +16,13 @@ export class HTMLTableRowElement extends HTMLElement {
     return -1
   }
 
-  get align() {
-    return this.getAttribute('align') ?? ''
-  }
-  set align(value: string) {
-    this.setAttribute('align', value)
-  }
-
-  get bgColor() {
-    return this.getAttribute('bgcolor') ?? ''
-  }
-  set bgColor(value: string) {
-    this.setAttribute('bgcolor', value)
-  }
-
-  get ch() {
-    return this.getAttribute('char') ?? ''
-  }
-  set ch(value: string) {
-    this.setAttribute('char', value)
-  }
-
-  get chOff() {
-    return this.getAttribute('charoff') ?? ''
-  }
-  set chOff(value: string) {
-    this.setAttribute('charoff', value)
-  }
-
-  get vAlign() {
-    return this.getAttribute('valign') ?? ''
-  }
-  set vAlign(value: string) {
-    this.setAttribute('valign', value)
-  }
-
   insertCell() { return null }
   deleteCell() {}
 }
+defineStringReflections(HTMLTableRowElement.prototype, [
+  ['align', 'align'],
+  ['bgColor', 'bgcolor'],
+  ['ch', 'char'],
+  ['chOff', 'charoff'],
+  ['vAlign', 'valign'],
+])
