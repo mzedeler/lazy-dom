@@ -29,7 +29,7 @@ jobs:
       - name: Run benchmarks
         run: |
           mkdir -p _site
-          pnpm --filter lazy-dom benchmark -- --md _site/index.md
+          pnpm --filter lazy-dom benchmark -- --md > _site/index.md
 
       - name: Add Jekyll front matter
         run: |

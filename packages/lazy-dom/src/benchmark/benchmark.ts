@@ -1,5 +1,3 @@
-import { writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { Bench } from 'tinybench'
 import { JSDOM } from 'jsdom'
 import lazyDom from '../lazyDom'
@@ -161,19 +159,13 @@ function generateMarkdown(tasks: Bench['tasks']): string {
 const main = async () => {
   await bench.warmup()
   await bench.run()
-  console.table(bench.table())
 
   const mdFlagIndex = process.argv.indexOf('--md')
   if (mdFlagIndex !== -1) {
-    const mdPath = process.argv[mdFlagIndex + 1]
-    if (!mdPath) {
-      console.error('--md requires a file path argument')
-      process.exit(1)
-    }
-    const markdown = generateMarkdown(bench.tasks)
-    writeFileSync(resolve(mdPath), markdown)
-    console.log(`Benchmark results written to ${mdPath}`)
+    process.stdout.write(generateMarkdown(bench.tasks))
+    return
   }
+  console.table(bench.table())
 }
 
 main()
