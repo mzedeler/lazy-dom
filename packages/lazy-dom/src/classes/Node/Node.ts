@@ -24,6 +24,8 @@ export abstract class Node {
   wasmId: number
   nodeStore: NodeStore
   readonly _childNodes: ChildNodeList
+  /** Set by Document when this node is a direct child of the document. */
+  _parentDocument: Document | null = null
 
   readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
   readonly ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE
@@ -63,7 +65,8 @@ export abstract class Node {
     return NodeRegistry.getNode(parentId) ?? null
   }
 
-  get parentNode(): Node | null {
+  get parentNode(): Node | Document | null {
+    if (this._parentDocument) return this._parentDocument
     return this.parent
   }
 

@@ -23,6 +23,7 @@ import { CSSStyleDeclaration } from "./CSSStyleDeclaration"
 import { ErrorEvent } from "./ErrorEvent"
 import { FocusEvent } from "./FocusEvent"
 import { parseHTML } from "../utils/parseHTML"
+import { HTMLCollection } from "./HTMLCollection"
 
 const adapter = new CssSelectAdapter()
 
@@ -165,15 +166,31 @@ export class Element extends Node implements EventTarget {
     this.elementStore.namespaceURI = () => namespaceURI
   }
 
-  get innerHTML(): string {
+  /** Internal serialization that doesn't depend on the innerHTML property. */
+  private _serializeChildren(): string {
     return this.nodeStore.getChildNodesArray()
       .map((node: Node): string => {
-        if (node instanceof Element) return node.outerHTML
+        if (node instanceof Element) return node._serializeOuterHTML()
         if (node instanceof Text) return node.data
         if (node instanceof Comment) return `<!--${node.data}-->`
         return ''
       })
       .join('')
+  }
+
+  /** Internal serialization that doesn't depend on outerHTML/innerHTML properties. */
+  _serializeOuterHTML(): string {
+    const attributes = Array.from(this.attributes)
+      .map((attr: Attr) => ' ' + attr.name + '="' + attr.value + '"')
+      .join('')
+
+    return '<' + this.tagName.toLocaleLowerCase() + attributes + '>'
+      + this._serializeChildren()
+      + '</' + this.tagName.toLocaleLowerCase() + '>'
+  }
+
+  get innerHTML(): string {
+    return this._serializeChildren()
   }
 
   set innerHTML(html: string) {
@@ -194,13 +211,7 @@ export class Element extends Node implements EventTarget {
   }
 
   get outerHTML() {
-    const attributes = Array.from(this.attributes)
-      .map((attr: Attr) => ' ' + attr.name + '="' + attr.value + '"')
-      .join('')
-
-    return '<' + this.tagName.toLocaleLowerCase() + attributes + '>'
-      + this.innerHTML
-      + '</' + this.tagName.toLocaleLowerCase() + '>'
+    return this._serializeOuterHTML()
   }
 
   get style() {
@@ -492,7 +503,7 @@ export class Element extends Node implements EventTarget {
     if (queue && queue.length) {
       const snapshot = queue.slice()
       for (const entry of snapshot) {
-        if (event._stopImmediatePropagation || event.cancelBubble) break
+        if (event._stopImmediatePropagation) break
         if (entry.capture === capture) {
           try {
             entry.listener(event)
@@ -504,7 +515,7 @@ export class Element extends Node implements EventTarget {
       }
     }
     // Fire the on* property handler (e.g., onclick) during non-capture phase
-    if (!capture && !event._stopImmediatePropagation && !event.cancelBubble) {
+    if (!capture && !event._stopImmediatePropagation) {
       const handler = (target as unknown as Record<string, unknown>)[`on${type}`]
       if (typeof handler === 'function') {
         try {
@@ -938,8 +949,9 @@ export class Element extends Node implements EventTarget {
     return new DOMStringMap(this.elementStore)
   }
 
-  get children() {
-    return this.nodeStore.getChildNodesArray().filter(node => node instanceof Element)
+  get children(): HTMLCollection {
+    const elements = this.nodeStore.getChildNodesArray().filter(node => node instanceof Element)
+    return new HTMLCollection(elements)
   }
 
   get firstElementChild(): Element | null {

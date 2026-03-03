@@ -547,6 +547,25 @@ describe('Element', () => {
 
       expect(log).to.eql(['child'])
     })
+
+    it('stopPropagation allows other listeners on the same element to fire', () => {
+      const parent = document.createElement('div')
+      const child = document.createElement('span')
+      parent.appendChild(child)
+      document.body.appendChild(parent)
+
+      const log: string[] = []
+      child.addEventListener('click', (e: Event) => {
+        log.push('child-1')
+        e.stopPropagation()
+      }, false)
+      child.addEventListener('click', () => log.push('child-2'), false)
+      parent.addEventListener('click', () => log.push('parent'), false)
+
+      child.dispatchEvent(new Event('click', { bubbles: true }))
+
+      expect(log).to.eql(['child-1', 'child-2'])
+    })
   })
 
   describe('removeEventListener', () => {

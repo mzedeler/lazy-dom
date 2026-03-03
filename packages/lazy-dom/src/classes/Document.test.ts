@@ -234,20 +234,70 @@ describe('Document', () => {
   })
 
   describe('Node-like methods', () => {
-    it('appendChild appends to documentElement', () => {
-      const el = document.createElement('div')
-      document.appendChild(el)
+    it('appendChild appends a child to the document', () => {
+      const docEl = document.documentElement
+      document.removeChild(docEl)
+      const newHtml = document.createElement('html')
+      document.appendChild(newHtml)
 
-      expect(document.documentElement.lastChild).to.eq(el)
-      document.removeChild(el)
+      expect(document.childNodes).to.include(newHtml)
+      // Restore original state
+      document.removeChild(newHtml)
+      document.appendChild(docEl)
     })
 
-    it('removeChild removes from documentElement', () => {
-      const el = document.createElement('div')
-      document.appendChild(el)
-      document.removeChild(el)
+    it('removeChild removes documentElement from the document', () => {
+      const docEl = document.documentElement
+      document.removeChild(docEl)
 
-      expect(document.documentElement.contains(el)).to.be.false
+      expect(document.childNodes).to.not.include(docEl)
+      // Restore original state
+      document.appendChild(docEl)
+    })
+
+    it('insertBefore inserts before a reference child', () => {
+      const comment = document.createComment('test')
+      document.appendChild(comment)
+
+      const newComment = document.createComment('inserted')
+      document.insertBefore(newComment, comment)
+
+      const children = Array.from(document.childNodes)
+      const commentIdx = children.indexOf(comment)
+      const newIdx = children.indexOf(newComment)
+      expect(newIdx).to.be.lessThan(commentIdx)
+      expect(newIdx).to.be.at.least(0)
+
+      // Restore original state
+      document.removeChild(newComment)
+      document.removeChild(comment)
+    })
+
+    it('replaceChild replaces an existing child', () => {
+      const comment = document.createComment('old')
+      document.appendChild(comment)
+
+      const replacement = document.createComment('new')
+      document.replaceChild(replacement, comment)
+
+      expect(document.childNodes).to.include(replacement)
+      expect(document.childNodes).to.not.include(comment)
+
+      // Restore original state
+      document.removeChild(replacement)
+    })
+
+    it('removeChild throws NotFoundError for non-child node', () => {
+      const detached = document.createElement('div')
+
+      expect(() => document.removeChild(detached)).to.throw(/not a child/)
+    })
+
+    it('insertBefore throws NotFoundError for invalid reference node', () => {
+      const newNode = document.createComment('new')
+      const fakeRef = document.createComment('fake')
+
+      expect(() => document.insertBefore(newNode, fakeRef)).to.throw(/not a child/)
     })
 
     it('contains returns true for contained elements', () => {

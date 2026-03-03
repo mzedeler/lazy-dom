@@ -31,7 +31,7 @@ export class Range {
 
   setStartBefore(node: Node) {
     const parent = node.parentNode
-    if (parent) {
+    if (parent instanceof Node) {
       const children = parent.childNodes
       for (let i = 0; i < children.length; i++) {
         if (children[i] === node) {
@@ -44,7 +44,7 @@ export class Range {
 
   setStartAfter(node: Node) {
     const parent = node.parentNode
-    if (parent) {
+    if (parent instanceof Node) {
       const children = parent.childNodes
       for (let i = 0; i < children.length; i++) {
         if (children[i] === node) {
@@ -57,7 +57,7 @@ export class Range {
 
   setEndBefore(node: Node) {
     const parent = node.parentNode
-    if (parent) {
+    if (parent instanceof Node) {
       const children = parent.childNodes
       for (let i = 0; i < children.length; i++) {
         if (children[i] === node) {
@@ -70,7 +70,7 @@ export class Range {
 
   setEndAfter(node: Node) {
     const parent = node.parentNode
-    if (parent) {
+    if (parent instanceof Node) {
       const children = parent.childNodes
       for (let i = 0; i < children.length; i++) {
         if (children[i] === node) {

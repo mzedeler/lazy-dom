@@ -1,4 +1,5 @@
 import { Node } from "./Node/Node"
+import type { Document } from "./Document"
 
 export class TreeWalker {
   root: Node
@@ -35,7 +36,8 @@ export class TreeWalker {
     while (current && current !== this.root) {
       const sibling = current.nextSibling
       if (sibling) return sibling
-      current = current.parentNode
+      const parent: Node | Document | null = current.parentNode
+      current = parent instanceof Node ? parent : null
     }
     return null
   }

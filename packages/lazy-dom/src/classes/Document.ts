@@ -68,6 +68,7 @@ import { HTMLTableRowElement } from "./elements/HTMLTableRowElement"
 import { HTMLTableSectionElement } from "./elements/HTMLTableSectionElement"
 import { HTMLTextAreaElement } from "./elements/HTMLTextAreaElement"
 import { HTMLTitleElement } from "./elements/HTMLTitleElement"
+import { HTMLCanvasElement } from "./elements/HTMLCanvasElement"
 import { HTMLCollection } from "./HTMLCollection"
 import { DOMImplementation } from "./DOMImplementation"
 import { DOMException } from "./DOMException"
@@ -183,7 +184,7 @@ const constructors: Record<string, Record<string, Constructor>> = {
     TFOOT: HTMLTableSectionElement,
     TEXTAREA: HTMLTextAreaElement,
     TITLE: HTMLTitleElement,
-    CANVAS: HTMLElement,
+    CANVAS: HTMLCanvasElement,
     BODY: HTMLBodyElement,
     HEAD: HTMLElement,
     // Common valid HTML elements that don't have specific classes
@@ -216,6 +217,7 @@ export class Document implements EventTarget {
   documentStore = new DocumentStore()
   defaultView: Window | null = null
   readonly implementation = new DOMImplementation(() => new Document())
+  private _docChildren: Node[] = []
 
   // on* event handler properties — needed so `'oninput' in document` returns
   // true, which React's isEventSupported uses to detect input event support.
@@ -274,6 +276,10 @@ export class Document implements EventTarget {
 
       // Connect entire tree to document for element tracking
       this.documentStore.connect(html)
+
+      // Track html as a document child
+      html._parentDocument = this
+      this._docChildren = [html]
 
       // Memoize all three
       this.documentStore.documentElement = () => html
@@ -672,16 +678,26 @@ export class Document implements EventTarget {
     return null
   }
 
+  private _ensureInit() {
+    if (this._docChildren.length === 0) {
+      // Trigger lazy init by accessing documentElement
+      void this.documentStore.documentElement()
+    }
+  }
+
   get childNodes(): Node[] {
-    return [this.documentElement]
+    this._ensureInit()
+    return this._docChildren
   }
 
-  get firstChild(): Node {
-    return this.documentElement
+  get firstChild(): Node | null {
+    this._ensureInit()
+    return this._docChildren[0] ?? null
   }
 
-  get lastChild(): Node {
-    return this.documentElement
+  get lastChild(): Node | null {
+    this._ensureInit()
+    return this._docChildren[this._docChildren.length - 1] ?? null
   }
 
   get nextSibling(): null {
@@ -693,7 +709,8 @@ export class Document implements EventTarget {
   }
 
   hasChildNodes(): boolean {
-    return true
+    this._ensureInit()
+    return this._docChildren.length > 0
   }
 
   get isConnected(): boolean {
@@ -709,24 +726,108 @@ export class Document implements EventTarget {
   }
 
   appendChild(node: Node): Node {
-    return this.documentElement.appendChild(node)
+    // Remove from old parent if needed
+    const oldParentId = nodeOps.getParentId(node.wasmId)
+    if (oldParentId !== 0) {
+      nodeOps.removeChild(oldParentId, node.wasmId)
+    }
+
+    node._parentDocument = this
+    this._docChildren.push(node)
+    this.documentStore.connect(node)
+
+    // Update documentElement/body/head references if applicable
+    if (node instanceof HTMLHtmlElement) {
+      this.documentStore.documentElement = () => node
+    }
+
+    return node
   }
 
   insertBefore(newNode: Node, referenceNode: Node | null): Node {
-    return this.documentElement.insertBefore(newNode, referenceNode)
+    if (referenceNode === null) {
+      return this.appendChild(newNode)
+    }
+
+    const refIdx = this._docChildren.indexOf(referenceNode)
+    if (refIdx === -1) {
+      throw new DOMException(
+        "The node before which the new node is to be inserted is not a child of this node.",
+        'NotFoundError',
+        DOMException.NOT_FOUND_ERR
+      )
+    }
+
+    // Remove from old parent if needed
+    const oldParentId = nodeOps.getParentId(newNode.wasmId)
+    if (oldParentId !== 0) {
+      nodeOps.removeChild(oldParentId, newNode.wasmId)
+    }
+
+    newNode._parentDocument = this
+    this._docChildren.splice(refIdx, 0, newNode)
+    this.documentStore.connect(newNode)
+
+    if (newNode instanceof HTMLHtmlElement) {
+      this.documentStore.documentElement = () => newNode
+    }
+
+    return newNode
   }
 
   removeChild(node: Node): Node {
-    return this.documentElement.removeChild(node)
+    const idx = this._docChildren.indexOf(node)
+    if (idx === -1) {
+      throw new DOMException(
+        "The node to be removed is not a child of this node.",
+        'NotFoundError',
+        DOMException.NOT_FOUND_ERR
+      )
+    }
+
+    this._docChildren.splice(idx, 1)
+    node._parentDocument = null
+    this.documentStore.disconnect(node)
+
+    return node
   }
 
   replaceChild(newChild: Node, oldChild: Node): Node {
-    return this.documentElement.replaceChild(newChild, oldChild)
+    const idx = this._docChildren.indexOf(oldChild)
+    if (idx === -1) {
+      throw new DOMException(
+        "The node to be removed is not a child of this node.",
+        'NotFoundError',
+        DOMException.NOT_FOUND_ERR
+      )
+    }
+
+    // Remove newChild from old parent if needed
+    const oldParentId = nodeOps.getParentId(newChild.wasmId)
+    if (oldParentId !== 0) {
+      nodeOps.removeChild(oldParentId, newChild.wasmId)
+    }
+
+    this._docChildren[idx] = newChild
+    oldChild._parentDocument = null
+    newChild._parentDocument = this
+    this.documentStore.disconnect(oldChild)
+    this.documentStore.connect(newChild)
+
+    if (newChild instanceof HTMLHtmlElement) {
+      this.documentStore.documentElement = () => newChild
+    }
+
+    return oldChild
   }
 
   contains(other: Node | null): boolean {
     if (!other) return false
-    return this.documentElement.contains(other)
+    if (this._docChildren.includes(other)) return true
+    for (const child of this._docChildren) {
+      if (child.contains(other)) return true
+    }
+    return false
   }
 
   cloneNode(_deep: boolean = false): Document {
@@ -821,6 +922,9 @@ export class Document implements EventTarget {
       this.documentElement.setAttribute(attr.name, attr.value)
     }
 
+    // Tags that belong in <head> per the HTML spec
+    const headTags = new Set(['meta', 'title', 'link', 'style', 'base', 'script', 'noscript'])
+
     // Snapshot children since appendChild moves nodes
     const children = htmlElement.nodeStore.getChildNodesArray()
     for (const child of children) {
@@ -849,6 +953,9 @@ export class Document implements EventTarget {
             this.documentElement.removeChild(body)
           }
           this.documentElement.appendChild(child)
+        } else if (headTags.has(tag)) {
+          // Metadata elements without an explicit <head> go to <head>
+          this.head.appendChild(child)
         } else {
           this.body.appendChild(child)
         }
