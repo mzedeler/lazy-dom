@@ -143,16 +143,10 @@ export const validCSSProperties = new Set([
 
 /**
  * Check whether a kebab-case property name is a valid CSS property.
- * Accepts standard properties, CSS custom properties (--*), and vendor
- * prefixes (-webkit-*, -moz-*, -ms-*, -o-*, and camelCase-converted
- * webkit-*, moz-*, ms-*).
+ * Accepts standard properties and CSS custom properties (--*).
+ * Vendor-prefixed properties are rejected to match JSDOM/cssstyle behavior.
  */
 export function isValidCSSProperty(kebab: string): boolean {
   if (kebab.startsWith('--')) return true
-  if (kebab.startsWith('-webkit-') || kebab.startsWith('-moz-') ||
-      kebab.startsWith('-ms-') || kebab.startsWith('-o-')) return true
-  // camelCase vendor prefixes (e.g. webkitFoo → webkit-foo)
-  if (kebab.startsWith('webkit-') || kebab.startsWith('moz-') ||
-      kebab.startsWith('ms-')) return true
   return validCSSProperties.has(kebab)
 }

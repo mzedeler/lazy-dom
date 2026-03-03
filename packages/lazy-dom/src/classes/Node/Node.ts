@@ -8,6 +8,8 @@ import * as nodeOps from "../../wasm/nodeOps"
 import * as NodeRegistry from "../../wasm/NodeRegistry"
 
 import { DOMException } from "../DOMException"
+import { notifyMutation } from "../mutationNotify"
+import { Range } from "../Range"
 
 // Forward reference resolved at runtime to avoid circular imports
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,6 +105,24 @@ export abstract class Node {
     return NodeRegistry.getNode(siblingIds[myIndex - 1]) ?? null
   }
 
+  get nextElementSibling(): Element | null {
+    let sibling = this.nextSibling
+    while (sibling) {
+      if (sibling instanceof Element) return sibling
+      sibling = sibling.nextSibling
+    }
+    return null
+  }
+
+  get previousElementSibling(): Element | null {
+    let sibling = this.previousSibling
+    while (sibling) {
+      if (sibling instanceof Element) return sibling
+      sibling = sibling.previousSibling
+    }
+    return null
+  }
+
   hasChildNodes(): boolean {
     return this.nodeStore.getChildCount() > 0
   }
@@ -123,9 +143,10 @@ export abstract class Node {
     if (node == null) {
       throw new TypeError("Failed to execute 'removeChild' on 'Node': 1 argument required, but only 0 present.")
     }
-    // Check that node is actually a child
+    // Check that node is actually a child and find its index for Range tracking
     const childIds = nodeOps.getChildIds(this.wasmId)
-    if (!childIds.includes(node.wasmId)) {
+    const childIndex = childIds.indexOf(node.wasmId)
+    if (childIndex === -1) {
       throw new DOMException(
         "The node to be removed is not a child of this node.",
         'NotFoundError',
@@ -136,6 +157,9 @@ export abstract class Node {
     nodeOps.setParentId(node.wasmId, 0)
     nodeOps.removeChild(this.wasmId, node.wasmId)
     this.ownerDocument.documentStore.disconnect(node)
+
+    Range._notifyChildRemoved(this, childIndex)
+    notifyMutation({ type: 'childList', target: this, removedNodes: [node] })
 
     return node
   }
@@ -181,6 +205,8 @@ export abstract class Node {
     nodeOps.insertBefore(this.wasmId, newNode.wasmId, referenceNode ? referenceNode.wasmId : 0)
     this.ownerDocument.documentStore.connect(newNode)
 
+    notifyMutation({ type: 'childList', target: this, addedNodes: [newNode] })
+
     return newNode
   }
 
@@ -212,6 +238,8 @@ export abstract class Node {
     nodeOps.setParentId(node.wasmId, this.wasmId)
     nodeOps.appendChild(this.wasmId, node.wasmId)
     this.ownerDocument.documentStore.connect(node)
+
+    notifyMutation({ type: 'childList', target: this, addedNodes: [node] })
 
     return node
   }

@@ -71,10 +71,11 @@ describe('CSSStyleDeclaration', () => {
       expect(div.style.getPropertyValue('--my-color')).to.eq('blue')
     })
 
-    it('allows vendor-prefixed properties via setProperty', () => {
+    it('silently ignores vendor-prefixed properties via setProperty', () => {
       const div = document.createElement('div')
       div.style.setProperty('-webkit-transform', 'none')
-      expect(div.style.getPropertyValue('-webkit-transform')).to.eq('none')
+      expect(div.style.getPropertyValue('-webkit-transform')).to.eq('')
+      expect(div.style.cssText).to.eq('')
     })
   })
 

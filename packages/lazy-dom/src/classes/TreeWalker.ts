@@ -54,6 +54,39 @@ export class TreeWalker {
     }
   }
 
+  private getPreviousNode(node: Node): Node | null {
+    // Try previous sibling's deepest last descendant
+    const sibling = node.previousSibling
+    if (sibling) {
+      // Find the deepest last child of the sibling
+      let current: Node = sibling
+      while (true) {
+        const children = current.childNodes
+        const lastChild = children.length > 0 ? children[children.length - 1] : null
+        if (!lastChild) break
+        current = lastChild
+      }
+      return current
+    }
+    // Go to parent (unless we've reached root)
+    const parent: Node | null = node.parentNode instanceof Node ? node.parentNode : null
+    if (parent && parent !== this.root) return parent
+    if (parent === this.root) return parent
+    return null
+  }
+
+  previousNode(): Node | null {
+    let node: Node | null = this.currentNode
+    while (true) {
+      node = this.getPreviousNode(node)
+      if (!node || node === this.root) return null
+      if (this.acceptNode(node)) {
+        this.currentNode = node
+        return node
+      }
+    }
+  }
+
   firstChild(): Node | null {
     const children = this.currentNode.childNodes
     for (let i = 0; i < children.length; i++) {

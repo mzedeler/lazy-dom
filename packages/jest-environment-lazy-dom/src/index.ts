@@ -15,10 +15,12 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     // Native EventTarget rejects non-native Event instances, so we keep the
     // native Event hierarchy on `g` and only expose lazy-dom's versions on
     // the lazy-dom `window` (where testing-library finds them via defaultView).
+    // EventTarget is also skipped to avoid cross-realm instanceof failures
+    // when native EventTarget receives sandbox Event instances.
     const eventClassNames = new Set([
       'Event', 'UIEvent', 'MouseEvent', 'KeyboardEvent', 'InputEvent',
       'FocusEvent', 'PointerEvent', 'ProgressEvent', 'ErrorEvent',
-      'CustomEvent', 'CompositionEvent',
+      'CustomEvent', 'CompositionEvent', 'EventTarget',
     ])
 
     // Assign all DOM classes onto the global (except Event classes)
@@ -202,13 +204,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       }
     })
 
-    defineStubOnBoth("MutationObserver", class MutationObserver {
-      observe() {}
-      disconnect() {}
-      takeRecords() {
-        return []
-      }
-    })
+    // MutationObserver comes from lazy-dom's classes (already assigned above)
 
     // Selection API implementation
     // Uses `unknown` for node types because this bridges the global DOM Node type
@@ -347,13 +343,13 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     })
 
     const screenStub = {
-      availHeight: 768,
-      availWidth: 1024,
+      availHeight: 0,
+      availWidth: 0,
       colorDepth: 24,
-      height: 768,
+      height: 0,
       pixelDepth: 24,
-      width: 1024,
-      orientation: { type: "landscape-primary", angle: 0 },
+      width: 0,
+      orientation: {},
     }
     defineStubOnBoth("screen", screenStub)
 
@@ -378,8 +374,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
 
     // Provide timer functions on the lazy-dom window object and jest global so that
     // libraries accessing them via ownerDocument.defaultView work correctly
-    const timerNames = ["setTimeout", "clearTimeout", "setInterval", "clearInterval",
-                        "requestAnimationFrame", "cancelAnimationFrame"] as const
+    const timerNames = ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] as const
     for (const name of timerNames) {
       const fn = globalThis[name]
       if (fn) {
@@ -397,6 +392,20 @@ export default class LazyDomEnvironment extends NodeEnvironment {
           writable: true,
         })
       }
+    }
+
+    // requestAnimationFrame/cancelAnimationFrame polyfills (not in Node.js by default)
+    if (typeof globalThis.requestAnimationFrame === 'function') {
+      defineStubOnBoth("requestAnimationFrame", globalThis.requestAnimationFrame.bind(globalThis))
+      defineStubOnBoth("cancelAnimationFrame", globalThis.cancelAnimationFrame.bind(globalThis))
+    } else {
+      let rafId = 0
+      defineStubOnBoth("requestAnimationFrame", (cb: FrameRequestCallback) => {
+        rafId++
+        g.setTimeout(() => cb(Date.now()), 0)
+        return rafId
+      })
+      defineStubOnBoth("cancelAnimationFrame", (id: number) => { g.clearTimeout(id) })
     }
 
     // Also put DOM classes on the lazy-dom window so testing-library can find them
@@ -432,6 +441,24 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       configurable: true,
       enumerable: true,
       value: window.dispatchEvent.bind(window),
+      writable: true,
+    })
+    Object.defineProperty(g, "scrollTo", {
+      configurable: true,
+      enumerable: true,
+      value: window.scrollTo.bind(window),
+      writable: true,
+    })
+    Object.defineProperty(g, "scrollBy", {
+      configurable: true,
+      enumerable: true,
+      value: window.scrollBy.bind(window),
+      writable: true,
+    })
+    Object.defineProperty(g, "scroll", {
+      configurable: true,
+      enumerable: true,
+      value: window.scroll.bind(window),
       writable: true,
     })
 

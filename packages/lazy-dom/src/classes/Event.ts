@@ -64,6 +64,21 @@ export class Event {
     this._stopImmediatePropagation = true
   }
 
+  composedPath(): Node[] {
+    const path: Node[] = []
+    try {
+      const target = this.eventStore.target()
+      let current: Node | null = target
+      while (current) {
+        path.push(current)
+        current = current.parentNode instanceof Node ? current.parentNode : null
+      }
+    } catch {
+      // target not set
+    }
+    return path
+  }
+
   initEvent(type: EventType, bubbles = false, cancelable = false) {
     this.eventStore.type = () => type
     this.bubbles = bubbles

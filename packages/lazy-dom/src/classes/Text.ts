@@ -2,6 +2,7 @@ import { Future } from "../types/Future"
 import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 import { CharacterData } from "./CharacterData"
+import { notifyMutation } from "./mutationNotify"
 
 class TextStore  {
   data: Future<string> = () => {
@@ -23,7 +24,12 @@ export class Text extends CharacterData {
   }
 
   set textContent(value: string) {
+    let oldValue: string | null = null
+    try { oldValue = this.textStore.data() } catch { /* uninitialized */ }
     this.textStore.data = () => value
+    if (oldValue !== null && oldValue !== value) {
+      notifyMutation({ type: 'characterData', target: this, oldValue })
+    }
   }
 
   get data() {
@@ -31,7 +37,12 @@ export class Text extends CharacterData {
   }
 
   set data(data: string) {
+    let oldValue: string | null = null
+    try { oldValue = this.textStore.data() } catch { /* uninitialized */ }
     this.textStore.data = () => data
+    if (oldValue !== null && oldValue !== data) {
+      notifyMutation({ type: 'characterData', target: this, oldValue })
+    }
   }
 
   get nodeValue() {
@@ -39,7 +50,12 @@ export class Text extends CharacterData {
   }
 
   set nodeValue(value: string) {
+    let oldValue: string | null = null
+    try { oldValue = this.textStore.data() } catch { /* uninitialized */ }
     this.textStore.data = () => value
+    if (oldValue !== null && oldValue !== value) {
+      notifyMutation({ type: 'characterData', target: this, oldValue })
+    }
   }
 
   protected _cloneNodeShallow(): Text {

@@ -28,6 +28,27 @@ function getDefaultDisplay(tagName?: string): string {
   return 'block'
 }
 
+// CSS computed value defaults for properties that should not return empty string.
+// HeadlessUI and other libraries parse these for transition/animation handling.
+const cssDefaults: Record<string, string> = {
+  display: '',  // handled separately via getDefaultDisplay
+  'transition-duration': '0s',
+  'transition-delay': '0s',
+  'transition-property': 'all',
+  'animation-duration': '0s',
+  'animation-delay': '0s',
+  transitionDuration: '0s',
+  transitionDelay: '0s',
+  transitionProperty: 'all',
+  animationDuration: '0s',
+  animationDelay: '0s',
+}
+
+function getComputedDefault(prop: string, tagName?: string): string {
+  if (prop === 'display') return getDefaultDisplay(tagName)
+  return cssDefaults[prop] ?? ''
+}
+
 class WindowStore {
   eventListeners: Future<Listeners> = () => ({})
 }
@@ -37,6 +58,10 @@ export class Window {
 
   innerWidth = 1024
   innerHeight = 768
+  scrollX = 0
+  scrollY = 0
+  pageXOffset = 0
+  pageYOffset = 0
 
   // Expose console so that error-reporting code can use win.console.error(...)
   // instead of the module-level console. This is necessary because Jest's VM
@@ -76,11 +101,7 @@ export class Window {
           const val = element.style.getPropertyValue(property)
           if (val) return val
         }
-        // Return CSS defaults for common properties
-        if (property === 'display') {
-          return getDefaultDisplay(element?.tagName)
-        }
-        return ''
+        return getComputedDefault(property, element?.tagName)
       },
     }
     return new Proxy(target, {
@@ -92,9 +113,8 @@ export class Window {
           const val = element.style[prop]
           if (typeof val === 'string' && val !== '') return val
         }
-        // Return CSS defaults for common properties
-        if (prop === 'display') {
-          return getDefaultDisplay(element?.tagName)
+        if (typeof prop === 'string') {
+          return getComputedDefault(prop, element?.tagName)
         }
         return ''
       },
@@ -135,16 +155,23 @@ export class Window {
   }
 
   dispatchEvent(event: Event): boolean {
+    const type = event.type
+    this._fireListeners(type, event, false)
+    return !event.defaultPrevented
+  }
+
+  /** Fire listeners matching the given capture flag. */
+  _fireListeners(type: string, event: Event, capture: boolean) {
     const listeners = this.windowStore.eventListeners()
-    const queue = listeners[event.type]
-    if (queue && queue.length) {
-      const snapshot = queue.slice()
-      for (const entry of snapshot) {
-        if (event.cancelBubble) break
+    const queue = listeners[type]
+    if (!queue || queue.length === 0) return
+    const snapshot = queue.slice()
+    for (const entry of snapshot) {
+      if (event.cancelBubble) break
+      if (entry.capture === capture) {
         entry.listener(event)
       }
     }
-    return !event.defaultPrevented
   }
 
   private _memoizeListeners(): Listeners {
@@ -183,6 +210,10 @@ export class Window {
   }
 
   open(): null { return null }
+
+  scrollTo() {}
+  scrollBy() {}
+  scroll() {}
 
   get localStorage() {
     return {

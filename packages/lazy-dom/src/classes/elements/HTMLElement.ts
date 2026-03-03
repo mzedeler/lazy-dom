@@ -69,6 +69,59 @@ export class HTMLElement extends Element {
     }
   }
 
+  get contentEditable(): string {
+    return this.getAttribute('contenteditable') ?? 'inherit'
+  }
+  set contentEditable(value: string) {
+    this.setAttribute('contenteditable', value)
+  }
+
+  get isContentEditable(): boolean {
+    const val = this.getAttribute('contenteditable')
+    if (val === 'true' || val === '') return true
+    if (val === 'false') return false
+    // 'inherit' — walk up the tree
+    const parent = this.parentElement
+    if (parent && 'isContentEditable' in parent) {
+      return (parent as HTMLElement).isContentEditable
+    }
+    return false
+  }
+
+  get hidden(): boolean {
+    return this.hasAttribute('hidden')
+  }
+  set hidden(value: boolean) {
+    if (value) {
+      this.setAttribute('hidden', '')
+    } else {
+      this.removeAttribute('hidden')
+    }
+  }
+
+  get spellcheck(): boolean {
+    const val = this.getAttribute('spellcheck')
+    if (val === 'false') return false
+    return true
+  }
+  set spellcheck(value: boolean) {
+    this.setAttribute('spellcheck', String(value))
+  }
+
+  get role(): string {
+    return this.getAttribute('role') ?? ''
+  }
+  set role(value: string) {
+    this.setAttribute('role', value)
+  }
+
+  get innerText(): string {
+    return this.textContent ?? ''
+  }
+  set innerText(value: string) {
+    this.textContent = value
+  }
+
   get offsetWidth(): number { return 0 }
   get offsetHeight(): number { return 0 }
   get offsetTop(): number { return 0 }

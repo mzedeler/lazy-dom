@@ -314,6 +314,14 @@ export class Document implements EventTarget {
     return this.documentStore.activeElement() ?? this.body
   }
 
+  hasFocus(): boolean {
+    return this.documentStore.activeElement() !== null
+  }
+
+  get readyState(): string {
+    return 'complete'
+  }
+
   get body(): HTMLBodyElement {
     return this.documentStore.body()
   }
@@ -969,6 +977,18 @@ export class Document implements EventTarget {
 
   createRange() {
     return new Range()
+  }
+
+  execCommand(_command: string, _showUI?: boolean, _value?: string): boolean {
+    return false
+  }
+
+  queryCommandSupported(_command: string): boolean {
+    return false
+  }
+
+  queryCommandEnabled(_command: string): boolean {
+    return false
   }
 
   createEvent(eventInterface: string): Event {

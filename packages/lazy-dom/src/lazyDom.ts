@@ -74,6 +74,8 @@ import { ProgressEvent } from "./classes/ProgressEvent"
 import { ErrorEvent } from "./classes/ErrorEvent"
 import { CustomEvent } from "./classes/CustomEvent"
 import { CompositionEvent } from "./classes/CompositionEvent"
+import { MutationObserver } from "./classes/MutationObserver"
+import { MutationRecord } from "./classes/MutationObserver"
 
 export { JSDOM } from "./jsdom"
 
@@ -174,6 +176,8 @@ const lazyDom = () => {
     SVGElement,
     Range,
     Document,
+    MutationObserver,
+    MutationRecord,
   }
   Object.assign(window, instances, classes)
   Object.assign(global, { window, document }, classes)

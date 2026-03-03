@@ -24,8 +24,21 @@ import { ErrorEvent } from "./ErrorEvent"
 import { FocusEvent } from "./FocusEvent"
 import { parseHTML } from "../utils/parseHTML"
 import { HTMLCollection } from "./HTMLCollection"
+import { notifyMutation } from "./mutationNotify"
 
 const adapter = new CssSelectAdapter()
+
+// Fix common malformed selector issues (e.g. missing closing bracket)
+// to match JSDOM/nwsapi's more forgiving parsing behavior
+function fixSelector(selector: string): string {
+  let open = 0
+  for (const ch of selector) {
+    if (ch === '[') open++
+    else if (ch === ']') open--
+  }
+  if (open > 0) return selector + ']'.repeat(open)
+  return selector
+}
 
 class ElementStore {
   eventListeners: Future<Listeners> = () => ({})
@@ -194,11 +207,15 @@ export class Element extends Node implements EventTarget {
   }
 
   set innerHTML(html: string) {
+    // Capture removed children for MutationObserver notification
+    const removedNodes = this.nodeStore.getChildNodesArray()
+
     // Properly disconnect old children before clearing
     this._removeAllChildren()
 
     // Coerce to string - React may pass numbers/booleans via dangerouslySetInnerHTML
     const str = String(html)
+    const addedNodes: Node[] = []
     if (str.length) {
       const ownerDocument = this.nodeStore.ownerDocument()
       const nodes = parseHTML(str, ownerDocument)
@@ -206,7 +223,12 @@ export class Element extends Node implements EventTarget {
         nodeOps.setParentId(node.wasmId, this.wasmId)
         nodeOps.appendChild(this.wasmId, node.wasmId)
         ownerDocument.documentStore.connect(node)
+        addedNodes.push(node)
       }
+    }
+
+    if (removedNodes.length > 0 || addedNodes.length > 0) {
+      notifyMutation({ type: 'childList', target: this, removedNodes, addedNodes })
     }
   }
 
@@ -243,14 +265,23 @@ export class Element extends Node implements EventTarget {
   }
 
   set textContent(data: string) {
+    // Capture removed children for MutationObserver notification
+    const removedNodes = this.nodeStore.getChildNodesArray()
+
     // Properly disconnect old children before clearing
     this._removeAllChildren()
 
+    const addedNodes: Node[] = []
     if (data.length) {
       const ownerDocument = this.nodeStore.ownerDocument()
       const textNode = ownerDocument.createTextNode(data)
       nodeOps.setParentId(textNode.wasmId, this.wasmId)
       nodeOps.appendChild(this.wasmId, textNode.wasmId)
+      addedNodes.push(textNode)
+    }
+
+    if (removedNodes.length > 0 || addedNodes.length > 0) {
+      notifyMutation({ type: 'childList', target: this, removedNodes, addedNodes })
     }
   }
 
@@ -280,6 +311,7 @@ export class Element extends Node implements EventTarget {
       previousAttributes.setNamedItem(attr)
       return previousAttributes
     }
+    notifyMutation({ type: 'attributes', target: this, attributeName: name })
     return
   }
 
@@ -317,6 +349,7 @@ export class Element extends Node implements EventTarget {
       previousAttributes.removeNamedItem(name)
       return previousAttributes
     }
+    notifyMutation({ type: 'attributes', target: this, attributeName: name })
   }
 
   private _memoizeListeners(): Listeners {
@@ -361,6 +394,15 @@ export class Element extends Node implements EventTarget {
         event.eventStore.target()
       } catch {
         event.eventStore.target = () => this
+      }
+    } else {
+      // Native Event dispatched via our dispatchEvent (e.g. from userEvent).
+      // The native target getter returns null since it wasn't dispatched through
+      // native DOM, so override it to match the spec dispatch algorithm.
+      try {
+        Object.defineProperty(event, 'target', { value: this, configurable: true })
+      } catch {
+        // target not configurable — leave as-is
       }
     }
 
@@ -407,16 +449,22 @@ export class Element extends Node implements EventTarget {
       current = parent instanceof Element ? parent : null
     }
 
-    // Get ownerDocument for event propagation to the document
+    // Get ownerDocument and window for event propagation
     let doc: import('./Document').Document | null = null
+    let win: import('./Window').Window | null = null
     try {
       doc = this.ownerDocument
+      win = doc?.defaultView ?? null
     } catch {
       // No ownerDocument
     }
 
-    // Capture phase: document -> root -> ... -> target parent
+    // Capture phase: window -> document -> root -> ... -> target parent
     event.eventPhase = 1 // CAPTURING_PHASE
+    if (win && !event.cancelBubble) {
+      event.currentTarget = win as unknown as Node
+      win._fireListeners(type, event, true)
+    }
     if (doc && !event.cancelBubble) {
       event.currentTarget = doc as unknown as Node
       doc._fireListeners(type, event, true)
@@ -437,7 +485,7 @@ export class Element extends Node implements EventTarget {
       }
     }
 
-    // Bubble phase: target parent -> ... -> root -> document
+    // Bubble phase: target parent -> ... -> root -> document -> window
     if (event.bubbles && !event.cancelBubble) {
       event.eventPhase = 3 // BUBBLING_PHASE
       for (let i = 1; i < path.length; i++) {
@@ -448,6 +496,10 @@ export class Element extends Node implements EventTarget {
       if (doc && !event.cancelBubble) {
         event.currentTarget = doc as unknown as Node
         doc._fireListeners(type, event, false)
+      }
+      if (win && !event.cancelBubble) {
+        event.currentTarget = win as unknown as Node
+        win._fireListeners(type, event, false)
       }
     }
 
@@ -477,6 +529,17 @@ export class Element extends Node implements EventTarget {
           if (form) {
             const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
             form.dispatchEvent(submitEvent)
+          }
+        }
+      }
+      // Anchor navigation default action: emit jsdomError on _virtualConsole
+      const anchor = this.tagName === 'A' ? this : this.closest('a')
+      if (anchor) {
+        const href = anchor.getAttribute('href')
+        if (href && win) {
+          const vc = (win as unknown as { _virtualConsole?: { emit(e: string, err: Error): void } })._virtualConsole
+          if (vc) {
+            vc.emit('jsdomError', new Error('Not implemented: navigation (except hash changes)'))
           }
         }
       }
@@ -571,6 +634,13 @@ export class Element extends Node implements EventTarget {
 
   get hidden(): boolean {
     return this.hasAttribute('hidden')
+  }
+  set hidden(value: boolean) {
+    if (value) {
+      this.setAttribute('hidden', '')
+    } else {
+      this.removeAttribute('hidden')
+    }
   }
 
   hasAttribute(name: string): boolean {
@@ -812,6 +882,15 @@ export class Element extends Node implements EventTarget {
         (node): node is Element => node instanceof Element
       )
     } catch {
+      // Retry with fixed selector (e.g. missing closing bracket)
+      const fixed = fixSelector(query)
+      if (fixed !== query) {
+        try {
+          return CSSselect.selectAll(fixed, this, { adapter }).filter(
+            (node): node is Element => node instanceof Element
+          )
+        } catch { /* fall through */ }
+      }
       return []
     }
   }
@@ -820,6 +899,12 @@ export class Element extends Node implements EventTarget {
     try {
       return CSSselect.is(this, selectors, { adapter })
     } catch {
+      const fixed = fixSelector(selectors)
+      if (fixed !== selectors) {
+        try {
+          return CSSselect.is(this, fixed, { adapter })
+        } catch { /* fall through */ }
+      }
       return false
     }
   }
@@ -829,6 +914,13 @@ export class Element extends Node implements EventTarget {
       const result = CSSselect.selectOne(selectors, this, { adapter })
       return result instanceof Element ? result : null
     } catch {
+      const fixed = fixSelector(selectors)
+      if (fixed !== selectors) {
+        try {
+          const result = CSSselect.selectOne(fixed, this, { adapter })
+          return result instanceof Element ? result : null
+        } catch { /* fall through */ }
+      }
       return null
     }
   }
@@ -907,7 +999,9 @@ export class Element extends Node implements EventTarget {
     return []
   }
 
-  focus() {
+  scrollIntoView() {}
+
+  focus(_options?: { preventScroll?: boolean }) {
     const doc = this.ownerDocument
     const previousActive = doc.documentStore.activeElement()
     if (previousActive === this) return

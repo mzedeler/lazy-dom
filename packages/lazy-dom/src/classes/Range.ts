@@ -2,9 +2,11 @@ import { Node } from './Node/Node'
 import { Element } from './Element'
 import { DocumentFragment } from './DocumentFragment'
 import { DOMException } from './DOMException'
+import type { Document } from './Document'
+import { parseHTML } from '../utils/parseHTML'
 
-// Use late-binding to avoid circular dependency with Document
-type DocumentLike = { createDocumentFragment(): DocumentFragment; createTextNode(data: string): { nodeStore: { ownerDocument: () => unknown } } & Node }
+// Global set of live Range objects for boundary point tracking
+const liveRanges = new Set<Range>()
 
 export class Range {
   startContainer: Node | null = null
@@ -13,6 +15,44 @@ export class Range {
   endOffset = 0
   collapsed = true
   commonAncestorContainer: Node | null = null
+
+  constructor() {
+    liveRanges.add(this)
+  }
+
+  /**
+   * Called when a child node is removed from a parent.
+   * Adjusts boundary points of all live Ranges per the DOM spec:
+   * if a Range's start/end container is the parent and offset > child index,
+   * decrement the offset.
+   */
+  static _notifyChildRemoved(parent: Node, childIndex: number) {
+    if (liveRanges.size === 0) return
+    for (const range of liveRanges) {
+      if (range.startContainer === parent && range.startOffset > childIndex) {
+        range.startOffset--
+      }
+      if (range.endContainer === parent && range.endOffset > childIndex) {
+        range.endOffset--
+      }
+    }
+  }
+
+  /**
+   * Called when a child node is inserted into a parent.
+   * Adjusts boundary points: if offset >= child index, increment.
+   */
+  static _notifyChildInserted(parent: Node, childIndex: number) {
+    if (liveRanges.size === 0) return
+    for (const range of liveRanges) {
+      if (range.startContainer === parent && range.startOffset > childIndex) {
+        range.startOffset++
+      }
+      if (range.endContainer === parent && range.endOffset > childIndex) {
+        range.endOffset++
+      }
+    }
+  }
 
   setStart(node: Node, offset: number) {
     this.startContainer = node
@@ -129,12 +169,14 @@ export class Range {
 
   createContextualFragment(html: string): DocumentFragment {
     const container = this.startContainer
-    const doc: DocumentLike = container
-      ? (container as Element).ownerDocument ?? (globalThis as Record<string, unknown>).document as DocumentLike
-      : (globalThis as Record<string, unknown>).document as DocumentLike
+    const doc = (container
+      ? (container as Element).ownerDocument ?? (globalThis as Record<string, unknown>).document
+      : (globalThis as Record<string, unknown>).document) as Document
     const fragment = doc.createDocumentFragment()
-    const textNode = doc.createTextNode(html)
-    fragment.appendChild(textNode as Node)
+    const nodes = parseHTML(html, doc)
+    for (const node of nodes) {
+      fragment.appendChild(node)
+    }
     return fragment
   }
 
@@ -324,6 +366,28 @@ export class Range {
 
   private _update() {
     this.collapsed = this.startContainer === this.endContainer && this.startOffset === this.endOffset
-    this.commonAncestorContainer = this.startContainer
+    this.commonAncestorContainer = this._computeCommonAncestor()
+  }
+
+  private _computeCommonAncestor(): Node | null {
+    if (!this.startContainer || !this.endContainer) return null
+    if (this.startContainer === this.endContainer) return this.startContainer
+
+    // Walk up from startContainer to collect all ancestors
+    const ancestors = new Set<Node>()
+    let node: Node | null = this.startContainer
+    while (node) {
+      ancestors.add(node)
+      node = node.parent
+    }
+
+    // Walk up from endContainer to find the first common ancestor
+    node = this.endContainer
+    while (node) {
+      if (ancestors.has(node)) return node
+      node = node.parent
+    }
+
+    return this.startContainer
   }
 }
