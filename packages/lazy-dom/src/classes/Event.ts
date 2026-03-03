@@ -52,7 +52,9 @@ export class Event {
   }
 
   preventDefault() {
-    this.defaultPrevented = true
+    if (this.cancelable) {
+      this.defaultPrevented = true
+    }
   }
 
   stopPropagation() {

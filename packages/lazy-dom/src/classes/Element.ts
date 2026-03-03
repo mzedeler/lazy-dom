@@ -1,6 +1,6 @@
 import { Future } from "../types/Future"
 import { Listener } from "../types/Listener"
-import { Listeners, AddEventListenerOptions } from "../types/Listeners"
+import { AddEventListenerOptions } from "../types/Listeners"
 import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 
@@ -25,6 +25,14 @@ import { FocusEvent } from "./FocusEvent"
 import { parseHTML } from "../utils/parseHTML"
 import { HTMLCollection } from "./HTMLCollection"
 import { notifyMutation } from "./mutationNotify"
+import {
+  EventTargetStore,
+  addEventListenerImpl,
+  removeEventListenerImpl,
+  fireListenersImpl,
+  fireListenersAtTarget,
+  fireOnHandler,
+} from "./EventTargetImpl"
 
 const adapter = new CssSelectAdapter()
 
@@ -41,7 +49,7 @@ function fixSelector(selector: string): string {
 }
 
 class ElementStore {
-  eventListeners: Future<Listeners> = () => ({})
+  eventTargetStore = new EventTargetStore()
   tagName: Future<string> = () => {
     throw valueNotSetError('tagName')
   }
@@ -107,17 +115,6 @@ class StyleAwareNamedNodeMap extends NamedNodeMap {
     if (styleAttr) {
       yield styleAttr
     }
-  }
-}
-
-function parseListenerOptions(options?: boolean | AddEventListenerOptions): { capture: boolean; passive: boolean; once: boolean } {
-  if (typeof options === 'boolean') return { capture: options, passive: false, once: false }
-  // Reading passive/once from the options object triggers getter-based feature detection
-  // (e.g. React checks if the browser supports passive events this way)
-  return {
-    capture: options?.capture ?? false,
-    passive: options?.passive ?? false,
-    once: options?.once ?? false,
   }
 }
 
@@ -352,39 +349,12 @@ export class Element extends Node implements EventTarget {
     notifyMutation({ type: 'attributes', target: this, attributeName: name })
   }
 
-  private _memoizeListeners(): Listeners {
-    const listeners = this.elementStore.eventListeners()
-    this.elementStore.eventListeners = () => listeners
-    return listeners
-  }
-
   addEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {
-    if (!listener) {
-      return
-    }
-    const { capture, passive, once } = parseListenerOptions(options)
-    const listeners = this._memoizeListeners()
-    let queue = listeners[type]
-    if (!queue) {
-      queue = []
-      listeners[type] = queue
-    }
-    queue.push({ listener, capture, passive, once })
+    addEventListenerImpl(this.elementStore.eventTargetStore, type, listener, options)
   }
 
   removeEventListener(type: string, listener: unknown, options?: boolean | AddEventListenerOptions) {
-    if (!listener) return
-    const { capture } = parseListenerOptions(options)
-    const listeners = this._memoizeListeners()
-    const queue = listeners[type]
-    if (queue) {
-      const idx = queue.findIndex(
-        entry => entry.listener === listener && entry.capture === capture
-      )
-      if (idx !== -1) {
-        queue.splice(idx, 1)
-      }
-    }
+    removeEventListenerImpl(this.elementStore.eventTargetStore, type, listener as Listener, options)
   }
 
   dispatchEvent(event: Event): boolean {
@@ -472,17 +442,15 @@ export class Element extends Node implements EventTarget {
     for (let i = path.length - 1; i > 0; i--) {
       if (event.cancelBubble) break
       event.currentTarget = path[i]
-      this._fireListeners(path[i], type, event, true)
+      fireListenersImpl(path[i].elementStore.eventTargetStore, type, event, true, (err) => this._dispatchErrorToWindow(err))
     }
 
-    // At-target phase
+    // At-target phase: fire ALL listeners in registration order regardless of capture flag
     if (!event.cancelBubble) {
       event.eventPhase = 2 // AT_TARGET
       event.currentTarget = this
-      this._fireListeners(this, type, event, true)
-      if (!event.cancelBubble) {
-        this._fireListeners(this, type, event, false)
-      }
+      fireListenersAtTarget(this.elementStore.eventTargetStore, type, event, (err) => this._dispatchErrorToWindow(err))
+      fireOnHandler(this as unknown as Record<string, unknown>, type, event, (err) => this._dispatchErrorToWindow(err))
     }
 
     // Bubble phase: target parent -> ... -> root -> document -> window
@@ -491,7 +459,8 @@ export class Element extends Node implements EventTarget {
       for (let i = 1; i < path.length; i++) {
         if (event.cancelBubble) break
         event.currentTarget = path[i]
-        this._fireListeners(path[i], type, event, false)
+        fireListenersImpl(path[i].elementStore.eventTargetStore, type, event, false, (err) => this._dispatchErrorToWindow(err))
+        fireOnHandler(path[i] as unknown as Record<string, unknown>, type, event, (err) => this._dispatchErrorToWindow(err))
       }
       if (doc && !event.cancelBubble) {
         event.currentTarget = doc as unknown as Node
@@ -560,35 +529,6 @@ export class Element extends Node implements EventTarget {
     return null
   }
 
-  private _fireListeners(target: Element, type: string, event: Event, capture: boolean) {
-    const listeners = target.elementStore.eventListeners()
-    const queue = listeners[type]
-    if (queue && queue.length) {
-      const snapshot = queue.slice()
-      for (const entry of snapshot) {
-        if (event._stopImmediatePropagation) break
-        if (entry.capture === capture) {
-          try {
-            entry.listener(event)
-          } catch (err) {
-            // Browser behavior: errors in event listeners fire ErrorEvent on window
-            this._dispatchErrorToWindow(err)
-          }
-        }
-      }
-    }
-    // Fire the on* property handler (e.g., onclick) during non-capture phase
-    if (!capture && !event._stopImmediatePropagation) {
-      const handler = (target as unknown as Record<string, unknown>)[`on${type}`]
-      if (typeof handler === 'function') {
-        try {
-          handler.call(target, event)
-        } catch (err) {
-          this._dispatchErrorToWindow(err)
-        }
-      }
-    }
-  }
 
   /** Disconnect all children from WASM parent tracking and document, then clear. */
   private _removeAllChildren() {

@@ -3,12 +3,18 @@ import { Node } from "./Node/Node"
 import { Element } from "./Element"
 import { Text } from "./Text"
 import { Listener } from "../types/Listener"
-import { Listeners, AddEventListenerOptions } from "../types/Listeners"
+import { AddEventListenerOptions } from "../types/Listeners"
 import { Event } from "./Event"
+import {
+  EventTargetStore,
+  addEventListenerImpl,
+  removeEventListenerImpl,
+  fireListenersAtTarget,
+} from "./EventTargetImpl"
 
 export class DocumentFragment extends Node {
   readonly nodeName = '#document-fragment'
-  private _listeners: Listeners = {}
+  private _eventTargetStore = new EventTargetStore()
 
   constructor() {
     super(NodeTypes.DOCUMENT_FRAGMENT_NODE)
@@ -45,40 +51,16 @@ export class DocumentFragment extends Node {
   }
 
   addEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {
-    if (!listener) return
-    const capture = typeof options === 'boolean' ? options : (options?.capture ?? false)
-    const passive = typeof options === 'boolean' ? false : (options?.passive ?? false)
-    const once = typeof options === 'boolean' ? false : (options?.once ?? false)
-    let queue = this._listeners[type]
-    if (!queue) {
-      queue = []
-      this._listeners[type] = queue
-    }
-    queue.push({ listener, capture, passive, once })
+    addEventListenerImpl(this._eventTargetStore, type, listener, options)
   }
 
   removeEventListener(type: string, listener: unknown, options?: boolean | AddEventListenerOptions) {
-    if (!listener) return
-    const capture = typeof options === 'boolean' ? options : (options?.capture ?? false)
-    const queue = this._listeners[type]
-    if (queue) {
-      const idx = queue.findIndex(
-        entry => entry.listener === listener && entry.capture === capture
-      )
-      if (idx !== -1) {
-        queue.splice(idx, 1)
-      }
-    }
+    removeEventListenerImpl(this._eventTargetStore, type, listener as Listener, options)
   }
 
   dispatchEvent(event: Event): boolean {
     const type = event.type
-    const queue = this._listeners[type]
-    if (queue) {
-      for (const entry of queue.slice()) {
-        entry.listener(event)
-      }
-    }
+    fireListenersAtTarget(this._eventTargetStore, type, event)
     return !event.defaultPrevented
   }
 

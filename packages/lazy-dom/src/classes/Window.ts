@@ -1,7 +1,14 @@
-import type { Future } from "../types/Future"
-import type { Listeners, AddEventListenerOptions } from "../types/Listeners"
+import type { AddEventListenerOptions } from "../types/Listeners"
 import type { Listener } from "../types/Listener"
 import type { Event } from "./Event"
+import {
+  EventTargetStore,
+  addEventListenerImpl,
+  removeEventListenerImpl,
+  fireListenersImpl,
+  fireListenersAtTarget,
+  fireOnHandler,
+} from "./EventTargetImpl"
 
 // Default CSS display values for common HTML elements
 const inlineElements = new Set([
@@ -49,12 +56,8 @@ function getComputedDefault(prop: string, tagName?: string): string {
   return cssDefaults[prop] ?? ''
 }
 
-class WindowStore {
-  eventListeners: Future<Listeners> = () => ({})
-}
-
 export class Window {
-  private windowStore = new WindowStore()
+  private _eventTargetStore = new EventTargetStore()
 
   innerWidth = 1024
   innerHeight = 768
@@ -156,57 +159,46 @@ export class Window {
 
   dispatchEvent(event: Event): boolean {
     const type = event.type
-    this._fireListeners(type, event, false)
+    event.eventPhase = 2 // AT_TARGET
+    event.currentTarget = this as unknown as import('./Node/Node').Node
+    fireListenersAtTarget(this._eventTargetStore, type, event, (err) => this._handleListenerError(err))
+    fireOnHandler(this as unknown as Record<string, unknown>, type, event, (err) => this._handleListenerError(err))
+    event.eventPhase = 0
+    event.currentTarget = null
     return !event.defaultPrevented
   }
 
-  /** Fire listeners matching the given capture flag. */
+  /** Fire listeners matching the given capture flag (called by Element.dispatchEvent during propagation). */
   _fireListeners(type: string, event: Event, capture: boolean) {
-    const listeners = this.windowStore.eventListeners()
-    const queue = listeners[type]
-    if (!queue || queue.length === 0) return
-    const snapshot = queue.slice()
-    for (const entry of snapshot) {
-      if (event.cancelBubble) break
-      if (entry.capture === capture) {
-        entry.listener(event)
-      }
+    fireListenersImpl(this._eventTargetStore, type, event, capture, (err) => this._handleListenerError(err))
+    if (!capture) {
+      fireOnHandler(this as unknown as Record<string, unknown>, type, event, (err) => this._handleListenerError(err))
     }
   }
 
-  private _memoizeListeners(): Listeners {
-    const listeners = this.windowStore.eventListeners()
-    this.windowStore.eventListeners = () => listeners
-    return listeners
+  private _handleListenerError(err: unknown) {
+    const errObj = err as { message?: string }
+    const message = (typeof errObj?.message === 'string') ? errObj.message : String(err)
+    // Lazy import to avoid circular dependency (Window -> ErrorEvent -> Event -> Node -> Document -> Window)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { ErrorEvent: ErrorEventClass } = require('./ErrorEvent') as typeof import('./ErrorEvent')
+    const errorEvent = new ErrorEventClass('error', {
+      message,
+      error: err,
+      cancelable: true,
+    })
+    const handled = !this.dispatchEvent(errorEvent)
+    if (!handled) {
+      this.console.error(`Error: Uncaught [${err}]`, err)
+    }
   }
 
   addEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {
-    if (!listener) return
-    const capture = typeof options === 'boolean' ? options : (options?.capture ?? false)
-    const passive = typeof options === 'boolean' ? false : (options?.passive ?? false)
-    const once = typeof options === 'boolean' ? false : (options?.once ?? false)
-    const listeners = this._memoizeListeners()
-    let queue = listeners[type]
-    if (!queue) {
-      queue = []
-      listeners[type] = queue
-    }
-    queue.push({ listener, capture, passive, once })
+    addEventListenerImpl(this._eventTargetStore, type, listener, options)
   }
 
   removeEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {
-    if (!listener) return
-    const capture = typeof options === 'boolean' ? options : (options?.capture ?? false)
-    const listeners = this._memoizeListeners()
-    const queue = listeners[type]
-    if (queue) {
-      const idx = queue.findIndex(
-        entry => entry.listener === listener && entry.capture === capture
-      )
-      if (idx !== -1) {
-        queue.splice(idx, 1)
-      }
-    }
+    removeEventListenerImpl(this._eventTargetStore, type, listener, options)
   }
 
   open(): null { return null }

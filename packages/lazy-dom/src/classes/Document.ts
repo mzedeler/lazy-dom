@@ -1,6 +1,6 @@
 import { NodeTypes } from "../types/NodeTypes"
 import { Future } from "../types/Future"
-import { Listeners, AddEventListenerOptions } from "../types/Listeners"
+import { AddEventListenerOptions } from "../types/Listeners"
 import { Listener } from "../types/Listener"
 import valueNotSetError from "../utils/valueNotSetError"
 import { parseHTML } from "../utils/parseHTML"
@@ -81,10 +81,18 @@ import { TreeWalker } from "./TreeWalker"
 import { Range } from "./Range"
 import * as nodeOps from "../wasm/nodeOps"
 import * as NodeRegistry from "../wasm/NodeRegistry"
+import {
+  EventTargetStore,
+  addEventListenerImpl,
+  removeEventListenerImpl,
+  fireListenersImpl,
+  fireListenersAtTarget,
+  fireOnHandler,
+} from "./EventTargetImpl"
 
 export class DocumentStore {
   wasmDocId: number
-  eventListeners: Future<Listeners> = () => ({})
+  eventTargetStore = new EventTargetStore()
   cookie: Future<string> = () => ''
   activeElement: Future<Element | null> = () => null
 
@@ -506,38 +514,20 @@ export class Document implements EventTarget {
       }
     }
     const type = event.eventStore ? event.eventStore.type() : event.type
-    const listeners = this.documentStore.eventListeners()
-    const queue = listeners[type]
-    if (queue && queue.length) {
-      const snapshot = queue.slice()
-      for (const entry of snapshot) {
-        if (event._stopImmediatePropagation || event.cancelBubble) break
-        try {
-          entry.listener(event)
-        } catch (err) {
-          this._dispatchErrorToWindow(err)
-        }
-      }
-    }
+    event.eventPhase = 2 // AT_TARGET
+    event.currentTarget = this as unknown as Node
+    fireListenersAtTarget(this.documentStore.eventTargetStore, type, event, (err) => this._dispatchErrorToWindow(err))
+    fireOnHandler(this as unknown as Record<string, unknown>, type, event, (err) => this._dispatchErrorToWindow(err))
+    event.eventPhase = 0
+    event.currentTarget = null
     return !event.defaultPrevented
   }
 
-  /** Fire only listeners matching the given capture flag. */
+  /** Fire only listeners matching the given capture flag (called by Element.dispatchEvent during propagation). */
   _fireListeners(type: string, event: Event, capture: boolean) {
-    const listeners = this.documentStore.eventListeners()
-    const queue = listeners[type]
-    if (!queue || queue.length === 0) return
-    const snapshot = queue.slice()
-    for (const entry of snapshot) {
-      if (event._stopImmediatePropagation || event.cancelBubble) break
-      if (entry.capture === capture) {
-        try {
-          entry.listener(event)
-        } catch (err) {
-          // Browser behavior: errors in event listeners fire ErrorEvent on window
-          this._dispatchErrorToWindow(err)
-        }
-      }
+    fireListenersImpl(this.documentStore.eventTargetStore, type, event, capture, (err) => this._dispatchErrorToWindow(err))
+    if (!capture) {
+      fireOnHandler(this as unknown as Record<string, unknown>, type, event, (err) => this._dispatchErrorToWindow(err))
     }
   }
 
@@ -562,39 +552,12 @@ export class Document implements EventTarget {
     }
   }
 
-  private _memoizeListeners(): Listeners {
-    const listeners = this.documentStore.eventListeners()
-    this.documentStore.eventListeners = () => listeners
-    return listeners
-  }
-
   addEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {
-    if (!listener) return
-    const capture = typeof options === 'boolean' ? options : (options?.capture ?? false)
-    const passive = typeof options === 'boolean' ? false : (options?.passive ?? false)
-    const once = typeof options === 'boolean' ? false : (options?.once ?? false)
-    const listeners = this._memoizeListeners()
-    let queue = listeners[type]
-    if (!queue) {
-      queue = []
-      listeners[type] = queue
-    }
-    queue.push({ listener, capture, passive, once })
+    addEventListenerImpl(this.documentStore.eventTargetStore, type, listener, options)
   }
 
   removeEventListener(type: string, listener: Listener, options?: boolean | AddEventListenerOptions) {
-    if (!listener) return
-    const capture = typeof options === 'boolean' ? options : (options?.capture ?? false)
-    const listeners = this._memoizeListeners()
-    const queue = listeners[type]
-    if (queue) {
-      const idx = queue.findIndex(
-        entry => entry.listener === listener && entry.capture === capture
-      )
-      if (idx !== -1) {
-        queue.splice(idx, 1)
-      }
-    }
+    removeEventListenerImpl(this.documentStore.eventTargetStore, type, listener, options)
   }
 
   querySelectorAll(query: string) {
