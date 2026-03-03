@@ -161,14 +161,6 @@ const expectations: { match: string | RegExp; expectation: Expectation }[] = [
   },
 
   // ===========================================================================
-  // lazyDom-only: Node.nodeName — qualified name uppercasing
-  // ===========================================================================
-  {
-    match: 'For Element nodes, nodeName should return the same as tagName.',
-    expectation: { status: 'fail', reason: 'createElementNS qualified name uppercasing differs', backends: ['lazydom'] },
-  },
-
-  // ===========================================================================
   // lazyDom-only: nodeValue = null should set data to ""
   // ===========================================================================
   {
@@ -193,26 +185,6 @@ const expectations: { match: string | RegExp; expectation: Expectation }[] = [
   },
 
   // ===========================================================================
-  // lazyDom-only: document.parentNode / parentElement
-  // ===========================================================================
-  {
-    match: /^Document$/,
-    expectation: { status: 'fail', reason: 'document.parentNode returns wrong value', backends: ['lazydom'] },
-  },
-  {
-    match: /^Root element$/,
-    expectation: { status: 'fail', reason: 'documentElement.parentNode not linked to document', backends: ['lazydom'] },
-  },
-  {
-    match: 'When the parent is null, parentElement should be null',
-    expectation: { status: 'fail', reason: 'document.parentElement returns undefined instead of null', backends: ['lazydom'] },
-  },
-  {
-    match: 'When the parent is a document, parentElement should be null (comment)',
-    expectation: { status: 'fail', reason: 'document.appendChild not implemented', backends: ['lazydom'] },
-  },
-
-  // ===========================================================================
   // lazyDom-only: document.normalize not implemented
   // ===========================================================================
   {
@@ -220,17 +192,6 @@ const expectations: { match: string | RegExp; expectation: Expectation }[] = [
     expectation: { status: 'fail', reason: 'document.normalize not implemented', backends: ['lazydom'] },
   },
 
-  // ===========================================================================
-  // lazyDom-only: Element first/last/count — getElementById may not find
-  // programmatically added elements
-  // ===========================================================================
-  // These use unnamed tests so we match by the describe-block context
-  // via a special handling approach — we'll mark them by their test file
-
-  // ===========================================================================
-  // lazyDom-only: Element-firstElementChild, lastElementChild, childElementCount
-  // These fail because getElementById can't find programmatically set-up DOM
-  // ===========================================================================
 ]
 
 // Separate list for unnamed tests that need file-context matching
@@ -238,18 +199,6 @@ const unnamedTestExpectations: { file: string; expectation: Expectation }[] = [
   {
     file: 'Node-normalize',
     expectation: { status: 'fail', reason: 'document.normalize not a function', backends: ['lazydom'] },
-  },
-  {
-    file: 'Element-firstElementChild',
-    expectation: { status: 'fail', reason: 'getElementById cannot find programmatically added elements', backends: ['lazydom'] },
-  },
-  {
-    file: 'Element-lastElementChild',
-    expectation: { status: 'fail', reason: 'getElementById cannot find programmatically added elements', backends: ['lazydom'] },
-  },
-  {
-    file: 'Element-childElementCount',
-    expectation: { status: 'fail', reason: 'getElementById cannot find programmatically added elements', backends: ['lazydom'] },
   },
 ]
 
