@@ -46,4 +46,5 @@ jobs:
           publish_dir: ./_site
           publish_branch: gh-pages
           force_orphan: true
+          enable_jekyll: true
           commit_message: "Update benchmarks"
