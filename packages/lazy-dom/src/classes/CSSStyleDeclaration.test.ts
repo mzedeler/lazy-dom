@@ -50,7 +50,7 @@ describe('CSSStyleDeclaration', () => {
       const style = div.style as unknown as Record<string, string>
       style.label = 'myComponent'
       expect(div.style.cssText).to.eq('')
-      expect(style.label).to.eq('')
+      expect(style.label).to.eq('myComponent')
     })
 
     it('silently ignores non-standard properties via setProperty', () => {

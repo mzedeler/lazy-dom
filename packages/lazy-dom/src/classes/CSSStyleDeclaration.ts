@@ -138,6 +138,8 @@ export class CSSStyleDeclaration {
         const key = prop as string
         // Convert camelCase to kebab-case for the internal map
         const kebab = camelToKebab(key)
+        // Return non-standard properties as plain JS own-properties (matches JSDOM behavior)
+        if (!isValidCSSProperty(kebab)) return Reflect.get(target, prop, receiver)
         return target.cssStyleDeclarationStore.properties().get(kebab) ?? ''
       },
       set(target, prop, value, receiver) {
@@ -146,8 +148,8 @@ export class CSSStyleDeclaration {
         }
         const key = prop as string
         const kebab = camelToKebab(key)
-        // Silently ignore non-standard CSS properties (matches JSDOM/cssstyle behavior)
-        if (!isValidCSSProperty(kebab)) return true
+        // Store non-standard CSS properties as plain JS own-properties (matches JSDOM behavior)
+        if (!isValidCSSProperty(kebab)) return Reflect.set(target, prop, value, receiver)
         // Reject non-primitive values (prevents [object Object] in cssText)
         if (value !== null && value !== undefined && value !== '' && typeof value === 'object') return true
         const strValue = value !== null && value !== undefined ? String(value) : ''
