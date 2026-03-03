@@ -16,14 +16,9 @@ import { reactDeepRender, reactDeepRenderWithSnapshot, reactDeepRenderRerender }
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-// Save native Event before any DOM setup overwrites it.
-// tinybench uses native EventTarget.dispatchEvent() internally,
-// which requires the native Event constructor.
-const NativeEvent = globalThis.Event
-
 const bench = new Bench({ time: 200 })
 
-const lazyDomOptions = { beforeAll: () => { lazyDom(); globalThis.Event = NativeEvent } }
+const lazyDomOptions = { beforeAll: () => { lazyDom() } }
 const JSDOMOptions = { beforeAll: () => {
   const dom = new JSDOM(``, {
     url: "https://example.org/",
@@ -36,7 +31,6 @@ const JSDOMOptions = { beforeAll: () => {
   // @ts-expect-error TODO
   global.window = dom.window
   global.document = dom.window.document
-  globalThis.Event = NativeEvent
 }}
 
 bench

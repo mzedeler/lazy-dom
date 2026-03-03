@@ -9,6 +9,7 @@ import {
   fireListenersAtTarget,
   fireOnHandler,
 } from "./EventTargetImpl"
+import { Selection } from "./Selection"
 
 // Default CSS display values for common HTML elements
 const inlineElements = new Set([
@@ -58,6 +59,7 @@ function getComputedDefault(prop: string, tagName?: string): string {
 
 export class Window {
   private _eventTargetStore = new EventTargetStore()
+  private _selection = new Selection()
 
   innerWidth = 1024
   innerHeight = 768
@@ -206,6 +208,10 @@ export class Window {
   scrollTo() {}
   scrollBy() {}
   scroll() {}
+
+  getSelection(): Selection {
+    return this._selection
+  }
 
   get localStorage() {
     return {

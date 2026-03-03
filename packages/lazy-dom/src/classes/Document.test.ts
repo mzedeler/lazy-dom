@@ -372,6 +372,22 @@ describe('Document', () => {
     })
   })
 
+  describe('getSelection()', () => {
+    before(function () {
+      if (typeof document.getSelection !== 'function') this.skip()
+    })
+
+    it('returns a Selection object', () => {
+      const sel = document.getSelection()
+      expect(sel).to.not.be.null
+      expect(sel).to.have.property('rangeCount')
+    })
+
+    it('returns the same instance as window.getSelection()', () => {
+      expect(document.getSelection()).to.equal(window.getSelection())
+    })
+  })
+
   describe('getElementsByTagNameNS', () => {
     it('has getElementsByTagNameNS()', () => {
       const namespace = 'http://www.w3.org/1999/xhtml'

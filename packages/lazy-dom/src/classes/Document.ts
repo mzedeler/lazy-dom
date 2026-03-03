@@ -79,6 +79,7 @@ import { CompositionEvent } from "./CompositionEvent"
 import { CSSStyleSheet } from "./CSSStyleSheet"
 import { TreeWalker } from "./TreeWalker"
 import { Range } from "./Range"
+import { Selection } from "./Selection"
 import * as nodeOps from "../wasm/nodeOps"
 import * as NodeRegistry from "../wasm/NodeRegistry"
 import {
@@ -868,6 +869,10 @@ export class Document implements EventTarget {
 
   createRange() {
     return new Range()
+  }
+
+  getSelection(): Selection | null {
+    return this.defaultView?.getSelection() ?? null
   }
 
   execCommand(_command: string, _showUI?: boolean, _value?: string): boolean {

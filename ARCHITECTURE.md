@@ -83,7 +83,11 @@ Each class has a companion store (`NodeStore`, `ElementStore`, `DocumentStore`, 
 
 ## Event System
 
-Events are implemented as a class hierarchy: `Event` → `UIEvent` → `MouseEvent`/`KeyboardEvent`/`FocusEvent`/`InputEvent`, and `MouseEvent` → `PointerEvent`. `addEventListener`, `removeEventListener`, and `dispatchEvent` are supported on both `Element` and `Window`. Event state is stored lazily via `EventStore`.
+lazy-dom provides a fully self-contained event system: both the Event class hierarchy and an `EventTarget` class are implemented internally. This is critical for compatibility — if lazy-dom overrides `globalThis.Event` but relies on the native `globalThis.EventTarget`, then `instanceof Event` checks inside native `EventTarget.dispatchEvent()` fail because the lazy-dom Event is not an instance of the native Event. By providing both sides, all `instanceof` checks are internally consistent, matching JSDOM's approach.
+
+The `EventTarget` class (`src/classes/EventTarget.ts`) wraps the existing `EventTargetStore` infrastructure and exposes the standard `addEventListener`, `removeEventListener`, and `dispatchEvent` methods. Node, Element, Document, and Window continue using `EventTargetStore` by composition (not inheritance) since they have additional dispatch semantics (event propagation, error handling). The standalone `EventTarget` class is exposed on the global so that library code (e.g. MSW, AbortController polyfills) that constructs `new EventTarget()` gets a lazy-dom-compatible instance.
+
+Events are implemented as a class hierarchy: `Event` → `UIEvent` → `MouseEvent`/`KeyboardEvent`/`FocusEvent`/`InputEvent`, and `MouseEvent` → `PointerEvent`. `addEventListener`, `removeEventListener`, and `dispatchEvent` are supported on `EventTarget`, `Element`, `Document`, and `Window`. Event state is stored lazily via `EventStore`.
 
 ## CSSStyleDeclaration
 
@@ -95,7 +99,11 @@ Events are implemented as a class hierarchy: `Event` → `UIEvent` → `MouseEve
 
 ## Window
 
-`Window` provides `innerWidth`/`innerHeight`, a `location` stub, `getComputedStyle`, `matchMedia`, `history`, and `EventTarget` support. State is stored in `WindowStore`.
+`Window` provides `innerWidth`/`innerHeight`, a `location` stub, `getComputedStyle`, `matchMedia`, `history`, `getSelection`, and `EventTarget` support.
+
+## Selection
+
+`Selection` (`src/classes/Selection.ts`) provides a minimal Selection API stub supporting `anchorNode`, `focusNode`, `rangeCount`, `isCollapsed`, `type`, `addRange`, `removeAllRanges`, `getRangeAt`, `setPosition`, `collapse`, `extend`, `setBaseAndExtent`, `collapseToStart`, `collapseToEnd`, and `toString`. Both `window.getSelection()` and `document.getSelection()` return the same `Selection` instance (per spec), with `Document` delegating to `this.defaultView.getSelection()`. Uses a lazy `require()` for `Range` construction to avoid circular dependencies.
 
 ## TreeWalker
 

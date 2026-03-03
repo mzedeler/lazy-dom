@@ -76,6 +76,7 @@ import { CustomEvent } from "./classes/CustomEvent"
 import { CompositionEvent } from "./classes/CompositionEvent"
 import { MutationObserver } from "./classes/MutationObserver"
 import { MutationRecord } from "./classes/MutationObserver"
+import { EventTarget } from "./classes/EventTarget"
 
 export { JSDOM } from "./jsdom"
 
@@ -125,7 +126,7 @@ const lazyDom = () => {
     CustomEvent,
     CompositionEvent,
     CSSStyleDeclaration,
-    EventTarget: globalThis.EventTarget,
+    EventTarget,
     HTMLElement,
     HTMLDivElement,
     HTMLLIElement,

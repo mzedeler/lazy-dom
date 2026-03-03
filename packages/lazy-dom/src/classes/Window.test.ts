@@ -106,6 +106,41 @@ describe('Window', () => {
     })
   })
 
+  describe('getSelection()', () => {
+    before(function () {
+      if (typeof window.getSelection !== 'function') this.skip()
+    })
+
+    it('returns a Selection object', () => {
+      const sel = window.getSelection()
+      expect(sel).to.not.be.null
+      expect(sel).to.have.property('rangeCount')
+      expect(sel).to.have.property('anchorNode')
+    })
+
+    it('returns the same instance on repeated calls', () => {
+      expect(window.getSelection()).to.equal(window.getSelection())
+    })
+
+    it('supports addRange and removeAllRanges', () => {
+      const sel = window.getSelection()!
+      sel.removeAllRanges()
+      expect(sel.rangeCount).to.equal(0)
+
+      const range = document.createRange()
+      const textNode = document.createTextNode('hello')
+      document.body.appendChild(textNode)
+      range.setStart(textNode, 0)
+      range.setEnd(textNode, 5)
+      sel.addRange(range)
+      expect(sel.rangeCount).to.equal(1)
+
+      sel.removeAllRanges()
+      expect(sel.rangeCount).to.equal(0)
+      document.body.removeChild(textNode)
+    })
+  })
+
   describe('open()', () => {
     it('is a function', () => {
       expect(window.open).to.be.a('function')
