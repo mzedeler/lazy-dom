@@ -26,10 +26,24 @@ jobs:
 
       - run: pnpm build
 
-      - run: pnpm --filter lazy-dom benchmark -- --md ../../BENCHMARKS.md
+      - name: Run benchmarks
+        run: |
+          mkdir -p _site
+          pnpm --filter lazy-dom benchmark -- --md _site/index.md
 
-      - name: Commit updated BENCHMARKS.md
-        uses: stefanzweifel/git-auto-commit-action@v5
+      - name: Add Jekyll front matter
+        run: |
+          sed -i '1s/^/---\ntitle: Benchmarks\n---\n/' _site/index.md
+
+      - name: Add Jekyll config
+        run: |
+          echo 'theme: jekyll-theme-cayman' > _site/_config.yml
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          commit_message: "Update BENCHMARKS.md [skip ci]"
-          file_pattern: BENCHMARKS.md
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "Update benchmarks"

@@ -141,7 +141,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
 
 lazy-dom is typically **2-4x faster** than JSDOM across React rendering, DOM mutations, and serialization workloads.
 
-See [BENCHMARKS.md](BENCHMARKS.md) for detailed results, updated automatically on each push to `main`.
+See [Benchmarks](https://mzedeler.github.io/lazy-dom/) for detailed results, updated automatically on each push to `main`.
 
 ## Development
 
