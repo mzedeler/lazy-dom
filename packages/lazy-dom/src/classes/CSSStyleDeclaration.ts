@@ -1,4 +1,5 @@
 import { Future } from "../types/Future"
+import { isValidCSSProperty } from "./validCSSProperties"
 
 // Convert camelCase to kebab-case: "textDecoration" → "text-decoration"
 function camelToKebab(str: string): string {
@@ -76,6 +77,8 @@ export class CSSStyleDeclaration {
         }
         const key = prop as string
         const kebab = camelToKebab(key)
+        // Silently ignore non-standard CSS properties (matches JSDOM/cssstyle behavior)
+        if (!isValidCSSProperty(kebab)) return true
         // Modifying via JS API clears the raw attribute
         target.cssStyleDeclarationStore.rawAttributeValue = null
         const isNonEmpty = value !== null && value !== undefined && value !== ''
@@ -96,6 +99,8 @@ export class CSSStyleDeclaration {
   }
 
   setProperty(property: string, value: string | null) {
+    // Silently ignore non-standard CSS properties (matches JSDOM/cssstyle behavior)
+    if (!isValidCSSProperty(property)) return
     // Modifying via JS API clears the raw attribute
     this.cssStyleDeclarationStore.rawAttributeValue = null
     const isNonEmpty = value !== null && value !== ''

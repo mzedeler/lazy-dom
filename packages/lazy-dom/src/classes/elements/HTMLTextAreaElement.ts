@@ -2,6 +2,9 @@ import { HTMLElement } from "./HTMLElement"
 
 export class HTMLTextAreaElement extends HTMLElement {
   private _value = ''
+  private _selectionStart: number = 0
+  private _selectionEnd: number = 0
+  private _selectionDirection: 'forward' | 'backward' | 'none' = 'none'
 
   get form() {
     return null
@@ -77,5 +80,61 @@ export class HTMLTextAreaElement extends HTMLElement {
   }
   set value(v: string) {
     this._value = v
+  }
+
+  get selectionStart(): number {
+    return this._selectionStart
+  }
+  set selectionStart(val: number) {
+    this._selectionStart = val
+  }
+
+  get selectionEnd(): number {
+    return this._selectionEnd
+  }
+  set selectionEnd(val: number) {
+    this._selectionEnd = val
+  }
+
+  get selectionDirection(): 'forward' | 'backward' | 'none' {
+    return this._selectionDirection
+  }
+
+  setSelectionRange(start: number, end: number, direction: 'forward' | 'backward' | 'none' = 'none') {
+    this._selectionStart = start
+    this._selectionEnd = end
+    this._selectionDirection = direction
+  }
+
+  setRangeText(replacement: string, start?: number, end?: number, selectMode?: string) {
+    const val = this.value
+    const s = start ?? this._selectionStart
+    const e = end ?? this._selectionEnd
+    this.value = val.slice(0, s) + replacement + val.slice(e)
+
+    switch (selectMode) {
+      case 'select':
+        this._selectionStart = s
+        this._selectionEnd = s + replacement.length
+        break
+      case 'start':
+        this._selectionStart = s
+        this._selectionEnd = s
+        break
+      case 'end':
+        this._selectionStart = s + replacement.length
+        this._selectionEnd = s + replacement.length
+        break
+      default: {
+        // 'preserve' (default)
+        const delta = replacement.length - (e - s)
+        this._selectionEnd = this._selectionEnd + delta
+        break
+      }
+    }
+  }
+
+  select() {
+    this.setSelectionRange(0, this.value.length)
   }
 }

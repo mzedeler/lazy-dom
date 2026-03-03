@@ -44,6 +44,40 @@ describe('CSSStyleDeclaration', () => {
     })
   })
 
+  describe('CSS property filtering', () => {
+    it('silently ignores non-standard properties via proxy', () => {
+      const div = document.createElement('div')
+      const style = div.style as unknown as Record<string, string>
+      style.label = 'myComponent'
+      expect(div.style.cssText).to.eq('')
+      expect(style.label).to.eq('')
+    })
+
+    it('silently ignores non-standard properties via setProperty', () => {
+      const div = document.createElement('div')
+      div.style.setProperty('label', 'myComponent')
+      expect(div.style.cssText).to.eq('')
+    })
+
+    it('allows standard CSS properties', () => {
+      const div = document.createElement('div')
+      div.style.color = 'red'
+      expect(div.style.color).to.eq('red')
+    })
+
+    it('allows CSS custom properties (--*)', () => {
+      const div = document.createElement('div')
+      div.style.setProperty('--my-color', 'blue')
+      expect(div.style.getPropertyValue('--my-color')).to.eq('blue')
+    })
+
+    it('allows vendor-prefixed properties via setProperty', () => {
+      const div = document.createElement('div')
+      div.style.setProperty('-webkit-transform', 'none')
+      expect(div.style.getPropertyValue('-webkit-transform')).to.eq('none')
+    })
+  })
+
   describe('undefined handling', () => {
     it('does not store undefined as the string "undefined"', () => {
       const div = document.createElement('div')

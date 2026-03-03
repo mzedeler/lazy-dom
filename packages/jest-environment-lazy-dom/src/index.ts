@@ -11,8 +11,19 @@ export default class LazyDomEnvironment extends NodeEnvironment {
 
     const g = this.global
 
-    // Assign all DOM classes onto the global
+    // Event-related classes that should NOT be placed on the jest global.
+    // Native EventTarget rejects non-native Event instances, so we keep the
+    // native Event hierarchy on `g` and only expose lazy-dom's versions on
+    // the lazy-dom `window` (where testing-library finds them via defaultView).
+    const eventClassNames = new Set([
+      'Event', 'UIEvent', 'MouseEvent', 'KeyboardEvent', 'InputEvent',
+      'FocusEvent', 'PointerEvent', 'ProgressEvent', 'ErrorEvent',
+      'CustomEvent', 'CompositionEvent',
+    ])
+
+    // Assign all DOM classes onto the global (except Event classes)
     for (const [name, value] of Object.entries(classes)) {
+      if (eventClassNames.has(name)) continue
       Object.defineProperty(g, name, {
         configurable: true,
         enumerable: true,
@@ -32,7 +43,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     Object.defineProperty(g, "navigator", {
       configurable: true,
       enumerable: true,
-      value: { userAgent: "Mozilla/5.0 (lazy-dom, jsdom-compatible)" },
+      value: { userAgent: "Mozilla/5.0 (jsdom, lazy-dom-compatible)" },
       writable: true,
     })
 
@@ -199,39 +210,132 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       }
     })
 
-    const getSelectionStub = () => ({
-      addRange() {},
-      removeAllRanges() {},
-      getRangeAt() {
-        return {
-          startContainer: null,
-          startOffset: 0,
-          endContainer: null,
-          endOffset: 0,
-          commonAncestorContainer: null,
-          collapsed: true,
-        }
-      },
-      rangeCount: 0,
-      anchorNode: null,
-      anchorOffset: 0,
-      focusNode: null,
-      focusOffset: 0,
-      isCollapsed: true,
-      type: "None",
-      toString() {
-        return ""
-      },
-      setBaseAndExtent() {},
-      extend() {},
-      setPosition() {},
-      collapse() {},
-      collapseToStart() {},
-      collapseToEnd() {},
-      selectAllChildren() {},
-      deleteFromDocument() {},
-      containsNode() { return false },
-    })
+    // Selection API implementation
+    // Uses `unknown` for node types because this bridges the global DOM Node type
+    // with lazy-dom's internal Node type — they are structurally compatible at
+    // runtime but TypeScript sees them as distinct nominal types.
+    type AnyNode = unknown
+    type RangeInstance = { setStart(n: AnyNode, o: number): void; setEnd(n: AnyNode, o: number): void; startContainer: AnyNode; startOffset: number; endContainer: AnyNode; endOffset: number; toString(): string }
+    const RangeClass = classes.Range as new () => RangeInstance
+    const DOCUMENT_POSITION_FOLLOWING = 0x04
+    const DOCUMENT_POSITION_CONTAINED_BY = 0x10
+
+    const createSelectionObject = () => {
+      const ranges: RangeInstance[] = []
+      let anchorNode: AnyNode = null
+      let anchorOffset = 0
+      let focusNode: AnyNode = null
+      let focusOffset = 0
+
+      const sel = {
+        get anchorNode() { return anchorNode },
+        get anchorOffset() { return anchorOffset },
+        get focusNode() { return focusNode },
+        get focusOffset() { return focusOffset },
+        get rangeCount() { return ranges.length },
+        get isCollapsed() { return anchorNode === focusNode && anchorOffset === focusOffset },
+        get type() {
+          if (ranges.length === 0) return "None"
+          return sel.isCollapsed ? "Caret" : "Range"
+        },
+        addRange(range: RangeInstance) {
+          ranges.push(range)
+          if (!anchorNode) {
+            anchorNode = range.startContainer
+            anchorOffset = range.startOffset
+            focusNode = range.endContainer
+            focusOffset = range.endOffset
+          }
+        },
+        removeAllRanges() {
+          ranges.length = 0
+          anchorNode = null
+          anchorOffset = 0
+          focusNode = null
+          focusOffset = 0
+        },
+        getRangeAt(index: number) {
+          if (index < 0 || index >= ranges.length) {
+            throw new DOMException("Index out of range", "IndexSizeError")
+          }
+          return ranges[index]
+        },
+        setPosition(node: AnyNode, offset = 0) {
+          sel.removeAllRanges()
+          if (!node) return
+          anchorNode = node
+          anchorOffset = offset
+          focusNode = node
+          focusOffset = offset
+          const range = new RangeClass()
+          range.setStart(node, offset)
+          range.setEnd(node, offset)
+          ranges.push(range)
+        },
+        collapse(node: AnyNode, offset = 0) {
+          sel.setPosition(node, offset)
+        },
+        extend(node: AnyNode, offset = 0) {
+          focusNode = node
+          focusOffset = offset
+          if (ranges.length > 0) {
+            const range = ranges[0]
+            if (anchorNode === node) {
+              if (offset >= anchorOffset) {
+                range.setEnd(node, offset)
+              } else {
+                range.setStart(node, offset)
+              }
+            } else if (anchorNode) {
+              const pos = (anchorNode as { compareDocumentPosition(n: AnyNode): number }).compareDocumentPosition(node)
+              if (pos & DOCUMENT_POSITION_FOLLOWING || pos & DOCUMENT_POSITION_CONTAINED_BY) {
+                range.setEnd(node, offset)
+              } else {
+                range.setStart(node, offset)
+              }
+            }
+          }
+        },
+        setBaseAndExtent(aNode: AnyNode, aOffset: number, fNode: AnyNode, fOffset: number) {
+          sel.removeAllRanges()
+          anchorNode = aNode
+          anchorOffset = aOffset
+          focusNode = fNode
+          focusOffset = fOffset
+          const range = new RangeClass()
+          if (aNode === fNode) {
+            range.setStart(aNode, Math.min(aOffset, fOffset))
+            range.setEnd(aNode, Math.max(aOffset, fOffset))
+          } else {
+            const pos = (aNode as { compareDocumentPosition(n: AnyNode): number }).compareDocumentPosition(fNode)
+            if (pos & DOCUMENT_POSITION_FOLLOWING || pos & DOCUMENT_POSITION_CONTAINED_BY) {
+              range.setStart(aNode, aOffset)
+              range.setEnd(fNode, fOffset)
+            } else {
+              range.setStart(fNode, fOffset)
+              range.setEnd(aNode, aOffset)
+            }
+          }
+          ranges.push(range)
+        },
+        collapseToStart() {
+          if (ranges.length > 0) sel.setPosition(ranges[0].startContainer, ranges[0].startOffset)
+        },
+        collapseToEnd() {
+          if (ranges.length > 0) sel.setPosition(ranges[0].endContainer, ranges[0].endOffset)
+        },
+        selectAllChildren() {},
+        deleteFromDocument() {},
+        containsNode() { return false },
+        toString() {
+          return ranges.map(r => r.toString()).join('')
+        },
+      }
+      return sel
+    }
+
+    const selectionInstance = createSelectionObject()
+    const getSelectionStub = () => selectionInstance
 
     // getSelection is accessed as both window.getSelection() and document.getSelection()
     defineStubOnBoth("getSelection", getSelectionStub)
@@ -330,6 +434,28 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       value: window.dispatchEvent.bind(window),
       writable: true,
     })
+
+    // Minimal _virtualConsole stub (EventEmitter-like) for libraries that expect it
+    type Listener = (...args: unknown[]) => void
+    const virtualConsole = {
+      _listeners: new Map<string, Listener[]>(),
+      addListener(event: string, handler: Listener) {
+        const list = this._listeners.get(event) ?? []
+        list.push(handler)
+        this._listeners.set(event, list)
+      },
+      removeAllListeners(event?: string) {
+        if (event) this._listeners.delete(event)
+        else this._listeners.clear()
+      },
+      listeners(event: string) {
+        return this._listeners.get(event) ?? []
+      },
+      emit(event: string, ...args: unknown[]) {
+        for (const fn of this.listeners(event)) fn(...args)
+      },
+    }
+    defineStubOnBoth("_virtualConsole", virtualConsole)
 
     // React act environment flag
     g.IS_REACT_ACT_ENVIRONMENT = true
