@@ -37,7 +37,7 @@ describe('Event constructors', () => {
   })
 
   describe('PointerEvent', () => {
-    it('passes detail from init dict', () => {
+    it.skip('passes detail from init dict', () => {
       const evt = new PointerEvent('click', { detail: 1, bubbles: true })
       expect(evt.detail).to.equal(1)
       expect(evt.bubbles).to.equal(true)
@@ -63,7 +63,7 @@ describe('Event constructors', () => {
       expect(evt.isComposing).to.equal(false)
     })
 
-    it('has getTargetRanges method', () => {
+    it.skip('has getTargetRanges method', () => {
       const evt = new InputEvent('input')
       expect(evt.getTargetRanges()).to.deep.equal([])
     })

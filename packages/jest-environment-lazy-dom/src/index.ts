@@ -160,6 +160,176 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     g.URLSearchParams = URLSearchParams
     g.BroadcastChannel = BroadcastChannel
 
+    // FileReader polyfill — Node.js does not provide FileReader as a global.
+    // Rails ActiveStorage DirectUpload uses FileReader to compute file checksums.
+    type FileReaderListener = (event: { type: string; target: unknown; currentTarget: unknown }) => void
+    g.FileReader = class FileReader implements globalThis.FileReader {
+      static readonly EMPTY = 0
+      static readonly LOADING = 1
+      static readonly DONE = 2
+      readonly EMPTY = 0
+      readonly LOADING = 1
+      readonly DONE = 2
+      readyState: 0 | 1 | 2 = 0
+      result: ArrayBuffer | string | null = null
+      error: DOMException | null = null
+      onload: FileReaderListener | null = null
+      onerror: FileReaderListener | null = null
+      onloadend: FileReaderListener | null = null
+      onloadstart: FileReaderListener | null = null
+      onprogress: FileReaderListener | null = null
+      onabort: FileReaderListener | null = null
+      private _listeners = new Map<string, FileReaderListener[]>()
+
+      addEventListener(type: string, listener: FileReaderListener) {
+        const list = this._listeners.get(type) ?? []
+        list.push(listener)
+        this._listeners.set(type, list)
+      }
+      removeEventListener(type: string, listener: FileReaderListener) {
+        const list = this._listeners.get(type)
+        if (list) {
+          const idx = list.indexOf(listener)
+          if (idx >= 0) list.splice(idx, 1)
+        }
+      }
+      dispatchEvent() { return true }
+
+      private _fireEvent(type: string) {
+        const event = { type, target: this, currentTarget: this }
+        const list = this._listeners.get(type) ?? []
+        for (const fn of list) fn(event)
+        const handler = (this as Record<string, unknown>)[`on${type}`]
+        if (typeof handler === 'function') (handler as FileReaderListener)(event)
+      }
+
+      readAsArrayBuffer(blob: Blob) {
+        this.readyState = 1
+        this._fireEvent('loadstart')
+        blob.arrayBuffer().then(buffer => {
+          this.readyState = 2
+          this.result = buffer
+          this._fireEvent('load')
+          this._fireEvent('loadend')
+        }).catch(() => {
+          this.readyState = 2
+          this._fireEvent('error')
+          this._fireEvent('loadend')
+        })
+      }
+
+      readAsText(blob: Blob) {
+        this.readyState = 1
+        this._fireEvent('loadstart')
+        blob.text().then(text => {
+          this.readyState = 2
+          this.result = text
+          this._fireEvent('load')
+          this._fireEvent('loadend')
+        }).catch(() => {
+          this.readyState = 2
+          this._fireEvent('error')
+          this._fireEvent('loadend')
+        })
+      }
+
+      readAsDataURL(blob: Blob) {
+        this.readyState = 1
+        this._fireEvent('loadstart')
+        blob.arrayBuffer().then(buffer => {
+          this.readyState = 2
+          const base64 = Buffer.from(buffer).toString('base64')
+          const type = blob.type || 'application/octet-stream'
+          this.result = `data:${type};base64,${base64}`
+          this._fireEvent('load')
+          this._fireEvent('loadend')
+        }).catch(() => {
+          this.readyState = 2
+          this._fireEvent('error')
+          this._fireEvent('loadend')
+        })
+      }
+
+      readAsBinaryString(blob: Blob) {
+        this.readyState = 1
+        this._fireEvent('loadstart')
+        blob.arrayBuffer().then(buffer => {
+          this.readyState = 2
+          this.result = String.fromCharCode(...new Uint8Array(buffer))
+          this._fireEvent('load')
+          this._fireEvent('loadend')
+        }).catch(() => {
+          this.readyState = 2
+          this._fireEvent('error')
+          this._fireEvent('loadend')
+        })
+      }
+
+      abort() {
+        this.readyState = 2
+        this._fireEvent('abort')
+        this._fireEvent('loadend')
+      }
+    }
+
+    // XMLHttpRequestUpload stub — needed by MSW's XMLHttpRequestInterceptor
+    g.XMLHttpRequestUpload = class XMLHttpRequestUpload {
+      addEventListener() {}
+      removeEventListener() {}
+      dispatchEvent() { return true }
+      onprogress: (() => void) | null = null
+      onload: (() => void) | null = null
+      onerror: (() => void) | null = null
+      onabort: (() => void) | null = null
+      ontimeout: (() => void) | null = null
+      onloadstart: (() => void) | null = null
+      onloadend: (() => void) | null = null
+    }
+
+    // Minimal XMLHttpRequest stub — MSW's XMLHttpRequestInterceptor replaces
+    // this with its own proxy, so we only need enough for hasConfigurableGlobal
+    // to return true.
+    g.XMLHttpRequest = class XMLHttpRequest {
+      static readonly UNSENT = 0
+      static readonly OPENED = 1
+      static readonly HEADERS_RECEIVED = 2
+      static readonly LOADING = 3
+      static readonly DONE = 4
+      readonly UNSENT = 0
+      readonly OPENED = 1
+      readonly HEADERS_RECEIVED = 2
+      readonly LOADING = 3
+      readonly DONE = 4
+      readyState = 0
+      status = 0
+      statusText = ''
+      response = ''
+      responseText = ''
+      responseType = '' as XMLHttpRequestResponseType
+      responseURL = ''
+      withCredentials = false
+      timeout = 0
+      upload = new g.XMLHttpRequestUpload()
+      open() {}
+      send() {}
+      abort() {}
+      setRequestHeader() {}
+      getResponseHeader() { return null }
+      getAllResponseHeaders() { return '' }
+      overrideMimeType() {}
+      addEventListener() {}
+      removeEventListener() {}
+      dispatchEvent() { return true }
+      onreadystatechange: (() => void) | null = null
+      onload: (() => void) | null = null
+      onerror: (() => void) | null = null
+      onabort: (() => void) | null = null
+      onprogress: (() => void) | null = null
+      ontimeout: (() => void) | null = null
+      onloadstart: (() => void) | null = null
+      onloadend: (() => void) | null = null
+    } as unknown as typeof globalThis.XMLHttpRequest
+
     // Stubs for DOM APIs not yet implemented in lazy-dom.
     // These must be set on BOTH the jest global (g) and the lazy-dom window,
     // because @testing-library/dom resolves constructors via
@@ -186,16 +356,19 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     defineStubOnBoth("history", window.history)
 
     defineStubOnBoth("DOMParser", class DOMParser {
-      parseFromString() {
-        return document
+      parseFromString(html: string, _mimeType?: string) {
+        const doc = document.implementation.createHTMLDocument('')
+        doc.write(html)
+        return doc
       }
     })
 
     // MutationObserver comes from lazy-dom's classes (already assigned above)
 
     // getSelection — delegate to the lazy-dom Window's built-in Selection
-    const getSelectionStub = () => window.getSelection()
-    defineStubOnBoth("getSelection", getSelectionStub)
+    // Capture the original before defineStubOnBoth overwrites window.getSelection
+    const originalGetSelection = window.getSelection.bind(window)
+    defineStubOnBoth("getSelection", () => originalGetSelection())
 
     const screenStub = {
       availHeight: 0,
@@ -250,10 +423,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     }
 
     // requestAnimationFrame/cancelAnimationFrame polyfills (not in Node.js by default)
-    if (typeof globalThis.requestAnimationFrame === 'function') {
-      defineStubOnBoth("requestAnimationFrame", globalThis.requestAnimationFrame.bind(globalThis))
-      defineStubOnBoth("cancelAnimationFrame", globalThis.cancelAnimationFrame.bind(globalThis))
-    } else {
+    {
       let rafId = 0
       defineStubOnBoth("requestAnimationFrame", (cb: FrameRequestCallback) => {
         rafId++

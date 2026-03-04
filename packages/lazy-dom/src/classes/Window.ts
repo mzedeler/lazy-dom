@@ -89,18 +89,53 @@ export class Window {
     port: '',
   }
 
-  private _location: Record<string, string> = new Proxy(this._locationData, {
-    set: (target, prop, value) => {
-      if (prop === 'href') {
-        this._updateLocation(String(value))
-        return true
-      }
-      target[prop as keyof typeof target] = value
-      return true
-    },
-  })
+  private _location: Location | undefined
 
-  private _updateLocation(href: string) {
+  private _getLocation(): Location {
+    if (this._location) return this._location
+    const data = this._locationData
+    this._location = {
+      get href() { return data.href },
+      set href(_value: string) { /* no-op: navigation not implemented */ },
+      get protocol() { return data.protocol },
+      set protocol(_value: string) { /* no-op */ },
+      get host() { return data.host },
+      set host(_value: string) { /* no-op */ },
+      get hostname() { return data.hostname },
+      set hostname(_value: string) { /* no-op */ },
+      get port() { return data.port },
+      set port(_value: string) { /* no-op */ },
+      get pathname() { return data.pathname },
+      set pathname(_value: string) { /* no-op */ },
+      get search() { return data.search },
+      set search(_value: string) { /* no-op */ },
+      get hash() { return data.hash },
+      set hash(value: string) {
+        const normalized = value.startsWith('#') ? value : `#${value}`
+        data.hash = normalized
+        const url = new URL(data.href)
+        url.hash = normalized
+        data.href = url.href
+      },
+      get origin() { return data.origin },
+      assign(_url: string) { /* no-op: navigation not implemented */ },
+      replace(_url: string) { /* no-op: navigation not implemented */ },
+      reload() { /* no-op: navigation not implemented */ },
+      toString() { return data.href },
+    } as unknown as Location
+    return this._location
+  }
+
+  get location(): Location {
+    return this._getLocation()
+  }
+
+  set location(_value: string | Location) {
+    /* no-op: navigation not implemented */
+  }
+
+  /** @internal Set the base URL (used by JSDOM constructor). */
+  _setLocationUrl(href: string) {
     try {
       const resolved = new URL(href, this._locationData.href)
       this._locationData.href = resolved.href
@@ -114,18 +149,6 @@ export class Window {
       this._locationData.port = resolved.port
     } catch {
       this._locationData.href = href
-    }
-  }
-
-  get location() {
-    return this._location
-  }
-
-  set location(value: string | Record<string, string>) {
-    if (typeof value === 'string') {
-      this._updateLocation(value)
-    } else {
-      Object.assign(this._locationData, value)
     }
   }
 

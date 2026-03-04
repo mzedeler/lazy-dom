@@ -141,6 +141,51 @@ describe('Window', () => {
     })
   })
 
+  describe('location', () => {
+    it('has a default href', () => {
+      expect(window.location.href).to.be.a('string')
+      expect(window.location.href).to.match(/^https?:\/\//)
+    })
+
+    it('has readable location properties', () => {
+      expect(window.location.protocol).to.be.a('string')
+      expect(window.location.hostname).to.be.a('string')
+      expect(window.location.pathname).to.be.a('string')
+      expect(window.location.origin).to.be.a('string')
+      expect(window.location.host).to.be.a('string')
+      expect(window.location.port).to.be.a('string')
+      expect(window.location.search).to.be.a('string')
+      expect(window.location.hash).to.be.a('string')
+    })
+
+    it('setting hash updates hash and href', () => {
+      const originalHash = window.location.hash
+      try {
+        window.location.hash = '#test'
+        expect(window.location.hash).to.equal('#test')
+        expect(window.location.href).to.include('#test')
+      } finally {
+        window.location.hash = originalHash || ''
+      }
+    })
+
+    it('setting href to a different URL is a no-op', () => {
+      const originalHref = window.location.href
+      window.location.href = 'https://example.com/other'
+      expect(window.location.href).to.equal(originalHref)
+    })
+
+    it('has assign, replace, and reload methods', () => {
+      expect(window.location.assign).to.be.a('function')
+      expect(window.location.replace).to.be.a('function')
+      expect(window.location.reload).to.be.a('function')
+    })
+
+    it('toString() returns href', () => {
+      expect(window.location.toString()).to.equal(window.location.href)
+    })
+  })
+
   describe('open()', () => {
     it('is a function', () => {
       expect(window.open).to.be.a('function')

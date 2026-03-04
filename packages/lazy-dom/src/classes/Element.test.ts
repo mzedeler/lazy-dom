@@ -203,6 +203,32 @@ describe('Element', () => {
       expect(el.classList.contains('bar')).to.be.false
     })
 
+    it('add() accepts multiple classes at once', () => {
+      const el = document.createElement('div')
+      el.classList.add('foo', 'bar', 'baz')
+      expect(el.classList.contains('foo')).to.be.true
+      expect(el.classList.contains('bar')).to.be.true
+      expect(el.classList.contains('baz')).to.be.true
+    })
+
+    it('add() does not duplicate when adding multiple', () => {
+      const el = document.createElement('div')
+      el.classList.add('foo')
+      el.classList.add('foo', 'bar')
+      const classes = (el.getAttribute('class') ?? '').split(/\s+/)
+      expect(classes.filter(c => c === 'foo')).to.have.length(1)
+      expect(classes).to.include('bar')
+    })
+
+    it('remove() accepts multiple classes at once', () => {
+      const el = document.createElement('div')
+      el.classList.add('foo', 'bar', 'baz')
+      el.classList.remove('foo', 'baz')
+      expect(el.classList.contains('foo')).to.be.false
+      expect(el.classList.contains('bar')).to.be.true
+      expect(el.classList.contains('baz')).to.be.false
+    })
+
     it('toggle() toggles a class on then off', () => {
       const el = document.createElement('div')
       el.classList.toggle('foo')
@@ -891,6 +917,107 @@ describe('Element', () => {
       el.appendChild(document.createComment('middle'))
       el.appendChild(document.createTextNode('after'))
       expect(el.innerHTML).to.equal('before<!--middle-->after')
+    })
+  })
+
+  describe('replaceChildren', () => {
+    it('replaces all existing children', () => {
+      const el = document.createElement('div')
+      el.appendChild(document.createElement('span'))
+      el.appendChild(document.createElement('p'))
+      document.body.appendChild(el)
+
+      const a = document.createElement('a')
+      el.replaceChildren(a)
+      expect(el.childNodes.length).to.equal(1)
+      expect(el.childNodes[0]).to.equal(a)
+    })
+
+    it('removes all children when called with no arguments', () => {
+      const el = document.createElement('div')
+      el.appendChild(document.createElement('span'))
+      el.appendChild(document.createElement('p'))
+      document.body.appendChild(el)
+
+      el.replaceChildren()
+      expect(el.childNodes.length).to.equal(0)
+    })
+
+    it('accepts strings as text nodes', () => {
+      const el = document.createElement('div')
+      el.appendChild(document.createElement('span'))
+      document.body.appendChild(el)
+
+      el.replaceChildren('hello', 'world')
+      expect(el.childNodes.length).to.equal(2)
+      expect(el.childNodes[0]?.textContent).to.equal('hello')
+      expect(el.childNodes[1]?.textContent).to.equal('world')
+    })
+
+    it('accepts a mix of nodes and strings', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+
+      const span = document.createElement('span')
+      el.replaceChildren(span, 'text')
+      expect(el.childNodes.length).to.equal(2)
+      expect(el.childNodes[0]).to.equal(span)
+      expect(el.childNodes[1]?.textContent).to.equal('text')
+    })
+  })
+
+  describe('focus management', () => {
+    it('dispatches blur and focusout on previously focused element when another gains focus', () => {
+      const inputA = document.createElement('input')
+      const inputB = document.createElement('input')
+      document.body.appendChild(inputA)
+      document.body.appendChild(inputB)
+
+      const events: string[] = []
+      inputA.addEventListener('blur', () => events.push('blur'))
+      inputA.addEventListener('focusout', () => events.push('focusout'))
+      inputB.addEventListener('focus', () => events.push('focus'))
+      inputB.addEventListener('focusin', () => events.push('focusin'))
+
+      inputA.focus()
+      events.length = 0
+
+      inputB.focus()
+
+      expect(events).to.include('blur')
+      expect(events).to.include('focusout')
+      expect(events).to.include('focus')
+      expect(events).to.include('focusin')
+    })
+
+    it('sets relatedTarget on blur events to the newly focused element', () => {
+      const inputA = document.createElement('input')
+      const inputB = document.createElement('input')
+      document.body.appendChild(inputA)
+      document.body.appendChild(inputB)
+
+      let blurRelatedTarget: unknown = undefined
+      inputA.addEventListener('blur', (e: Event) => {
+        blurRelatedTarget = (e as FocusEvent).relatedTarget
+      })
+
+      inputA.focus()
+      inputB.focus()
+
+      expect(blurRelatedTarget).to.equal(inputB)
+    })
+
+    it('updates document.activeElement correctly', () => {
+      const inputA = document.createElement('input')
+      const inputB = document.createElement('input')
+      document.body.appendChild(inputA)
+      document.body.appendChild(inputB)
+
+      inputA.focus()
+      expect(document.activeElement).to.equal(inputA)
+
+      inputB.focus()
+      expect(document.activeElement).to.equal(inputB)
     })
   })
 

@@ -388,6 +388,16 @@ describe('Document', () => {
     })
   })
 
+  describe.skip('scrollingElement', () => {
+    it('returns the documentElement', () => {
+      expect(document.scrollingElement).to.equal(document.documentElement)
+    })
+
+    it('is defined', () => {
+      expect(document).to.have.property('scrollingElement')
+    })
+  })
+
   describe('getElementsByTagNameNS', () => {
     it('has getElementsByTagNameNS()', () => {
       const namespace = 'http://www.w3.org/1999/xhtml'

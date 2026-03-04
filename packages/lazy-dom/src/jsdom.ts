@@ -14,7 +14,7 @@ export class JSDOM {
     }
 
     if (typeof _options.url === 'string') {
-      this._window.location = { href: _options.url }
+      this._window._setLocationUrl(_options.url)
     }
   }
 
