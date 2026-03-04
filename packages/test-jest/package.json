@@ -1,0 +1,18 @@
+{
+  "name": "@lazy-dom/test-jest",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "pnpm test:jsdom && pnpm test:lazydom",
+    "test:jsdom": "jest --config jest.config.jsdom.js",
+    "test:lazydom": "jest --config jest.config.lazydom.js"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-environment-lazy-dom": "workspace:*",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.6.2"
+  }
+}

@@ -4,7 +4,6 @@ import type { JestEnvironmentConfig } from "@jest/environment"
 import lazyDom from "lazy-dom"
 
 export default class LazyDomEnvironment extends NodeEnvironment {
-  private _pendingRafTimers = new Map<number, ReturnType<typeof globalThis.setTimeout>>()
 
   constructor(config: JestEnvironmentConfig, context: EnvironmentContext) {
     super(config, context)
@@ -426,24 +425,26 @@ export default class LazyDomEnvironment extends NodeEnvironment {
 
     // requestAnimationFrame/cancelAnimationFrame polyfills (not in Node.js by default)
     // Uses a 16ms delay to match JSDOM's pretendToBeVisual behavior (~60fps).
-    // Pending timers are tracked so they can be cancelled between tests.
+    // Pending RAF timers are NOT cancelled between tests — this matches JSDOM's
+    // behavior and avoids corrupting module-level frame loop singletons (e.g.
+    // motion v12's batcher) that rely on their RAF callbacks firing.
     {
       let rafId = 0
-      const pendingTimers = this._pendingRafTimers
+      const timers = new Map<number, ReturnType<typeof globalThis.setTimeout>>()
       defineStubOnBoth("requestAnimationFrame", (cb: FrameRequestCallback) => {
         const id = ++rafId
         const timerId = globalThis.setTimeout(() => {
-          pendingTimers.delete(id)
+          timers.delete(id)
           cb(Date.now())
         }, 16)
-        pendingTimers.set(id, timerId)
+        timers.set(id, timerId)
         return id
       })
       defineStubOnBoth("cancelAnimationFrame", (id: number) => {
-        const timerId = pendingTimers.get(id)
+        const timerId = timers.get(id)
         if (timerId !== undefined) {
           globalThis.clearTimeout(timerId)
-          pendingTimers.delete(id)
+          timers.delete(id)
         }
       })
     }
@@ -542,16 +543,6 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     this.customExportConditions = [""]
   }
 
-  // Cancel pending requestAnimationFrame timers between tests to prevent
-  // callbacks from a previous test firing during the next test.
-  handleTestEvent(event: { name: string }) {
-    if (event.name === "test_start") {
-      for (const [, timerId] of this._pendingRafTimers) {
-        globalThis.clearTimeout(timerId)
-      }
-      this._pendingRafTimers.clear()
-    }
-  }
 }
 
 export const TestEnvironment = LazyDomEnvironment

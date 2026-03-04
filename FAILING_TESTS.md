@@ -19,10 +19,6 @@ implementations.
 | File | Test | Reason |
 |------|------|--------|
 | `app/javascript/components/RichTextEditor/RichTextEditor.test.tsx` | `Rich text editor > renders as per snapshot` | Snapshot mismatch under lazy-dom |
-| `app/javascript/features/UserPanel/FoldersPanel/FoldersPanel.test.tsx` | `Should spawn Folder Modal when Create Folder button is clicked` | Timed out in `waitForElementToBeRemoved` (progressbar never removed) |
-| `app/javascript/features/UserPanel/FoldersPanel/FoldersPanel.test.tsx` | `Should render Folder Items panel when a Folder is clicked and send the correct tracking data` | Same as above |
-| `app/javascript/features/UserPanel/FoldersPanel/FoldersPanel.test.tsx` | `Should spawn Folder Modal when Edit Action is clicked` | Same as above |
-| `app/javascript/features/UserPanel/FoldersPanel/FoldersPanel.test.tsx` | `Should traverse user correctly via Breadcrumbs` | Same as above |
 | `app/javascript/components/Widget/components/AnnouncementsAsFeed/AnnouncementsAsFeed.test.tsx` | `renders according to snapshot with compact appearance with highlights` | Snapshot mismatch under lazy-dom |
 | `app/javascript/components/Widget/components/AnnouncementsAsFeed/AnnouncementsAsFeed.test.tsx` | `only renders announcements with images in product_page_styling_with_images appearance` | Snapshot mismatch under lazy-dom |
 
