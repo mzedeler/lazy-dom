@@ -14,14 +14,6 @@ implementations.
 | `src/classes/UIEvent.test.ts` | `PointerEvent > passes detail from init dict` | `PointerEvent` is not defined in the JSDOM test environment |
 | `src/classes/UIEvent.test.ts` | `InputEvent > has getTargetRanges method` | JSDOM's `InputEvent` does not implement `getTargetRanges()` |
 
-## pro
-
-| File | Test | Reason |
-|------|------|--------|
-| `app/javascript/components/RichTextEditor/RichTextEditor.test.tsx` | `Rich text editor > renders as per snapshot` | Snapshot mismatch under lazy-dom |
-| `app/javascript/components/Widget/components/AnnouncementsAsFeed/AnnouncementsAsFeed.test.tsx` | `renders according to snapshot with compact appearance with highlights` | Snapshot mismatch under lazy-dom |
-| `app/javascript/components/Widget/components/AnnouncementsAsFeed/AnnouncementsAsFeed.test.tsx` | `only renders announcements with images in product_page_styling_with_images appearance` | Snapshot mismatch under lazy-dom |
-
 ## test-react-source (packages/test-react-source)
 
 | File | Test | Reason |

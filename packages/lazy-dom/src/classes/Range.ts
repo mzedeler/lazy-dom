@@ -1,6 +1,7 @@
 import { Node } from './Node/Node'
 import { Element } from './Element'
 import { DocumentFragment } from './DocumentFragment'
+import { CharacterData } from './CharacterData'
 import { DOMException } from './DOMException'
 import type { Document } from './Document'
 import { parseHTML } from '../utils/parseHTML'
@@ -9,6 +10,16 @@ import { parseHTML } from '../utils/parseHTML'
 const liveRanges = new Set<Range>()
 
 export class Range {
+  static readonly START_TO_START = 0
+  static readonly START_TO_END = 1
+  static readonly END_TO_END = 2
+  static readonly END_TO_START = 3
+
+  readonly START_TO_START = 0
+  readonly START_TO_END = 1
+  readonly END_TO_END = 2
+  readonly END_TO_START = 3
+
   startContainer: Node | null = null
   startOffset = 0
   endContainer: Node | null = null
@@ -131,7 +142,7 @@ export class Range {
     this.startContainer = node
     this.startOffset = 0
     this.endContainer = node
-    this.endOffset = node.childNodes.length
+    this.endOffset = node instanceof CharacterData ? node.length : node.childNodes.length
     this._update()
   }
 
@@ -200,6 +211,335 @@ export class Range {
     } catch {
       return false
     }
+  }
+
+  compareBoundaryPoints(how: number, sourceRange: Range): number {
+    if (how < 0 || how > 3) {
+      throw new DOMException('The comparison method provided is not supported.', 'NotSupportedError', DOMException.NOT_SUPPORTED_ERR)
+    }
+    if (!this.startContainer || !this.endContainer || !sourceRange.startContainer || !sourceRange.endContainer) {
+      throw new DOMException('Range has no boundary points', 'InvalidStateError')
+    }
+
+    let thisNode: Node
+    let thisOffset: number
+    let sourceNode: Node
+    let sourceOffset: number
+
+    switch (how) {
+      case Range.START_TO_START:
+        thisNode = this.startContainer
+        thisOffset = this.startOffset
+        sourceNode = sourceRange.startContainer
+        sourceOffset = sourceRange.startOffset
+        break
+      case Range.START_TO_END:
+        thisNode = this.endContainer
+        thisOffset = this.endOffset
+        sourceNode = sourceRange.startContainer
+        sourceOffset = sourceRange.startOffset
+        break
+      case Range.END_TO_END:
+        thisNode = this.endContainer
+        thisOffset = this.endOffset
+        sourceNode = sourceRange.endContainer
+        sourceOffset = sourceRange.endOffset
+        break
+      default: // END_TO_START
+        thisNode = this.startContainer
+        thisOffset = this.startOffset
+        sourceNode = sourceRange.endContainer
+        sourceOffset = sourceRange.endOffset
+        break
+    }
+
+    const result = this._compareBoundaryPosition(thisNode, thisOffset, sourceNode, sourceOffset)
+    return result < 0 ? -1 : result > 0 ? 1 : 0
+  }
+
+  deleteContents(): void {
+    if (this.collapsed || !this.startContainer || !this.endContainer) return
+
+    // Same container
+    if (this.startContainer === this.endContainer) {
+      if (this.startContainer instanceof CharacterData) {
+        this.startContainer.deleteData(this.startOffset, this.endOffset - this.startOffset)
+      } else {
+        for (let i = this.endOffset - 1; i >= this.startOffset; i--) {
+          const child = this.startContainer.childNodes[i]
+          if (child) this.startContainer.removeChild(child)
+        }
+      }
+      this.collapse(true)
+      return
+    }
+
+    // Different containers
+    const startContainer = this.startContainer
+    const startOffset = this.startOffset
+    const endContainer = this.endContainer
+    const endOffset = this.endOffset
+    const commonAncestor = this.commonAncestorContainer!
+
+    // Build paths from each boundary to common ancestor
+    const startPath = _pathToAncestor(startContainer, commonAncestor)
+    const endPath = _pathToAncestor(endContainer, commonAncestor)
+
+    const startSideChild = startPath.length > 0 ? startPath[startPath.length - 1] : null
+    const endSideChild = endPath.length > 0 ? endPath[endPath.length - 1] : null
+
+    // Collect middle nodes (children of commonAncestor between start-side and end-side)
+    const middleNodesToRemove: Node[] = []
+    if (startSideChild && endSideChild) {
+      let sibling = startSideChild.nextSibling
+      while (sibling && sibling !== endSideChild) {
+        middleNodesToRemove.push(sibling)
+        sibling = sibling.nextSibling
+      }
+    }
+
+    // Collect siblings to remove along start path (after each path node)
+    const startSiblingsToRemove: Array<{ parent: Node; nodes: Node[] }> = []
+    for (let i = 0; i < startPath.length - 1; i++) {
+      const pathNode = startPath[i]
+      const siblings: Node[] = []
+      let sib = pathNode.nextSibling
+      while (sib) {
+        siblings.push(sib)
+        sib = sib.nextSibling
+      }
+      if (siblings.length > 0) {
+        startSiblingsToRemove.push({ parent: pathNode.parentNode as Node, nodes: siblings })
+      }
+    }
+
+    // Collect children to remove from element start container
+    const startChildrenToRemove: Node[] = []
+    if (!(startContainer instanceof CharacterData)) {
+      for (let i = startOffset; i < startContainer.childNodes.length; i++) {
+        const child = startContainer.childNodes[i]
+        if (child) startChildrenToRemove.push(child)
+      }
+    }
+
+    // Collect siblings to remove along end path (before each path node)
+    const endSiblingsToRemove: Array<{ parent: Node; nodes: Node[] }> = []
+    for (let i = 0; i < endPath.length - 1; i++) {
+      const pathNode = endPath[i]
+      const siblings: Node[] = []
+      let sib = pathNode.previousSibling
+      while (sib) {
+        siblings.unshift(sib)
+        sib = sib.previousSibling
+      }
+      if (siblings.length > 0) {
+        endSiblingsToRemove.push({ parent: pathNode.parentNode as Node, nodes: siblings })
+      }
+    }
+
+    // Collect children to remove from element end container
+    const endChildrenToRemove: Node[] = []
+    if (!(endContainer instanceof CharacterData)) {
+      for (let i = 0; i < endOffset; i++) {
+        const child = endContainer.childNodes[i]
+        if (child) endChildrenToRemove.push(child)
+      }
+    }
+
+    // Determine collapse point
+    let newNode: Node = startContainer
+    let newOffset: number = startOffset
+    if (!startContainer.contains(endContainer)) {
+      let ref: Node = startContainer
+      while (ref.parentNode && !(ref.parentNode as Node).contains(endContainer)) {
+        ref = ref.parentNode as Node
+      }
+      if (ref.parentNode) {
+        newNode = ref.parentNode as Node
+        newOffset = _indexOfChild(ref, newNode) + 1
+      }
+    }
+
+    // Now perform all removals
+
+    // Truncate start CharacterData
+    if (startContainer instanceof CharacterData) {
+      startContainer.deleteData(startOffset, startContainer.length - startOffset)
+    } else {
+      for (const child of startChildrenToRemove) {
+        startContainer.removeChild(child)
+      }
+    }
+
+    // Remove start-side siblings
+    for (const { parent, nodes } of startSiblingsToRemove) {
+      for (const node of nodes) {
+        parent.removeChild(node)
+      }
+    }
+
+    // Remove middle nodes
+    for (const node of middleNodesToRemove) {
+      commonAncestor.removeChild(node)
+    }
+
+    // Remove end-side siblings
+    for (const { parent, nodes } of endSiblingsToRemove) {
+      for (const node of nodes) {
+        parent.removeChild(node)
+      }
+    }
+
+    // Truncate end CharacterData
+    if (endContainer instanceof CharacterData) {
+      endContainer.deleteData(0, endOffset)
+    } else {
+      for (const child of endChildrenToRemove) {
+        endContainer.removeChild(child)
+      }
+    }
+
+    // Collapse range
+    this.setStart(newNode, newOffset)
+    this.setEnd(newNode, newOffset)
+  }
+
+  cloneContents(): DocumentFragment {
+    if (!this.startContainer || !this.endContainer) {
+      const doc = (globalThis as Record<string, unknown>).document as Document
+      return doc.createDocumentFragment()
+    }
+
+    const doc = (this.startContainer instanceof Element
+      ? this.startContainer.ownerDocument
+      : (this.startContainer as Node).ownerDocument) as Document
+    const fragment = doc.createDocumentFragment()
+
+    if (this.collapsed) return fragment
+
+    // Same container
+    if (this.startContainer === this.endContainer) {
+      if (this.startContainer instanceof CharacterData) {
+        const clone = this.startContainer.cloneNode(false)
+        ;(clone as unknown as CharacterData).data = this.startContainer.substringData(this.startOffset, this.endOffset - this.startOffset)
+        fragment.appendChild(clone)
+      } else {
+        for (let i = this.startOffset; i < this.endOffset; i++) {
+          const child = this.startContainer.childNodes[i]
+          if (child) fragment.appendChild(child.cloneNode(true))
+        }
+      }
+      return fragment
+    }
+
+    // Different containers - clone partial start, full middle, partial end
+    const commonAncestor = this.commonAncestorContainer!
+    const startPath = _pathToAncestor(this.startContainer, commonAncestor)
+    const endPath = _pathToAncestor(this.endContainer, commonAncestor)
+    const startSideChild = startPath.length > 0 ? startPath[startPath.length - 1] : null
+    const endSideChild = endPath.length > 0 ? endPath[endPath.length - 1] : null
+
+    // Clone start side
+    if (this.startContainer instanceof CharacterData) {
+      const clone = this.startContainer.cloneNode(false)
+      ;(clone as unknown as CharacterData).data = this.startContainer.substringData(this.startOffset, this.startContainer.length - this.startOffset)
+      let current = clone
+      for (let i = 0; i < startPath.length - 1; i++) {
+        const parentClone = startPath[i + 1].cloneNode(false)
+        parentClone.appendChild(current)
+        // Clone siblings after the path node
+        let sib = startPath[i].nextSibling
+        while (sib) {
+          parentClone.appendChild(sib.cloneNode(true))
+          sib = sib.nextSibling
+        }
+        current = parentClone
+      }
+      fragment.appendChild(current)
+    } else if (startSideChild) {
+      const clone = startSideChild.cloneNode(false)
+      _cloneChildrenFrom(this.startContainer, this.startOffset, this.startContainer.childNodes.length, clone)
+      fragment.appendChild(clone)
+    }
+
+    // Clone middle nodes
+    if (startSideChild && endSideChild) {
+      let sibling = startSideChild.nextSibling
+      while (sibling && sibling !== endSideChild) {
+        fragment.appendChild(sibling.cloneNode(true))
+        sibling = sibling.nextSibling
+      }
+    }
+
+    // Clone end side
+    if (this.endContainer instanceof CharacterData) {
+      const clone = this.endContainer.cloneNode(false)
+      ;(clone as unknown as CharacterData).data = this.endContainer.substringData(0, this.endOffset)
+      let current = clone
+      for (let i = 0; i < endPath.length - 1; i++) {
+        const parentClone = endPath[i + 1].cloneNode(false)
+        // Clone siblings before the path node
+        let sib = endPath[i].previousSibling
+        const preSibs: Node[] = []
+        while (sib) {
+          preSibs.unshift(sib)
+          sib = sib.previousSibling
+        }
+        for (const s of preSibs) parentClone.appendChild(s.cloneNode(true))
+        parentClone.appendChild(current)
+        current = parentClone
+      }
+      fragment.appendChild(current)
+    } else if (endSideChild) {
+      const clone = endSideChild.cloneNode(false)
+      _cloneChildrenFrom(this.endContainer, 0, this.endOffset, clone)
+      fragment.appendChild(clone)
+    }
+
+    return fragment
+  }
+
+  extractContents(): DocumentFragment {
+    if (!this.startContainer || !this.endContainer) {
+      const doc = (globalThis as Record<string, unknown>).document as Document
+      return doc.createDocumentFragment()
+    }
+
+    const fragment = this.cloneContents()
+    this.deleteContents()
+    return fragment
+  }
+
+  surroundContents(newParent: Node): void {
+    if (!this.startContainer || !this.endContainer) return
+
+    // Validate: range must not partially select a non-CharacterData node
+    if (this.startContainer !== this.endContainer) {
+      const commonAncestor = this.commonAncestorContainer
+      if (commonAncestor) {
+        const startPath = _pathToAncestor(this.startContainer, commonAncestor)
+        const endPath = _pathToAncestor(this.endContainer, commonAncestor)
+        // If start is in a non-CharacterData node and offset > 0 (partial)
+        if (startPath.length > 0 && !(this.startContainer instanceof CharacterData) && this.startOffset > 0) {
+          throw new DOMException('The Range has partially selected a non-Text node.', 'InvalidStateError')
+        }
+        // If end is in a non-CharacterData node and offset < childNodes.length (partial)
+        if (endPath.length > 0 && !(this.endContainer instanceof CharacterData) && this.endOffset < this.endContainer.childNodes.length) {
+          throw new DOMException('The Range has partially selected a non-Text node.', 'InvalidStateError')
+        }
+      }
+    }
+
+    const fragment = this.extractContents()
+
+    // Remove all children from newParent
+    while (newParent.firstChild) {
+      newParent.removeChild(newParent.firstChild)
+    }
+
+    this.insertNode(newParent)
+    newParent.appendChild(fragment)
+    this.selectNode(newParent)
   }
 
   insertNode(node: Node) {
@@ -389,5 +729,32 @@ export class Range {
     }
 
     return this.startContainer
+  }
+}
+
+function _pathToAncestor(node: Node, ancestor: Node): Node[] {
+  const path: Node[] = []
+  let current: Node = node
+  while (current !== ancestor) {
+    path.push(current)
+    const parent = current.parent
+    if (!parent) break
+    current = parent
+  }
+  return path
+}
+
+function _indexOfChild(child: Node, parent: Node): number {
+  const children = parent.childNodes
+  for (let i = 0; i < children.length; i++) {
+    if (children[i] === child) return i
+  }
+  return -1
+}
+
+function _cloneChildrenFrom(source: Node, startIdx: number, endIdx: number, target: Node): void {
+  for (let i = startIdx; i < endIdx; i++) {
+    const child = source.childNodes[i]
+    if (child) target.appendChild(child.cloneNode(true))
   }
 }

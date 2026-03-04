@@ -3,6 +3,7 @@
 import { Window } from "./classes/Window"
 import { Document } from "./classes/Document"
 import { Range } from "./classes/Range"
+import { Selection } from "./classes/Selection"
 import { Node } from "./classes/Node"
 import { Element } from "./classes/Element"
 import { Text } from "./classes/Text"
@@ -176,6 +177,7 @@ const lazyDom = () => {
     HTMLUListElement,
     SVGElement,
     Range,
+    Selection,
     Document,
     MutationObserver,
     MutationRecord,
