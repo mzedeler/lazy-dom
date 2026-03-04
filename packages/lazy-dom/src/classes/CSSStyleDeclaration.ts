@@ -75,6 +75,8 @@ function hexToRgb(hex: string): string | null {
 }
 
 function normalizeCSSValue(property: string, value: string): string {
+  // CSS custom properties preserve their values verbatim
+  if (property.startsWith('--')) return value
   if (value === '0' && lengthProperties.has(property)) {
     return '0px'
   }

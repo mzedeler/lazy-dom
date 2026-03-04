@@ -8,7 +8,6 @@ export class HTMLElement extends Element {
   declare dir: string
   declare className: string
   declare accessKey: string
-  declare role: string
   declare tabIndex: number
   declare autofocus: boolean
 
@@ -67,7 +66,6 @@ defineStringReflections(HTMLElement.prototype, [
   ['dir', 'dir'],
   ['className', 'class'],
   ['accessKey', 'accesskey'],
-  ['role', 'role'],
 ])
 defineBooleanReflections(HTMLElement.prototype, [
   ['autofocus', 'autofocus'],

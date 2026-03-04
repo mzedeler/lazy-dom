@@ -19,8 +19,12 @@ implementations.
 | File | Test | Reason |
 |------|------|--------|
 | `app/javascript/components/RichTextEditor/RichTextEditor.test.tsx` | `Rich text editor > renders as per snapshot` | Snapshot mismatch under lazy-dom |
-| `app/javascript/components/AreaLayout/layouts/TabbedLayout/components/LayoutTabs/LayoutTabs.test.tsx` | `LayoutTabs > TabNavigation > persists scroll position when activating overlay tab` | Scroll position APIs not implemented |
-| `app/javascript/pages/SearchPage/components/ResultsPanel/components/SearchFeedback/SearchFeedback.test.tsx` | `SearchFeedback > has disabled submitButton initially and enabled when user selects an option` | `findByRole` unable to locate expected buttons |
+| `app/javascript/features/UserPanel/FoldersPanel/FoldersPanel.test.tsx` | `Should spawn Folder Modal when Create Folder button is clicked` | Timed out in `waitForElementToBeRemoved` (progressbar never removed) |
+| `app/javascript/features/UserPanel/FoldersPanel/FoldersPanel.test.tsx` | `Should render Folder Items panel when a Folder is clicked and send the correct tracking data` | Same as above |
+| `app/javascript/features/UserPanel/FoldersPanel/FoldersPanel.test.tsx` | `Should spawn Folder Modal when Edit Action is clicked` | Same as above |
+| `app/javascript/features/UserPanel/FoldersPanel/FoldersPanel.test.tsx` | `Should traverse user correctly via Breadcrumbs` | Same as above |
+| `app/javascript/components/Widget/components/AnnouncementsAsFeed/AnnouncementsAsFeed.test.tsx` | `renders according to snapshot with compact appearance with highlights` | Snapshot mismatch under lazy-dom |
+| `app/javascript/components/Widget/components/AnnouncementsAsFeed/AnnouncementsAsFeed.test.tsx` | `only renders announcements with images in product_page_styling_with_images appearance` | Snapshot mismatch under lazy-dom |
 
 ## test-react-source (packages/test-react-source)
 
@@ -28,8 +32,6 @@ implementations.
 |------|------|--------|
 | `packages/react/src/__tests__/ReactClassEquivalence-test.js` | `tests the same thing for es6 classes and CoffeeScript` | Spawns a nested Jest process that fails in the lazy-dom environment |
 | `packages/react/src/__tests__/ReactClassEquivalence-test.js` | `tests the same thing for es6 classes and TypeScript` | Same as above |
-| `packages/react-dom/src/__tests__/DOMPropertyOperations-test.js` | `setValueForProperty > should set values as attributes if necessary` | Attribute handling difference |
 | `packages/react-dom/src/__tests__/ReactDOMOption-test.js` | `generates a warning and hydration error when an invalid nested tag is used as a child` | Invalid nesting detection difference |
 | `packages/react-dom/src/__tests__/ReactRenderDocument-test.js` | `with new explicit hydration API > should not be able to switch root constructors` | Document-level rendering difference |
 | `packages/react-dom/src/__tests__/ReactDOMSelection-test.internal.js` | `returns correctly for fuzz test` | Selection API difference |
-| `packages/react-dom/src/__tests__/ReactDOMServerIntegrationAttributes-test.js` | `renders camel cased custom properties` (4 render modes) | CSS custom property (`--someColor`) not preserved through `getPropertyValue` |

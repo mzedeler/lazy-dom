@@ -71,6 +71,18 @@ describe('CSSStyleDeclaration', () => {
       expect(div.style.getPropertyValue('--my-color')).to.eq('blue')
     })
 
+    it('preserves camelCase CSS custom property values verbatim', () => {
+      const div = document.createElement('div')
+      div.style.setProperty('--someColor', '#000000')
+      expect(div.style.getPropertyValue('--someColor')).to.eq('#000000')
+    })
+
+    it('does not normalize hex colors in custom properties', () => {
+      const div = document.createElement('div')
+      div.style.setProperty('--theme-primary', '#ff0000')
+      expect(div.style.getPropertyValue('--theme-primary')).to.eq('#ff0000')
+    })
+
     it('silently ignores vendor-prefixed properties via setProperty', () => {
       const div = document.createElement('div')
       div.style.setProperty('-webkit-transform', 'none')

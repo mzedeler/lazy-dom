@@ -435,7 +435,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
         const timerId = globalThis.setTimeout(() => {
           pendingTimers.delete(id)
           cb(Date.now())
-        }, 0)
+        }, 16)
         pendingTimers.set(id, timerId)
         return id
       })
