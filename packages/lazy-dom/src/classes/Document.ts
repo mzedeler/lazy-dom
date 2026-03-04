@@ -333,6 +333,10 @@ export class Document implements EventTarget {
     return 'complete'
   }
 
+  get scrollingElement(): Element {
+    return this.documentElement
+  }
+
   get body(): HTMLBodyElement {
     return this.documentStore.body()
   }

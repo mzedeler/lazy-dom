@@ -13,5 +13,5 @@ defineBooleanReflections(HTMLOListElement.prototype, [
   ['compact', 'compact'],
 ])
 defineNumericReflections(HTMLOListElement.prototype, [
-  ['start', 'start'],
+  ['start', 'start', 1],
 ])

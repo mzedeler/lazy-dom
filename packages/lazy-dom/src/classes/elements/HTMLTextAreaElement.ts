@@ -15,7 +15,7 @@ export class HTMLTextAreaElement extends HTMLElement {
   declare tabIndex: number
 
   get form() {
-    return null
+    return this.closest('form')
   }
 
   get defaultValue() {

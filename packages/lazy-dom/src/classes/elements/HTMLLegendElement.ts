@@ -5,7 +5,7 @@ export class HTMLLegendElement extends HTMLElement {
   declare align: string
 
   get form() {
-    return null
+    return this.closest('form')
   }
 }
 defineStringReflections(HTMLLegendElement.prototype, [

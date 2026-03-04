@@ -1,3 +1,4 @@
+import { Event } from "../Event"
 import { HTMLElement } from "./HTMLElement"
 import { HTMLInputElement } from "./HTMLInputElement"
 import { HTMLTextAreaElement } from "./HTMLTextAreaElement"
@@ -24,11 +25,20 @@ export class HTMLFormElement extends HTMLElement {
     this.setAttribute('enctype', value)
   }
 
+  get elements() {
+    return this.querySelectorAll('input, select, textarea, button, fieldset')
+  }
+
   get length() {
-    return 0
+    return this.elements.length
   }
 
   submit() {}
+
+  requestSubmit() {
+    const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+    this.dispatchEvent(submitEvent)
+  }
 
   reset() {
     // Reset all form elements to their default values

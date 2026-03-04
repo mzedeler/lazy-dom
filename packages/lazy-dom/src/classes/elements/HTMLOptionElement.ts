@@ -10,7 +10,7 @@ export class HTMLOptionElement extends HTMLElement {
   declare disabled: boolean
 
   get form() {
-    return null
+    return this.closest('form')
   }
 
   get defaultSelected() {

@@ -70,7 +70,7 @@ export class HTMLSelectElement extends HTMLElement {
   }
 
   get form() {
-    return null
+    return this.closest('form')
   }
 
   add() {}

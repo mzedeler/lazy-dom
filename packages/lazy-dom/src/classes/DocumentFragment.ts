@@ -64,6 +64,31 @@ export class DocumentFragment extends Node {
     return !event.defaultPrevented
   }
 
+  append(...nodes: (Node | string)[]) {
+    for (const node of nodes) {
+      if (typeof node === 'string') {
+        this.appendChild(this.ownerDocument.createTextNode(node))
+      } else {
+        this.appendChild(node)
+      }
+    }
+  }
+
+  prepend(...nodes: (Node | string)[]) {
+    const firstChild = this.firstChild
+    for (const node of nodes) {
+      const child = typeof node === 'string'
+        ? this.ownerDocument.createTextNode(node)
+        : node
+      this.insertBefore(child, firstChild)
+    }
+  }
+
+  replaceChildren(...nodes: (Node | string)[]) {
+    while (this.firstChild) this.removeChild(this.firstChild)
+    this.append(...nodes)
+  }
+
   protected _cloneNodeShallow(): DocumentFragment {
     const clone = this.ownerDocument.createDocumentFragment()
     return clone

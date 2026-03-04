@@ -5,7 +5,7 @@ export class HTMLLabelElement extends HTMLElement {
   declare htmlFor: string
 
   get form() {
-    return null
+    return this.closest('form')
   }
 
   get control() {

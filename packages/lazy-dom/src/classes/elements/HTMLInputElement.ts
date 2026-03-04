@@ -101,7 +101,14 @@ export class HTMLInputElement extends HTMLElement {
   }
 
   get form() {
-    return null
+    return this.closest('form')
+  }
+
+  get files(): FileList | null {
+    return this.type.toLowerCase() === 'file' ? null : null
+  }
+  set files(_val: FileList | null) {
+    // Writable per spec; user-event overrides via Object.defineProperty
   }
 
   get selectionStart(): number {

@@ -18,7 +18,7 @@ export class HTMLButtonElement extends HTMLElement {
   }
 
   get form() {
-    return null
+    return this.closest('form')
   }
 }
 defineStringReflections(HTMLButtonElement.prototype, [

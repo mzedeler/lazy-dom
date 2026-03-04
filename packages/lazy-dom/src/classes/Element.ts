@@ -492,12 +492,18 @@ export class Element extends Node implements EventTarget {
       }
     }
 
-    // Submit button default action: dispatch submit event on the form
+    // Submit button default action: dispatch submit event on the form.
+    // Walk up from the click target to find the closest submit button,
+    // because clicks on child elements (e.g. <span> inside <button>) should
+    // still trigger form submission (matching browser behavior).
     if (type === 'click' && !event.defaultPrevented) {
-      if (this.tagName === 'BUTTON' || this.tagName === 'INPUT') {
-        const btnType = (this.getAttribute('type') ?? '').toLowerCase()
-        if (btnType === 'submit' || (this.tagName === 'BUTTON' && !btnType)) {
-          const form = this.closest('form')
+      const submitEl = (this.tagName === 'BUTTON' || this.tagName === 'INPUT')
+        ? this
+        : this.closest('button, input[type="submit"]')
+      if (submitEl) {
+        const btnType = (submitEl.getAttribute('type') ?? '').toLowerCase()
+        if (btnType === 'submit' || (submitEl.tagName === 'BUTTON' && !btnType)) {
+          const form = submitEl.closest('form')
           if (form) {
             const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
             form.dispatchEvent(submitEvent)
@@ -851,6 +857,11 @@ export class Element extends Node implements EventTarget {
     }
   }
 
+  replaceChildren(...nodes: (Node | string)[]) {
+    while (this.firstChild) this.removeChild(this.firstChild)
+    this.append(...nodes)
+  }
+
   replaceWith(...nodes: (Node | string)[]) {
     const parent = this.parentNode
     if (!parent) return
@@ -889,6 +900,13 @@ export class Element extends Node implements EventTarget {
     const previousActive = doc.documentStore.activeElement()
     if (previousActive === this) return
     doc.documentStore.activeElement = () => this
+    // Dispatch blur/focusout on the previously active element
+    if (previousActive instanceof Element) {
+      const focusOut = new FocusEvent('focusout', { bubbles: true, relatedTarget: this })
+      previousActive.dispatchEvent(focusOut)
+      const blurEvt = new FocusEvent('blur', { bubbles: false, relatedTarget: this })
+      previousActive.dispatchEvent(blurEvt)
+    }
     // Dispatch focus events (focusin bubbles, focus does not)
     const focusIn = new FocusEvent('focusin', { bubbles: true, relatedTarget: previousActive })
     this.dispatchEvent(focusIn)

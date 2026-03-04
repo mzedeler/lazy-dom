@@ -77,7 +77,7 @@ export class Window {
   // React's invokeGuardedCallback checks window.event and window.hasOwnProperty('event')
   event: Event | undefined = undefined
 
-  private _location: Record<string, string> = {
+  private _locationData = {
     href: 'http://localhost/',
     protocol: 'http:',
     hostname: 'localhost',
@@ -85,6 +85,36 @@ export class Window {
     origin: 'http://localhost',
     search: '',
     hash: '',
+    host: 'localhost',
+    port: '',
+  }
+
+  private _location: Record<string, string> = new Proxy(this._locationData, {
+    set: (target, prop, value) => {
+      if (prop === 'href') {
+        this._updateLocation(String(value))
+        return true
+      }
+      target[prop as keyof typeof target] = value
+      return true
+    },
+  })
+
+  private _updateLocation(href: string) {
+    try {
+      const resolved = new URL(href, this._locationData.href)
+      this._locationData.href = resolved.href
+      this._locationData.protocol = resolved.protocol
+      this._locationData.hostname = resolved.hostname
+      this._locationData.pathname = resolved.pathname
+      this._locationData.origin = resolved.origin
+      this._locationData.search = resolved.search
+      this._locationData.hash = resolved.hash
+      this._locationData.host = resolved.host
+      this._locationData.port = resolved.port
+    } catch {
+      this._locationData.href = href
+    }
   }
 
   get location() {
@@ -93,9 +123,9 @@ export class Window {
 
   set location(value: string | Record<string, string>) {
     if (typeof value === 'string') {
-      this._location.href = value
+      this._updateLocation(value)
     } else {
-      Object.assign(this._location, value)
+      Object.assign(this._locationData, value)
     }
   }
 

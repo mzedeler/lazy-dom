@@ -13,28 +13,35 @@ export class DOMTokenList {
     this.store = store
   }
 
-  add(cls: string) {
+  add(...tokens: string[]) {
     const previousAttributesFuture = this.store.attributes
     this.store.attributes = () => {
       const attrs = previousAttributesFuture()
       const existing = attrs.getNamedItem('class')
       const current = existing?.value ?? ''
       const classes = current ? current.split(/\s+/) : []
-      if (!classes.includes(cls)) {
-        const newValue = current ? current + ' ' + cls : cls
-        attrs.setNamedItem(new Attr(null, 'class', newValue))
+      let changed = false
+      for (const tok of tokens) {
+        if (!classes.includes(tok)) {
+          classes.push(tok)
+          changed = true
+        }
+      }
+      if (changed) {
+        attrs.setNamedItem(new Attr(null, 'class', classes.join(' ')))
       }
       return attrs
     }
   }
 
-  remove(cls: string) {
+  remove(...tokens: string[]) {
     const previousAttributesFuture = this.store.attributes
     this.store.attributes = () => {
       const attrs = previousAttributesFuture()
       const existing = attrs.getNamedItem('class')
       if (existing) {
-        const classes = existing.value.split(/\s+/).filter(c => c !== cls)
+        const removeSet = new Set(tokens)
+        const classes = existing.value.split(/\s+/).filter(c => !removeSet.has(c))
         attrs.setNamedItem(new Attr(null, 'class', classes.join(' ')))
       }
       return attrs
