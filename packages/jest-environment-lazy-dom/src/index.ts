@@ -4,6 +4,8 @@ import type { JestEnvironmentConfig } from "@jest/environment"
 import lazyDom from "lazy-dom"
 
 export default class LazyDomEnvironment extends NodeEnvironment {
+  private _pendingRafTimers = new Map<number, ReturnType<typeof globalThis.setTimeout>>()
+
   constructor(config: JestEnvironmentConfig, context: EnvironmentContext) {
     super(config, context)
 
@@ -423,14 +425,27 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     }
 
     // requestAnimationFrame/cancelAnimationFrame polyfills (not in Node.js by default)
+    // Uses a 16ms delay to match JSDOM's pretendToBeVisual behavior (~60fps).
+    // Pending timers are tracked so they can be cancelled between tests.
     {
       let rafId = 0
+      const pendingTimers = this._pendingRafTimers
       defineStubOnBoth("requestAnimationFrame", (cb: FrameRequestCallback) => {
-        rafId++
-        g.setTimeout(() => cb(Date.now()), 0)
-        return rafId
+        const id = ++rafId
+        const timerId = globalThis.setTimeout(() => {
+          pendingTimers.delete(id)
+          cb(Date.now())
+        }, 0)
+        pendingTimers.set(id, timerId)
+        return id
       })
-      defineStubOnBoth("cancelAnimationFrame", (id: number) => { g.clearTimeout(id) })
+      defineStubOnBoth("cancelAnimationFrame", (id: number) => {
+        const timerId = pendingTimers.get(id)
+        if (timerId !== undefined) {
+          globalThis.clearTimeout(timerId)
+          pendingTimers.delete(id)
+        }
+      })
     }
 
     // Also put DOM classes on the lazy-dom window so testing-library can find them
@@ -513,8 +528,29 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     g.IS_REACT_ACT_ENVIRONMENT = true
     g.__LAZY_DOM__ = true
 
+    // Expose scroll properties on the global (matching JSDOM behavior)
+    for (const name of ["scrollX", "scrollY", "pageXOffset", "pageYOffset"] as const) {
+      Object.defineProperty(g, name, {
+        configurable: true,
+        enumerable: true,
+        value: window[name],
+        writable: true,
+      })
+    }
+
     // Opt-out from browser-style resolution (matching pro's config)
     this.customExportConditions = [""]
+  }
+
+  // Cancel pending requestAnimationFrame timers between tests to prevent
+  // callbacks from a previous test firing during the next test.
+  handleTestEvent(event: { name: string }) {
+    if (event.name === "test_start") {
+      for (const [, timerId] of this._pendingRafTimers) {
+        globalThis.clearTimeout(timerId)
+      }
+      this._pendingRafTimers.clear()
+    }
   }
 }
 

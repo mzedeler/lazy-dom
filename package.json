@@ -8,7 +8,8 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "benchmark": "pnpm --filter lazy-dom benchmark",
-    "bench:pro": "pnpm --filter lazy-dom build && pnpm --filter jest-environment-lazy-dom build && pnpm --filter @lazy-dom/bench-pro compare"
+    "bench:pro": "pnpm --filter lazy-dom build && pnpm --filter jest-environment-lazy-dom build && pnpm --filter @lazy-dom/bench-pro compare",
+    "validate": "pnpm --filter lazy-dom test && cd pro && ALLOW_CONSOLE_OUTPUT=true npx jest --testEnvironment jest-environment-lazy-dom --forceExit --maxWorkers=4 && cd .. && pnpm --filter test-react-source test:react"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
