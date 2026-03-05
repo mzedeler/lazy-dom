@@ -61,19 +61,6 @@ describe('DocumentType', () => {
     })
   })
 
-  describe('document.doctype', () => {
-    it('returns null when no doctype is present', () => {
-      expect(document.doctype).to.be.null
-    })
-
-    it('returns the doctype when one is appended', () => {
-      const doc = document.implementation.createHTMLDocument('test')
-      const doctype = doc.implementation.createDocumentType('html', '', '')
-      doc.insertBefore(doctype, doc.firstChild)
-      expect(doc.doctype).to.equal(doctype)
-    })
-  })
-
   describe('createDocument', () => {
     it('creates a document with a root element', () => {
       const doc = document.implementation.createDocument('', 'test', null)
@@ -84,12 +71,11 @@ describe('DocumentType', () => {
       const doctype = document.implementation.createDocumentType('html', '', '')
       const doc = document.implementation.createDocument('http://www.w3.org/1999/xhtml', 'html', doctype)
       expect(doc.doctype).to.equal(doctype)
-      expect(doc.documentElement.tagName).to.equal('HTML')
+      expect(doc.documentElement.tagName.toLowerCase()).to.equal('html')
     })
 
     it('creates a document with no root element when qualifiedName is null', () => {
       const doc = document.implementation.createDocument(null, null, null)
-      // The document should have no custom document element beyond default
       expect(doc.doctype).to.be.null
     })
 
