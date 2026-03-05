@@ -104,8 +104,14 @@ export class HTMLInputElement extends HTMLElement {
     return this.closest('form')
   }
 
+  private _fileList: FileList | null = null
+
   get files(): FileList | null {
-    return this.type.toLowerCase() === 'file' ? null : null
+    if (this.type.toLowerCase() !== 'file') return null
+    if (!this._fileList) {
+      this._fileList = Object.assign([], { item: (_i: number) => null }) as unknown as FileList
+    }
+    return this._fileList
   }
   set files(_val: FileList | null) {
     // Writable per spec; user-event overrides via Object.defineProperty

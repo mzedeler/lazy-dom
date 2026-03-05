@@ -95,10 +95,12 @@ describe('HTMLInputElement', () => {
   })
 
   describe('files', () => {
-    it.skip('returns null for file inputs', () => {
+    it('returns a FileList for file inputs', () => {
       const input = document.createElement('input') as HTMLInputElement
       input.type = 'file'
-      expect(input.files).to.equal(null)
+      const files = input.files
+      expect(files).to.not.equal(null)
+      expect(files).to.have.property('length', 0)
     })
 
     it('returns null for non-file inputs', () => {

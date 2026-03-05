@@ -37,7 +37,8 @@ describe('Event constructors', () => {
   })
 
   describe('PointerEvent', () => {
-    it.skip('passes detail from init dict', () => {
+    it('passes detail from init dict', function () {
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const evt = new PointerEvent('click', { detail: 1, bubbles: true })
       expect(evt.detail).to.equal(1)
       expect(evt.bubbles).to.equal(true)
@@ -63,7 +64,8 @@ describe('Event constructors', () => {
       expect(evt.isComposing).to.equal(false)
     })
 
-    it.skip('has getTargetRanges method', () => {
+    it('has getTargetRanges method', function () {
+      if (!globalThis.__LAZY_DOM__) this.skip()
       const evt = new InputEvent('input')
       expect(evt.getTargetRanges()).to.deep.equal([])
     })

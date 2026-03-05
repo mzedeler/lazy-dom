@@ -388,12 +388,14 @@ describe('Document', () => {
     })
   })
 
-  describe.skip('scrollingElement', () => {
-    it('returns the documentElement', () => {
+  describe('scrollingElement', () => {
+    it('returns the documentElement', function () {
+      if (!globalThis.__LAZY_DOM__) this.skip()
       expect(document.scrollingElement).to.equal(document.documentElement)
     })
 
-    it('is defined', () => {
+    it('is defined', function () {
+      if (!globalThis.__LAZY_DOM__) this.skip()
       expect(document).to.have.property('scrollingElement')
     })
   })
