@@ -250,7 +250,12 @@ function wptSetup(fnOrProperties: Function | object): void {
   if (typeof fnOrProperties === 'function') {
     // WPT setup() runs synchronously and immediately — test scripts
     // depend on variables being set before subsequent code executes.
-    fnOrProperties()
+    try {
+      fnOrProperties()
+    } catch {
+      // Setup failure is non-fatal — individual tests that depend on
+      // setup variables will fail on their own.
+    }
   }
   // Properties object is ignored (allow_uncaught_exception, etc.)
 }

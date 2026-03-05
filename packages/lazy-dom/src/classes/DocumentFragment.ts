@@ -46,15 +46,17 @@ export class DocumentFragment extends Node {
       .join('')
   }
 
-  set textContent(value: string) {
+  set textContent(value: string | null) {
+    // Per spec, null is treated as empty string
+    const coerced = value === null || value === undefined ? '' : String(value)
     // Remove all existing children
     const children = this.nodeStore.getChildNodesArray()
     for (const child of children) {
       this.removeChild(child)
     }
     // Append a text node if value is non-empty
-    if (value !== '') {
-      this.appendChild(this.ownerDocument.createTextNode(value))
+    if (coerced !== '') {
+      this.appendChild(this.ownerDocument.createTextNode(coerced))
     }
   }
 

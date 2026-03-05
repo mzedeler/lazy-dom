@@ -71,6 +71,7 @@ import { HTMLTitleElement } from "./elements/HTMLTitleElement"
 import { HTMLCanvasElement } from "./elements/HTMLCanvasElement"
 import { HTMLCollection } from "./HTMLCollection"
 import { DOMImplementation } from "./DOMImplementation"
+import { DocumentType } from "./DocumentType"
 import { DOMException } from "./DOMException"
 import { Window } from "./Window"
 import { ErrorEvent } from "./ErrorEvent"
@@ -99,7 +100,7 @@ export class DocumentStore {
   cookie: Future<string> = () => ''
   activeElement: Future<Element | null> = () => null
 
-  documentElement: () => HTMLHtmlElement = () => {
+  documentElement: () => Element = () => {
     throw valueNotSetError('documentElement')
   }
 
@@ -227,7 +228,7 @@ const constructors: Record<string, Record<string, Constructor>> = {
 export class Document implements EventTarget {
   documentStore = new DocumentStore()
   defaultView: Window | null = null
-  readonly implementation = new DOMImplementation(() => new Document())
+  readonly implementation = new DOMImplementation(() => new Document(), () => this)
   private _docChildren: Node[] = []
 
   // on* event handler properties — needed so `'oninput' in document` returns
@@ -327,6 +328,15 @@ export class Document implements EventTarget {
 
   hasFocus(): boolean {
     return this.documentStore.activeElement() !== null
+  }
+
+  get doctype(): DocumentType | null {
+    for (const child of this._docChildren) {
+      if (child.nodeType === NodeTypes.DOCUMENT_TYPE_NODE) {
+        return child as DocumentType
+      }
+    }
+    return null
   }
 
   get readyState(): string {
@@ -641,7 +651,7 @@ export class Document implements EventTarget {
     this.documentStore.connect(node)
 
     // Update documentElement/body/head references if applicable
-    if (node instanceof HTMLHtmlElement) {
+    if (node instanceof Element) {
       this._setDocumentElement(node)
     }
 
@@ -672,7 +682,7 @@ export class Document implements EventTarget {
     this._docChildren.splice(refIdx, 0, newNode)
     this.documentStore.connect(newNode)
 
-    if (newNode instanceof HTMLHtmlElement) {
+    if (newNode instanceof Element) {
       this._setDocumentElement(newNode)
     }
 
@@ -718,17 +728,17 @@ export class Document implements EventTarget {
     this.documentStore.disconnect(oldChild)
     this.documentStore.connect(newChild)
 
-    if (newChild instanceof HTMLHtmlElement) {
+    if (newChild instanceof Element) {
       this._setDocumentElement(newChild)
     }
 
     return oldChild
   }
 
-  private _setDocumentElement(html: HTMLHtmlElement) {
-    this.documentStore.documentElement = () => html
+  private _setDocumentElement(element: Element) {
+    this.documentStore.documentElement = () => element
     // Update body and head to search the new documentElement's children
-    const children = html.nodeStore.getChildNodesArray()
+    const children = element.nodeStore.getChildNodesArray()
     for (const child of children) {
       if (child instanceof HTMLBodyElement) {
         this.documentStore.body = () => child
@@ -785,7 +795,7 @@ export class Document implements EventTarget {
     return this.documentStore.head()
   }
 
-  get documentElement(): HTMLHtmlElement {
+  get documentElement(): Element {
     return this.documentStore.documentElement()
   }
 

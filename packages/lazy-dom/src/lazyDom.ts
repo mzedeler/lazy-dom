@@ -77,6 +77,7 @@ import { CustomEvent } from "./classes/CustomEvent"
 import { CompositionEvent } from "./classes/CompositionEvent"
 import { MutationObserver } from "./classes/MutationObserver"
 import { MutationRecord } from "./classes/MutationObserver"
+import { DocumentType } from "./classes/DocumentType"
 import { EventTarget } from "./classes/EventTarget"
 
 export { JSDOM } from "./jsdom"
@@ -181,6 +182,7 @@ const lazyDom = () => {
     Document,
     MutationObserver,
     MutationRecord,
+    DocumentType,
   }
   Object.assign(window, instances, classes)
   Object.assign(global, { window, document }, classes)

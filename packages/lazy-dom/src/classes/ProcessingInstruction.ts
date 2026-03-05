@@ -30,6 +30,14 @@ export class ProcessingInstruction extends Node {
     this.data = value
   }
 
+  get textContent(): string {
+    return this.data
+  }
+
+  set textContent(value: string) {
+    this.data = value
+  }
+
   readonly attributes = null
 
   protected _cloneNodeShallow(): ProcessingInstruction {

@@ -47,39 +47,33 @@ const expectations: { match: string | RegExp; expectation: Expectation }[] = [
   },
 
   // ===========================================================================
-  // lazyDom-only: DocumentType / doctype not implemented
+  // lazyDom-only skips
   // ===========================================================================
-  {
-    match: 'For DocumentType nodes, nodeName should return the name.',
-    expectation: { status: 'skip', reason: 'DocumentType not implemented', backends: ['lazydom'] },
-  },
-  {
-    match: /DocumentType/i,
-    expectation: { status: 'skip', reason: 'DocumentType not implemented', backends: ['lazydom'] },
-  },
-  {
-    match: /doctype/i,
-    expectation: { status: 'skip', reason: 'document.doctype not available', backends: ['lazydom'] },
-  },
-
-  // ===========================================================================
-  // lazyDom-only: DOMImplementation factory methods not implemented
-  // ===========================================================================
-  {
-    match: /createHTMLDocument/,
-    expectation: { status: 'skip', reason: 'DOMImplementation.createHTMLDocument not implemented', backends: ['lazydom'] },
-  },
-  {
-    match: /\bcreateDocument\b/,
-    expectation: { status: 'skip', reason: 'DOMImplementation.createDocument not implemented', backends: ['lazydom'] },
-  },
-  {
-    match: /created by parser/,
-    expectation: { status: 'skip', reason: 'Parser-created documents not available', backends: ['lazydom'] },
-  },
   {
     match: 'Node with custom prototype',
-    expectation: { status: 'skip', reason: 'HTMLUnknownElement not implemented', backends: ['lazydom'] },
+    expectation: { status: 'skip', reason: 'Custom prototype manipulation not supported', backends: ['lazydom'] },
+  },
+  // Tests that reference document.doctype from a parser-created document —
+  // our test document is created programmatically without a DOCTYPE.
+  {
+    match: 'For DocumentType nodes, nodeName should return the name.',
+    expectation: { status: 'skip', reason: 'No parser-created doctype in test document', backends: ['lazydom'] },
+  },
+  {
+    match: 'DocumentType.nodeValue',
+    expectation: { status: 'skip', reason: 'No parser-created doctype in test document', backends: ['lazydom'] },
+  },
+  {
+    match: /DocumentType created by parser/,
+    expectation: { status: 'skip', reason: 'No parser-created doctype in test document', backends: ['lazydom'] },
+  },
+  {
+    match: /^Doctype$/,
+    expectation: { status: 'skip', reason: 'No parser-created doctype in test document', backends: ['lazydom'] },
+  },
+  {
+    match: 'parentElement should be null (doctype)',
+    expectation: { status: 'skip', reason: 'No parser-created doctype in test document', backends: ['lazydom'] },
   },
 
 ]

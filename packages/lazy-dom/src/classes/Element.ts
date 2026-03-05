@@ -268,7 +268,10 @@ export class Element extends Node implements EventTarget {
     return fragments.join('')
   }
 
-  set textContent(data: string) {
+  set textContent(data: string | null) {
+    // Per spec, null is treated as empty string
+    const coerced = data === null || data === undefined ? '' : String(data)
+
     // Capture removed children for MutationObserver notification
     const removedNodes = this.nodeStore.getChildNodesArray()
 
@@ -276,9 +279,9 @@ export class Element extends Node implements EventTarget {
     this._removeAllChildren()
 
     const addedNodes: Node[] = []
-    if (data.length) {
+    if (coerced.length) {
       const ownerDocument = this.nodeStore.ownerDocument()
-      const textNode = ownerDocument.createTextNode(data)
+      const textNode = ownerDocument.createTextNode(coerced)
       nodeOps.setParentId(textNode.wasmId, this.wasmId)
       nodeOps.appendChild(this.wasmId, textNode.wasmId)
       addedNodes.push(textNode)
