@@ -12,12 +12,20 @@ import {
   fireListenersAtTarget,
 } from "./EventTargetImpl"
 
+import type { Document } from "./Document"
+
 export class DocumentFragment extends Node {
   readonly nodeName = '#document-fragment'
   private _eventTargetStore = new EventTargetStore()
 
   constructor() {
     super(NodeTypes.DOCUMENT_FRAGMENT_NODE)
+    // Per spec, new DocumentFragment() sets ownerDocument to the
+    // current global object's associated document.
+    const globalDoc = (globalThis as Record<string, unknown>).document as Document | undefined
+    if (globalDoc) {
+      this.nodeStore.ownerDocument = () => globalDoc
+    }
   }
 
   get nodeValue(): null {

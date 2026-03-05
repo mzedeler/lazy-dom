@@ -14,8 +14,8 @@ export class Comment extends CharacterData {
     return this._data
   }
 
-  set data(data: string) {
-    this._data = data
+  set data(value: string) {
+    this._data = value === null ? '' : String(value)
   }
 
   get nodeValue(): string {
@@ -23,7 +23,7 @@ export class Comment extends CharacterData {
   }
 
   set nodeValue(value: string) {
-    this._data = value
+    this._data = value === null ? '' : String(value)
   }
 
   protected _cloneNodeShallow(): Comment {

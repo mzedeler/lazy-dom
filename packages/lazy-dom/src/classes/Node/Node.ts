@@ -33,21 +33,32 @@ export abstract class Node {
   static readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
   static readonly ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE
   static readonly TEXT_NODE = NodeTypes.TEXT_NODE
+  static readonly CDATA_SECTION_NODE = NodeTypes.CDATA_SECTION_NODE
+  static readonly ENTITY_REFERENCE_NODE = NodeTypes.ENTITY_REFERENCE_NODE
+  static readonly ENTITY_NODE = NodeTypes.ENTITY_NODE
   static readonly PROCESSING_INSTRUCTION_NODE = NodeTypes.PROCESSING_INSTRUCTION_NODE
   static readonly COMMENT_NODE = NodeTypes.COMMENT_NODE
   static readonly DOCUMENT_NODE = NodeTypes.DOCUMENT_NODE
   static readonly DOCUMENT_TYPE_NODE = NodeTypes.DOCUMENT_TYPE_NODE
   static readonly DOCUMENT_FRAGMENT_NODE = NodeTypes.DOCUMENT_FRAGMENT_NODE
+  static readonly NOTATION_NODE = NodeTypes.NOTATION_NODE
 
-  // Instance constants (accessed as node.TEXT_NODE, etc.)
-  readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
-  readonly ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE
-  readonly TEXT_NODE = NodeTypes.TEXT_NODE
-  readonly PROCESSING_INSTRUCTION_NODE = NodeTypes.PROCESSING_INSTRUCTION_NODE
-  readonly COMMENT_NODE = NodeTypes.COMMENT_NODE
-  readonly DOCUMENT_NODE = NodeTypes.DOCUMENT_NODE
-  readonly DOCUMENT_TYPE_NODE = NodeTypes.DOCUMENT_TYPE_NODE
-  readonly DOCUMENT_FRAGMENT_NODE = NodeTypes.DOCUMENT_FRAGMENT_NODE
+  // Instance constants are defined on the prototype after the class definition
+  // (see bottom of file) so that WPT checks like `prop in Node.prototype` pass.
+  // TypeScript `readonly` instance properties compile to own properties set in
+  // the constructor, which don't appear on the prototype.
+  declare readonly ELEMENT_NODE: number
+  declare readonly ATTRIBUTE_NODE: number
+  declare readonly TEXT_NODE: number
+  declare readonly CDATA_SECTION_NODE: number
+  declare readonly ENTITY_REFERENCE_NODE: number
+  declare readonly ENTITY_NODE: number
+  declare readonly PROCESSING_INSTRUCTION_NODE: number
+  declare readonly COMMENT_NODE: number
+  declare readonly DOCUMENT_NODE: number
+  declare readonly DOCUMENT_TYPE_NODE: number
+  declare readonly DOCUMENT_FRAGMENT_NODE: number
+  declare readonly NOTATION_NODE: number
 
   constructor(nodeType: NodeTypes) {
     this.wasmId = nodeOps.createNode(nodeType)
@@ -341,12 +352,12 @@ export abstract class Node {
   static readonly DOCUMENT_POSITION_CONTAINED_BY = 0x10
   static readonly DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 0x20
 
-  readonly DOCUMENT_POSITION_DISCONNECTED = 0x01
-  readonly DOCUMENT_POSITION_PRECEDING = 0x02
-  readonly DOCUMENT_POSITION_FOLLOWING = 0x04
-  readonly DOCUMENT_POSITION_CONTAINS = 0x08
-  readonly DOCUMENT_POSITION_CONTAINED_BY = 0x10
-  readonly DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 0x20
+  declare readonly DOCUMENT_POSITION_DISCONNECTED: number
+  declare readonly DOCUMENT_POSITION_PRECEDING: number
+  declare readonly DOCUMENT_POSITION_FOLLOWING: number
+  declare readonly DOCUMENT_POSITION_CONTAINS: number
+  declare readonly DOCUMENT_POSITION_CONTAINED_BY: number
+  declare readonly DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC: number
 
   compareDocumentPosition(other: Node): number {
     if (this === other) return 0
@@ -420,3 +431,26 @@ export abstract class Node {
     return current
   }
 }
+
+// Copy all node-type and document-position constants to the prototype so that
+// WPT checks like `"ELEMENT_NODE" in Node.prototype` pass. TypeScript `declare`
+// fields emit no code, so the prototype properties must be set manually.
+const proto = Node.prototype as unknown as Record<string, number>
+proto.ELEMENT_NODE = NodeTypes.ELEMENT_NODE
+proto.ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE
+proto.TEXT_NODE = NodeTypes.TEXT_NODE
+proto.CDATA_SECTION_NODE = NodeTypes.CDATA_SECTION_NODE
+proto.ENTITY_REFERENCE_NODE = NodeTypes.ENTITY_REFERENCE_NODE
+proto.ENTITY_NODE = NodeTypes.ENTITY_NODE
+proto.PROCESSING_INSTRUCTION_NODE = NodeTypes.PROCESSING_INSTRUCTION_NODE
+proto.COMMENT_NODE = NodeTypes.COMMENT_NODE
+proto.DOCUMENT_NODE = NodeTypes.DOCUMENT_NODE
+proto.DOCUMENT_TYPE_NODE = NodeTypes.DOCUMENT_TYPE_NODE
+proto.DOCUMENT_FRAGMENT_NODE = NodeTypes.DOCUMENT_FRAGMENT_NODE
+proto.NOTATION_NODE = NodeTypes.NOTATION_NODE
+proto.DOCUMENT_POSITION_DISCONNECTED = 0x01
+proto.DOCUMENT_POSITION_PRECEDING = 0x02
+proto.DOCUMENT_POSITION_FOLLOWING = 0x04
+proto.DOCUMENT_POSITION_CONTAINS = 0x08
+proto.DOCUMENT_POSITION_CONTAINED_BY = 0x10
+proto.DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC = 0x20

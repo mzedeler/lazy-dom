@@ -24,10 +24,11 @@ export class Text extends CharacterData {
   }
 
   set textContent(value: string) {
+    const coerced = value === null ? '' : String(value)
     let oldValue: string | null = null
     try { oldValue = this.textStore.data() } catch { /* uninitialized */ }
-    this.textStore.data = () => value
-    if (oldValue !== null && oldValue !== value) {
+    this.textStore.data = () => coerced
+    if (oldValue !== null && oldValue !== coerced) {
       notifyMutation({ type: 'characterData', target: this, oldValue })
     }
   }
@@ -36,11 +37,12 @@ export class Text extends CharacterData {
     return this.textStore.data()
   }
 
-  set data(data: string) {
+  set data(value: string) {
+    const coerced = value === null ? '' : String(value)
     let oldValue: string | null = null
     try { oldValue = this.textStore.data() } catch { /* uninitialized */ }
-    this.textStore.data = () => data
-    if (oldValue !== null && oldValue !== data) {
+    this.textStore.data = () => coerced
+    if (oldValue !== null && oldValue !== coerced) {
       notifyMutation({ type: 'characterData', target: this, oldValue })
     }
   }
@@ -50,10 +52,11 @@ export class Text extends CharacterData {
   }
 
   set nodeValue(value: string) {
+    const coerced = value === null ? '' : String(value)
     let oldValue: string | null = null
     try { oldValue = this.textStore.data() } catch { /* uninitialized */ }
-    this.textStore.data = () => value
-    if (oldValue !== null && oldValue !== value) {
+    this.textStore.data = () => coerced
+    if (oldValue !== null && oldValue !== coerced) {
       notifyMutation({ type: 'characterData', target: this, oldValue })
     }
   }

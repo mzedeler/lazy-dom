@@ -748,6 +748,15 @@ export class Document implements EventTarget {
     return false
   }
 
+  normalize(): void {
+    this._ensureInit()
+    for (const child of this._docChildren) {
+      if (typeof child.normalize === 'function') {
+        child.normalize()
+      }
+    }
+  }
+
   cloneNode(_deep: boolean = false): Document {
     return new Document()
   }

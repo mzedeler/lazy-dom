@@ -30,12 +30,18 @@ export abstract class CharacterData extends Node {
     return this.data.length
   }
 
-  appendData(data: string): void {
+  appendData(...args: unknown[]): void {
+    if (args.length === 0) {
+      throw new TypeError("Failed to execute 'appendData' on 'CharacterData': 1 argument required, but only 0 present.")
+    }
+    const data = args[0] === undefined ? 'undefined' : args[0] === null ? 'null' : String(args[0])
     this.data = this.data + data
   }
 
   deleteData(offset: number, count: number): void {
-    if (offset < 0 || offset > this.data.length) {
+    offset = offset >>> 0
+    count = count >>> 0
+    if (offset > this.data.length) {
       throw new DOMException('INDEX_SIZE_ERR', 'IndexSizeError', DOMException.INDEX_SIZE_ERR)
     }
     const current = this.data
@@ -43,7 +49,8 @@ export abstract class CharacterData extends Node {
   }
 
   insertData(offset: number, arg: string): void {
-    if (offset < 0 || offset > this.data.length) {
+    offset = offset >>> 0
+    if (offset > this.data.length) {
       throw new DOMException('INDEX_SIZE_ERR', 'IndexSizeError', DOMException.INDEX_SIZE_ERR)
     }
     const current = this.data
@@ -51,15 +58,22 @@ export abstract class CharacterData extends Node {
   }
 
   replaceData(offset: number, count: number, arg: string): void {
-    if (offset < 0 || offset > this.data.length) {
+    offset = offset >>> 0
+    count = count >>> 0
+    if (offset > this.data.length) {
       throw new DOMException('INDEX_SIZE_ERR', 'IndexSizeError', DOMException.INDEX_SIZE_ERR)
     }
     const current = this.data
     this.data = current.substring(0, offset) + arg + current.substring(offset + count)
   }
 
-  substringData(offset: number, count: number): string {
-    if (offset < 0 || offset > this.data.length) {
+  substringData(...args: unknown[]): string {
+    if (args.length < 2) {
+      throw new TypeError("Failed to execute 'substringData' on 'CharacterData': 2 arguments required, but only " + args.length + " present.")
+    }
+    const offset = (args[0] as number) >>> 0
+    const count = (args[1] as number) >>> 0
+    if (offset > this.data.length) {
       throw new DOMException('INDEX_SIZE_ERR', 'IndexSizeError', DOMException.INDEX_SIZE_ERR)
     }
     return this.data.substring(offset, offset + count)
