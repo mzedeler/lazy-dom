@@ -29,6 +29,17 @@ export abstract class Node {
   /** Set by Document when this node is a direct child of the document. */
   _parentDocument: Document | null = null
 
+  // Static constants (accessed as Node.TEXT_NODE, etc.)
+  static readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
+  static readonly ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE
+  static readonly TEXT_NODE = NodeTypes.TEXT_NODE
+  static readonly PROCESSING_INSTRUCTION_NODE = NodeTypes.PROCESSING_INSTRUCTION_NODE
+  static readonly COMMENT_NODE = NodeTypes.COMMENT_NODE
+  static readonly DOCUMENT_NODE = NodeTypes.DOCUMENT_NODE
+  static readonly DOCUMENT_TYPE_NODE = NodeTypes.DOCUMENT_TYPE_NODE
+  static readonly DOCUMENT_FRAGMENT_NODE = NodeTypes.DOCUMENT_FRAGMENT_NODE
+
+  // Instance constants (accessed as node.TEXT_NODE, etc.)
   readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
   readonly ATTRIBUTE_NODE = NodeTypes.ATTRIBUTE_NODE
   readonly TEXT_NODE = NodeTypes.TEXT_NODE

@@ -3,7 +3,7 @@ import { Future } from "../types/Future"
 import { AddEventListenerOptions } from "../types/Listeners"
 import { Listener } from "../types/Listener"
 import valueNotSetError from "../utils/valueNotSetError"
-import { parseHTML } from "../utils/parseHTML"
+import { parseHTML, parseHTMLDocument } from "../utils/parseHTML"
 
 import { Element } from "./Element"
 import { HTMLBodyElement } from "./elements/HTMLBodyElement"
@@ -642,7 +642,7 @@ export class Document implements EventTarget {
 
     // Update documentElement/body/head references if applicable
     if (node instanceof HTMLHtmlElement) {
-      this.documentStore.documentElement = () => node
+      this._setDocumentElement(node)
     }
 
     return node
@@ -673,7 +673,7 @@ export class Document implements EventTarget {
     this.documentStore.connect(newNode)
 
     if (newNode instanceof HTMLHtmlElement) {
-      this.documentStore.documentElement = () => newNode
+      this._setDocumentElement(newNode)
     }
 
     return newNode
@@ -719,10 +719,24 @@ export class Document implements EventTarget {
     this.documentStore.connect(newChild)
 
     if (newChild instanceof HTMLHtmlElement) {
-      this.documentStore.documentElement = () => newChild
+      this._setDocumentElement(newChild)
     }
 
     return oldChild
+  }
+
+  private _setDocumentElement(html: HTMLHtmlElement) {
+    this.documentStore.documentElement = () => html
+    // Update body and head to search the new documentElement's children
+    const children = html.nodeStore.getChildNodesArray()
+    for (const child of children) {
+      if (child instanceof HTMLBodyElement) {
+        this.documentStore.body = () => child
+      }
+      if (child instanceof HTMLElement && child.tagName === 'HEAD') {
+        this.documentStore.head = () => child
+      }
+    }
   }
 
   contains(other: Node | null): boolean {
@@ -794,18 +808,22 @@ export class Document implements EventTarget {
   write(html: string) {
     // Parse the HTML and append nodes to the document
     if (!html) return
-    const nodes = parseHTML(html, this)
 
-    // Check if the parsed HTML contains an <html> element (full-document write)
-    for (const node of nodes) {
-      if (node instanceof Element && node.tagName.toLowerCase() === 'html') {
-        // Merge the parsed <html> element's children into the document structure
-        this._mergeDocumentChildren(node as Element)
-        return
+    // Full-document write: use document parser to correctly handle
+    // <html>, <head>, <body>, <frameset> etc. per the HTML5 spec
+    if (/<html[\s>]/i.test(html)) {
+      const children = parseHTMLDocument(html, this)
+      // Wrap in a temporary element to use _mergeDocumentChildren
+      const wrapper = this.createElement('html')
+      for (const child of children) {
+        wrapper.appendChild(child)
       }
+      this._mergeDocumentChildren(wrapper)
+      return
     }
 
-    // No <html> found — append to body (default behavior)
+    // Fragment write — parse as fragment and append to body
+    const nodes = parseHTML(html, this)
     let target: Node = this.body
     if (!target) {
       try {

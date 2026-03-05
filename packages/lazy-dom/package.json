@@ -70,7 +70,7 @@
   "dependencies": {
     "@assemblyscript/loader": "^0.28.9",
     "css-select": "^5.1.0",
-    "htmlparser2": "^10.1.0"
+    "parse5": "^7.1.2"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.1.0",

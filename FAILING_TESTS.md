@@ -16,10 +16,4 @@ implementations.
 
 ## test-react-source (packages/test-react-source)
 
-| File | Test | Reason |
-|------|------|--------|
-| `packages/react/src/__tests__/ReactClassEquivalence-test.js` | `tests the same thing for es6 classes and CoffeeScript` | Spawns a nested Jest process that fails in the lazy-dom environment |
-| `packages/react/src/__tests__/ReactClassEquivalence-test.js` | `tests the same thing for es6 classes and TypeScript` | Same as above |
-| `packages/react-dom/src/__tests__/ReactDOMOption-test.js` | `generates a warning and hydration error when an invalid nested tag is used as a child` | Invalid nesting detection difference |
-| `packages/react-dom/src/__tests__/ReactRenderDocument-test.js` | `with new explicit hydration API > should not be able to switch root constructors` | Document-level rendering difference |
-| `packages/react-dom/src/__tests__/ReactDOMSelection-test.internal.js` | `returns correctly for fuzz test` | Selection API difference |
+No failing tests.
