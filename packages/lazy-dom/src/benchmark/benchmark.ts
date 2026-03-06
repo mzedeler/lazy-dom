@@ -16,9 +16,19 @@ import { reactDeepRender, reactDeepRenderWithSnapshot, reactDeepRenderRerender }
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+// Preserve native Event so tinybench's internal EventTarget works
+const NativeEvent = globalThis.Event
+
 const bench = new Bench({ time: 200 })
 
-const lazyDomOptions = { beforeAll: () => { lazyDom() } }
+const lazyDomOptions = {
+  beforeAll: () => {
+    lazyDom()
+    // Restore native Event — tinybench extends native EventTarget internally
+    // and its dispatchEvent rejects non-native Event instances
+    globalThis.Event = NativeEvent
+  }
+}
 const JSDOMOptions = { beforeAll: () => {
   const dom = new JSDOM(``, {
     url: "https://example.org/",
