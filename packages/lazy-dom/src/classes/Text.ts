@@ -3,6 +3,7 @@ import { NodeTypes } from "../types/NodeTypes"
 import valueNotSetError from "../utils/valueNotSetError"
 import { CharacterData } from "./CharacterData"
 import { notifyMutation } from "./mutationNotify"
+import { Range } from "./Range"
 
 class TextStore  {
   data: Future<string> = () => {
@@ -70,11 +71,10 @@ export class Text extends CharacterData {
       throw new Error('INDEX_SIZE_ERR')
     }
     const newData = this.data.substring(offset)
-    this.data = this.data.substring(0, offset)
 
     const newText = this.ownerDocument.createTextNode(newData)
 
-    // Insert after this node in the parent
+    // Per DOM spec order: insert new node, adjust ranges, then truncate data
     const parent = this.parentNode
     if (parent) {
       const nextSib = this.nextSibling
@@ -83,7 +83,14 @@ export class Text extends CharacterData {
       } else {
         parent.appendChild(newText)
       }
+
+      // Adjust live Range boundary points that reference this text node
+      // past the split point — move them to the new node
+      Range._notifyTextSplit(this, newText, offset)
     }
+
+    // Truncate this node's data to only the portion before the split point
+    this.data = this.data.substring(0, offset)
 
     return newText
   }

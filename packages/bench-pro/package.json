@@ -5,7 +5,8 @@
   "scripts": {
     "compare": "tsx src/compare.ts",
     "typecheck": "tsc --noEmit",
-    "test": "ls ..; cd ../../pro; npx jest --testEnvironment=jest-environment-lazy-dom"
+    "test:lazydom": "ls ..; cd ../../pro; npx jest --testEnvironment=jest-environment-lazy-dom",
+    "test:jsdom": "ls ..; cd ../../pro; npx jest"
   },
   "devDependencies": {
     "@types/node": "^20.12.11",

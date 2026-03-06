@@ -51,7 +51,7 @@ export class Range {
 
   /**
    * Called when a child node is inserted into a parent.
-   * Adjusts boundary points: if offset >= child index, increment.
+   * Adjusts boundary points: if offset > child index, increment.
    */
   static _notifyChildInserted(parent: Node, childIndex: number) {
     if (liveRanges.size === 0) return
@@ -61,6 +61,26 @@ export class Range {
       }
       if (range.endContainer === parent && range.endOffset > childIndex) {
         range.endOffset++
+      }
+    }
+  }
+
+  /**
+   * Called when a Text node is split via splitText().
+   * Per DOM spec: for each live Range whose start/end node is the original
+   * text node and offset > split point, move the boundary to the new node
+   * with the offset adjusted by subtracting the split point.
+   */
+  static _notifyTextSplit(originalNode: Node, newNode: Node, offset: number) {
+    if (liveRanges.size === 0) return
+    for (const range of liveRanges) {
+      if (range.startContainer === originalNode && range.startOffset > offset) {
+        range.startContainer = newNode
+        range.startOffset -= offset
+      }
+      if (range.endContainer === originalNode && range.endOffset > offset) {
+        range.endContainer = newNode
+        range.endOffset -= offset
       }
     }
   }

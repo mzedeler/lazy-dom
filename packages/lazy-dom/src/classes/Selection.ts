@@ -4,6 +4,10 @@ import type { Range } from "./Range"
 const DOCUMENT_POSITION_FOLLOWING = 0x04
 const DOCUMENT_POSITION_CONTAINED_BY = 0x10
 
+const DIRECTION_FORWARDS = 1
+const DIRECTION_BACKWARDS = -1
+const DIRECTION_DIRECTIONLESS = 0
+
 // Lazy import to avoid circular dependency (Selection → Range → Node → ... → Document → Window → Selection)
 function createRange(): Range {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -12,57 +16,74 @@ function createRange(): Range {
 }
 
 export class Selection {
-  private _ranges: Range[] = []
-  private _anchorNode: Node | null = null
-  private _anchorOffset = 0
-  private _focusNode: Node | null = null
-  private _focusOffset = 0
+  private _range: Range | null = null
+  private _direction = DIRECTION_DIRECTIONLESS
 
-  get anchorNode(): Node | null { return this._anchorNode }
-  get anchorOffset(): number { return this._anchorOffset }
-  get focusNode(): Node | null { return this._focusNode }
-  get focusOffset(): number { return this._focusOffset }
-  get rangeCount(): number { return this._ranges.length }
+  get anchorNode(): Node | null {
+    if (!this._range) return null
+    return this._direction === DIRECTION_BACKWARDS
+      ? this._range.endContainer
+      : this._range.startContainer
+  }
+
+  get anchorOffset(): number {
+    if (!this._range) return 0
+    return this._direction === DIRECTION_BACKWARDS
+      ? this._range.endOffset
+      : this._range.startOffset
+  }
+
+  get focusNode(): Node | null {
+    if (!this._range) return null
+    return this._direction === DIRECTION_BACKWARDS
+      ? this._range.startContainer
+      : this._range.endContainer
+  }
+
+  get focusOffset(): number {
+    if (!this._range) return 0
+    return this._direction === DIRECTION_BACKWARDS
+      ? this._range.startOffset
+      : this._range.endOffset
+  }
+
+  get rangeCount(): number {
+    return this._range ? 1 : 0
+  }
 
   get isCollapsed(): boolean {
-    return this._anchorNode === this._focusNode && this._anchorOffset === this._focusOffset
+    if (!this._range) return true
+    return this._range.collapsed
   }
 
   get type(): string {
-    if (this._ranges.length === 0) return "None"
-    return this.isCollapsed ? "Caret" : "Range"
+    if (!this._range) return "None"
+    return this._range.collapsed ? "Caret" : "Range"
+  }
+
+  /**
+   * Associates a range with this selection.
+   * Modeled after JSDOM's _associateRange pattern.
+   */
+  private _associateRange(newRange: Range | null, direction?: number) {
+    this._range = newRange
+    this._direction = direction ?? (newRange === null ? DIRECTION_DIRECTIONLESS : DIRECTION_FORWARDS)
   }
 
   addRange(range: Range) {
-    this._ranges.push(range)
-    if (!this._anchorNode) {
-      this._anchorNode = range.startContainer
-      this._anchorOffset = range.startOffset
-      this._focusNode = range.endContainer
-      this._focusOffset = range.endOffset
-    }
+    if (this._range) return // Only allow one range, matching JSDOM behavior
+    this._associateRange(range)
   }
 
   removeRange(range: Range) {
-    const idx = this._ranges.indexOf(range)
-    if (idx === -1) {
+    if (this._range !== range) {
       throw new DOMException("The given range is not in the selection.", "NotFoundError")
     }
-    this._ranges.splice(idx, 1)
-    if (this._ranges.length === 0) {
-      this._anchorNode = null
-      this._anchorOffset = 0
-      this._focusNode = null
-      this._focusOffset = 0
-    }
+    this._associateRange(null)
   }
 
   removeAllRanges() {
-    this._ranges.length = 0
-    this._anchorNode = null
-    this._anchorOffset = 0
-    this._focusNode = null
-    this._focusOffset = 0
+    this._associateRange(null)
   }
 
   empty() {
@@ -70,23 +91,21 @@ export class Selection {
   }
 
   getRangeAt(index: number): Range {
-    if (index < 0 || index >= this._ranges.length) {
+    if (index !== 0 || !this._range) {
       throw new DOMException("Index out of range", "IndexSizeError")
     }
-    return this._ranges[index]
+    return this._range
   }
 
   setPosition(node: Node | null, offset = 0) {
-    this.removeAllRanges()
-    if (!node) return
-    this._anchorNode = node
-    this._anchorOffset = offset
-    this._focusNode = node
-    this._focusOffset = offset
+    if (!node) {
+      this._associateRange(null)
+      return
+    }
     const range = createRange()
     range.setStart(node, offset)
     range.setEnd(node, offset)
-    this._ranges.push(range)
+    this._associateRange(range)
   }
 
   collapse(node: Node | null, offset = 0) {
@@ -94,56 +113,67 @@ export class Selection {
   }
 
   extend(node: Node, offset = 0) {
-    this._focusNode = node
-    this._focusOffset = offset
-    if (this._ranges.length > 0) {
-      const range = this._ranges[0]
-      if (this._anchorNode === node) {
-        if (offset >= this._anchorOffset) {
-          range.setEnd(node, offset)
-        } else {
-          range.setStart(node, offset)
-        }
-      } else if (this._anchorNode) {
-        const pos = this._anchorNode.compareDocumentPosition(node)
-        if (pos & DOCUMENT_POSITION_FOLLOWING || pos & DOCUMENT_POSITION_CONTAINED_BY) {
-          range.setEnd(node, offset)
-        } else {
-          range.setStart(node, offset)
-        }
+    if (!this._range) return
+    const anchor = this.anchorNode
+    const anchorOff = this.anchorOffset
+    if (!anchor) return
+
+    const range = createRange()
+    let newDirection: number
+
+    if (anchor === node) {
+      if (offset >= anchorOff) {
+        range.setStart(anchor, anchorOff)
+        range.setEnd(node, offset)
+        newDirection = DIRECTION_FORWARDS
+      } else {
+        range.setStart(node, offset)
+        range.setEnd(anchor, anchorOff)
+        newDirection = DIRECTION_BACKWARDS
+      }
+    } else {
+      const pos = anchor.compareDocumentPosition(node)
+      if (pos & DOCUMENT_POSITION_FOLLOWING || pos & DOCUMENT_POSITION_CONTAINED_BY) {
+        range.setStart(anchor, anchorOff)
+        range.setEnd(node, offset)
+        newDirection = DIRECTION_FORWARDS
+      } else {
+        range.setStart(node, offset)
+        range.setEnd(anchor, anchorOff)
+        newDirection = DIRECTION_BACKWARDS
       }
     }
+    this._associateRange(range, newDirection)
   }
 
   setBaseAndExtent(aNode: Node, aOffset: number, fNode: Node, fOffset: number) {
-    this.removeAllRanges()
-    this._anchorNode = aNode
-    this._anchorOffset = aOffset
-    this._focusNode = fNode
-    this._focusOffset = fOffset
     const range = createRange()
+    let direction: number
     if (aNode === fNode) {
       range.setStart(aNode, Math.min(aOffset, fOffset))
       range.setEnd(aNode, Math.max(aOffset, fOffset))
+      direction = aOffset <= fOffset ? DIRECTION_FORWARDS : DIRECTION_BACKWARDS
     } else {
       const pos = aNode.compareDocumentPosition(fNode)
       if (pos & DOCUMENT_POSITION_FOLLOWING || pos & DOCUMENT_POSITION_CONTAINED_BY) {
         range.setStart(aNode, aOffset)
         range.setEnd(fNode, fOffset)
+        direction = DIRECTION_FORWARDS
       } else {
         range.setStart(fNode, fOffset)
         range.setEnd(aNode, aOffset)
+        direction = DIRECTION_BACKWARDS
       }
     }
-    this._ranges.push(range)
+    this._associateRange(range, direction)
   }
 
   collapseToStart() {
-    if (this._ranges.length > 0) this.setPosition(this._ranges[0].startContainer, this._ranges[0].startOffset)
+    if (this._range) this.setPosition(this._range.startContainer, this._range.startOffset)
   }
 
   collapseToEnd() {
-    if (this._ranges.length > 0) this.setPosition(this._ranges[0].endContainer, this._ranges[0].endOffset)
+    if (this._range) this.setPosition(this._range.endContainer, this._range.endOffset)
   }
 
   selectAllChildren(node: Node) {
@@ -154,35 +184,34 @@ export class Selection {
   }
 
   deleteFromDocument() {
-    for (const range of this._ranges) {
-      range.deleteContents()
+    if (this._range) {
+      this._range.deleteContents()
     }
   }
 
   containsNode(node: Node, allowPartial = false): boolean {
-    if (this._ranges.length === 0) return false
+    if (!this._range) return false
 
     const nodeRange = createRange()
     nodeRange.selectNode(node)
 
-    for (const range of this._ranges) {
-      if (!range.startContainer || !range.endContainer) continue
+    const range = this._range
+    if (!range.startContainer || !range.endContainer) return false
 
-      // Check if range fully contains nodeRange
-      const startCompare = range.compareBoundaryPoints(0 /* START_TO_START */, nodeRange)
-      const endCompare = range.compareBoundaryPoints(2 /* END_TO_END */, nodeRange)
+    // Check if range fully contains nodeRange
+    const startCompare = range.compareBoundaryPoints(0 /* START_TO_START */, nodeRange)
+    const endCompare = range.compareBoundaryPoints(2 /* END_TO_END */, nodeRange)
 
-      if (startCompare <= 0 && endCompare >= 0) {
+    if (startCompare <= 0 && endCompare >= 0) {
+      return true
+    }
+
+    if (allowPartial) {
+      // Check for overlap: range start before nodeRange end AND range end after nodeRange start
+      const startToEnd = range.compareBoundaryPoints(3 /* END_TO_START */, nodeRange)
+      const endToStart = range.compareBoundaryPoints(1 /* START_TO_END */, nodeRange)
+      if (startToEnd <= 0 && endToStart >= 0) {
         return true
-      }
-
-      if (allowPartial) {
-        // Check for overlap: range start before nodeRange end AND range end after nodeRange start
-        const startToEnd = range.compareBoundaryPoints(3 /* END_TO_START */, nodeRange)
-        const endToStart = range.compareBoundaryPoints(1 /* START_TO_END */, nodeRange)
-        if (startToEnd <= 0 && endToStart >= 0) {
-          return true
-        }
       }
     }
 
@@ -190,11 +219,11 @@ export class Selection {
   }
 
   modify(alter: string, direction: string, granularity: string) {
-    if (this._ranges.length === 0) return
+    if (!this._range) return
 
     const isForward = direction === 'forward' || direction === 'right'
-    const focusNode = this._focusNode
-    const focusOffset = this._focusOffset
+    const focusNode = this.focusNode
+    const focusOffset = this.focusOffset
     if (!focusNode) return
 
     let newNode: Node = focusNode
@@ -222,7 +251,7 @@ export class Selection {
   }
 
   toString(): string {
-    return this._ranges.map(r => r.toString()).join('')
+    return this._range ? this._range.toString() : ''
   }
 }
 
