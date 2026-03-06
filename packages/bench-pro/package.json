@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "compare": "tsx src/compare.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "ls ..; cd ../../pro; npx jest --testEnvironment=jest-environment-lazy-dom"
   },
   "devDependencies": {
     "@types/node": "^20.12.11",
