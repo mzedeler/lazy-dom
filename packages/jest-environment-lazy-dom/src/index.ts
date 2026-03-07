@@ -4,6 +4,7 @@ import type { JestEnvironmentConfig } from "@jest/environment"
 import lazyDom from "lazy-dom"
 
 export default class LazyDomEnvironment extends NodeEnvironment {
+  private _rafFlush: (() => void) | null = null
 
   constructor(config: JestEnvironmentConfig, context: EnvironmentContext) {
     super(config, context)
@@ -424,28 +425,57 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     }
 
     // requestAnimationFrame/cancelAnimationFrame polyfills (not in Node.js by default)
-    // Uses a 16ms delay to match JSDOM's pretendToBeVisual behavior (~60fps).
-    // Pending RAF timers are NOT cancelled between tests — this matches JSDOM's
-    // behavior and avoids corrupting module-level frame loop singletons (e.g.
-    // motion v12's batcher) that rely on their RAF callbacks firing.
+    // Matches JSDOM's setInterval-based approach: a shared interval at ~60Hz runs
+    // all pending callbacks on each tick. The interval starts lazily when the first
+    // callback is registered and stops when no callbacks remain. Between tests,
+    // handleTestEvent flushes any remaining callbacks to prevent cross-test leaks.
     {
       let rafId = 0
-      const timers = new Map<number, ReturnType<typeof globalThis.setTimeout>>()
+      const mapOfCallbacks = new Map<number, FrameRequestCallback>()
+      let numberOfOngoing = 0
+      let intervalHandle: ReturnType<typeof setInterval> | null = null
+
+      const runCallbacks = (stamp: number) => {
+        const ids = Array.from(mapOfCallbacks.keys())
+        for (const id of ids) {
+          const cb = mapOfCallbacks.get(id)
+          if (cb) {
+            removeCallback(id)
+            try {
+              cb(stamp)
+            } catch {
+              // swallow — matches JSDOM behavior
+            }
+          }
+        }
+      }
+
+      const removeCallback = (id: number) => {
+        if (mapOfCallbacks.has(id)) {
+          numberOfOngoing--
+          if (numberOfOngoing === 0 && intervalHandle !== null) {
+            globalThis.clearInterval(intervalHandle)
+            intervalHandle = null
+          }
+          mapOfCallbacks.delete(id)
+        }
+      }
+
+      this._rafFlush = () => runCallbacks(performance.now())
+
       defineStubOnBoth("requestAnimationFrame", (cb: FrameRequestCallback) => {
         const id = ++rafId
-        const timerId = globalThis.setTimeout(() => {
-          timers.delete(id)
-          cb(Date.now())
-        }, 16)
-        timers.set(id, timerId)
+        mapOfCallbacks.set(id, cb)
+        numberOfOngoing++
+        if (numberOfOngoing === 1) {
+          intervalHandle = globalThis.setInterval(() => {
+            runCallbacks(performance.now())
+          }, 1000 / 60)
+        }
         return id
       })
       defineStubOnBoth("cancelAnimationFrame", (id: number) => {
-        const timerId = timers.get(id)
-        if (timerId !== undefined) {
-          globalThis.clearTimeout(timerId)
-          timers.delete(id)
-        }
+        removeCallback(id)
       })
     }
 

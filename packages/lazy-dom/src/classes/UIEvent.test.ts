@@ -64,12 +64,6 @@ describe('Event constructors', () => {
       expect(evt.isComposing).to.equal(false)
     })
 
-    it('has getTargetRanges method', function () {
-      if (!globalThis.__LAZY_DOM__) this.skip()
-      const evt = new InputEvent('input')
-      expect(evt.getTargetRanges()).to.deep.equal([])
-    })
-
     it('passes isComposing from init dict', () => {
       const evt = new InputEvent('input', { isComposing: true })
       expect(evt.isComposing).to.equal(true)

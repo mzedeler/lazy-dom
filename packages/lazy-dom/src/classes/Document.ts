@@ -343,6 +343,14 @@ export class Document implements EventTarget {
     return 'complete'
   }
 
+  get visibilityState(): string {
+    return 'visible'
+  }
+
+  get hidden(): boolean {
+    return false
+  }
+
   get scrollingElement(): Element {
     return this.documentElement
   }

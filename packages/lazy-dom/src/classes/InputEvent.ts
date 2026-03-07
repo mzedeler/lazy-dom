@@ -11,7 +11,6 @@ interface InputEventInit {
   inputType?: string
   isComposing?: boolean
   dataTransfer?: unknown
-  targetRanges?: unknown[]
 }
 
 export class InputEvent extends UIEvent {
@@ -19,7 +18,6 @@ export class InputEvent extends UIEvent {
   readonly inputType: string
   readonly isComposing: boolean
   readonly dataTransfer: unknown
-  private readonly _targetRanges: unknown[]
 
   constructor(type?: EventType, eventInitDict?: InputEventInit) {
     super(type, eventInitDict)
@@ -27,10 +25,5 @@ export class InputEvent extends UIEvent {
     this.inputType = eventInitDict?.inputType ?? ''
     this.isComposing = eventInitDict?.isComposing ?? false
     this.dataTransfer = eventInitDict?.dataTransfer ?? null
-    this._targetRanges = eventInitDict?.targetRanges ?? []
-  }
-
-  getTargetRanges(): unknown[] {
-    return this._targetRanges
   }
 }
