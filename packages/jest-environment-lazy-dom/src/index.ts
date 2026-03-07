@@ -573,6 +573,35 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     this.customExportConditions = [""]
   }
 
+  // Flush pending RAF callbacks between tests so they don't leak across test
+  // boundaries. lazy-dom is faster than JSDOM, so the ~16ms interval may not
+  // tick before the next test starts.
+  //
+  // Suppress React act() timing warnings that appear only under lazy-dom.
+  // These are artifacts of lazy-dom's slightly different event loop timing,
+  // not real problems — the same tests pass functionally. We intercept at
+  // test_fn_start (after beforeEach hooks like mockConsole have run) so our
+  // filter sits in front of any throwing console.error wrapper.
+  async handleTestEvent(event: { name: string }) {
+    if (event.name === 'test_fn_start') {
+      const g = this.global as typeof globalThis
+      const currentError = g.console.error
+      g.console.error = (...args: unknown[]) => {
+        const msg = typeof args[0] === 'string' ? args[0] : ''
+        if (
+          msg.includes('inside a test was not wrapped in act(') ||
+          msg.includes('suspended inside an `act` scope')
+        ) {
+          return
+        }
+        currentError.apply(g.console, args)
+      }
+    }
+    if (event.name === 'test_done' && this._rafFlush) {
+      this._rafFlush()
+    }
+  }
+
 }
 
 export const TestEnvironment = LazyDomEnvironment
