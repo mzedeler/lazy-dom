@@ -1,324 +1,285 @@
-# Performance Call-Chain Analysis: `getChildNodesArray()`
+# Performance Analysis
 
-## The Critical Chain (shared by nearly all queries)
+## Real-World Benchmark: bench-pro
+
+Benchmark run against a production React application with 465 Jest test suites, comparing `jest-fixed-jsdom` vs `jest-environment-lazy-dom`. Both run `--runInBand --forceExit`.
+
+### Summary (2026-03-07, after adding ResizeObserver/IntersectionObserver stubs)
+
+| Metric | Value |
+|--------|-------|
+| Total suites | 465 |
+| Passing in both | 449 |
+| Failing/missing in lazy-dom | 16 |
+| JSDOM total time | 221.1s |
+| lazy-dom total time | 324.6s |
+| **Overall speedup** | **0.7x (47% slower)** |
+
+lazy-dom is currently **slower overall**. Code path analysis (see below) shows the bottleneck is per-operation WASM bridge overhead, not initialization.
+
+Adding `ResizeObserver`/`IntersectionObserver` stubs fixed 5 of the 7 original severe outliers (e.g., `deCamelCaseObjectKeys` 2.0s → 168ms, `useBreakpointObserver` 2.0s → 205ms) but did not change the overall ratio. 41 tests still balloon to ~2s from < 1s in JSDOM — these likely have a different root cause (possibly missing APIs causing `waitFor()` timeouts).
+
+### Performance by Test Weight Class
+
+| Weight class (JSDOM time) | Suites | lazy-dom faster | Aggregate JSDOM | Aggregate lazy-dom | Ratio |
+|---------------------------|--------|-----------------|-----------------|--------------------|----|
+| Heavy (>= 1s) | 39 | 36 (92%) | 85.5s | 64.5s | **1.32x** |
+| Medium-heavy (500ms-1s) | 79 | 42 (53%) | 52.4s | 67.7s | 0.77x |
+| Medium (200ms-500ms) | 179 | 16 (9%) | 68.5s | 163.3s | 0.42x |
+| Light (< 200ms) | 153 | 0 (0%) | 13.9s | 26.5s | 0.52x |
+
+**Key insight**: lazy-dom wins decisively on heavy tests (1.32x faster) where lazy evaluation skips intermediate DOM states. It loses on lighter tests due to per-operation WASM bridge overhead. The medium bracket (0.42x) is hit hardest — enough DOM work for overhead to accumulate, not enough redundant mutations for laziness to help.
+
+### Speedup Distribution (450 passing suites)
+
+| Bracket | Count | Pct |
+|---------|-------|-----|
+| >= 2.0x (lazy-dom much faster) | 3 | 0.7% |
+| 1.5x - 2.0x | 10 | 2.2% |
+| 1.2x - 1.5x | 30 | 6.7% |
+| 1.0x - 1.2x (about equal) | 51 | 11.3% |
+| 0.8x - 1.0x (lazy-dom slightly slower) | 97 | 21.6% |
+| 0.5x - 0.8x (lazy-dom slower) | 186 | 41.3% |
+| < 0.5x (lazy-dom much slower) | 73 | 16.2% |
+
+94 suites faster, 356 slower.
+
+### Top 10 lazy-dom Wins
+
+| Test file | JSDOM | lazy-dom | Speedup |
+|-----------|-------|----------|---------|
+| CompanyUploadTagsView.test.tsx | 4.2s | 1.2s | 3.4x (71%) |
+| RegisterPage.test.tsx | 2.1s | 948ms | 2.2x (55%) |
+| UserAlerts.test.tsx | 1.7s | 770ms | 2.2x (55%) |
+| DocumentResult.test.tsx | 1.1s | 601ms | 1.9x (46%) |
+| SearchPage.test.tsx | 7.6s | 4.4s | 1.7x (42%) |
+| ProductsMenu.test.tsx | 1.9s | 1.1s | 1.7x (42%) |
+| utils.test.ts (HelpAndFeedback) | 241ms | 145ms | 1.7x (40%) |
+| DocumentInfo.test.tsx | 3.3s | 2.0s | 1.7x (40%) |
+| UserNote.test.tsx | 997ms | 639ms | 1.6x (36%) |
+| ContentAreaHeader.test.tsx | 1.1s | 711ms | 1.6x (37%) |
+
+### Severe Regressions (> 5x slower)
+
+| Test file | JSDOM | lazy-dom | Slowdown |
+|-----------|-------|----------|----------|
+| deCamelCaseObjectKeys.test.ts | 100ms | 2.0s | 0.05x (1904% slower) |
+| useBreakpointObserver.test.ts | 127ms | 2.0s | 0.1x (1470% slower) |
+| reducer.test.ts (DocumentSearch) | 168ms | 1.9s | 0.1x (1058% slower) |
+| LoadMore.test.tsx (CompanyUploads) | 231ms | 2.1s | 0.1x (797% slower) |
+| LoadMore.test.tsx | 236ms | 2.0s | 0.1x (767% slower) |
+| MainWidgetLayout.test.tsx (NoMarginWithSidebar) | 289ms | 2.1s | 0.1x (625% slower) |
+| usePageTitle.test.tsx | 325ms | 2.2s | 0.1x (577% slower) |
+
+These all show a similar pattern: tests that take 100-300ms in JSDOM balloon to ~2s in lazy-dom. The consistent ~2s ceiling strongly suggests `waitFor()` timeouts (default 1000ms + retry) caused by missing API stubs — see analysis below.
+
+### Failing Suites (15)
+
+11 suites under `app/javascript/App/tests/` (routing/page-level integration tests) all fail. These likely depend on APIs lazy-dom doesn't implement (e.g., navigation, History API features, or specific global stubs).
+
+Other failures:
+- `ProductShortcutFavouritesList.test.tsx`
+- `BookInfoTab.test.tsx`
+- `UnifiedDocumentNavigationbar.test.tsx`
+- `applyV2UserHighlight.test.ts`
+
+### Root Cause Analysis: Per-Operation WASM Bridge Overhead
+
+The initial hypothesis was that initialization overhead (~100-200ms per test) explained the regression. **Code path analysis disproves this.** The overhead scales with test complexity, proving it's per-operation, not per-initialization:
+
+| Weight class | JSDOM avg | lazy-dom avg | Overhead | Overhead % |
+|---|---|---|---|---|
+| Light (< 200ms) | 90ms | 173ms | 83ms | 92% |
+| Medium (200-500ms) | 383ms | 912ms | 529ms | 138% |
+| Med-heavy (500ms-1s) | 663ms | 857ms | 194ms | 29% |
+| Heavy (>= 1s) | 2192ms | 1654ms | -538ms | -25% (win) |
+
+If initialization were the bottleneck, the overhead would be **constant** across brackets. Instead, the medium bracket has 6.4x the overhead of the light bracket. The overhead is proportional to the amount of DOM read operations — specifically, tree traversals via css-select.
+
+#### What initialization actually costs
+
+Traced from `new LazyDomEnvironment()` through all code paths:
+
+1. **WASM instantiation** (one-time per process, not per test file):
+   - `wasmLoader.ts` calls `readFileSync()` (14KB) + `instantiateSync()` at module import
+   - Cached by Node.js module system across all test files in `--runInBand` mode
+   - Cost: ~10-50ms total, amortized to near-zero per file
+
+2. **`lazyDom()` call** (per test file):
+   - `new Window()`: EventTargetStore + Selection — trivial object allocation
+   - `new Document()`: one WASM call (`createDocument()`)
+   - Document tree (html/head/body): deferred via thunks until first `document.body` access
+   - Cost: ~1-3ms
+
+3. **Global patching** (per test file):
+   - ~50 `Object.defineProperty()` calls for DOM classes, stubs, timer polyfills
+   - Cost: ~1-2ms
+
+4. **Module-level side effects** (one-time per process):
+   - `Element.ts`: `new CssSelectAdapter()` — empty state object
+   - `HTMLElement.ts`: `defineStringReflections()` — prototype mutations
+   - `Window.ts`: Set/Record literals for CSS defaults
+   - Cost: negligible
+
+**Total per-test-file initialization: ~3-5ms.** This is comparable to JSDOM's `jest-fixed-jsdom` environment setup (which creates a full JSDOM instance per file). Initialization is NOT the bottleneck.
+
+#### The real bottleneck: WASM round-trips in child node traversal
+
+The hot path is `NodeStore.getChildNodesArray()`, called on every node during every css-select tree traversal:
 
 ```
-screen.queryBy*(...)
-  → @testing-library/dom internals
-    → Element.querySelector() / querySelectorAll() / matches()
-      → css-select (CSSselect.selectAll/selectOne/is)
-        → CssSelectAdapter.getChildren()     — calls node.childNodes.values()
-        → CssSelectAdapter.findAll/findOne()  — recursively calls getChildren()
-        → CssSelectAdapter.getText()          — recursively calls getChildren()
-          → ChildNodeList.values()
-            → nodeStore.getChildNodesArray()
+CssSelectAdapter.getChildren(node)           -- src/utils/CssSelectAdapter.ts:12
+  → Array.from(node.childNodes)              -- iterates ChildNodeList
+    → ChildNodeList[Symbol.iterator]()       -- src/classes/Node/ChildNodeList.ts:63
+      → NodeStore.getChildNodesArray()       -- src/classes/Node/NodeStore.ts:25
+        → nodeOps.getChildIds(wasmId)        -- src/wasm/nodeOps.ts:66
+          → wasm.getChildIds(nodeId)         -- JS→WASM call
+          → wasm.__getArray(ptr)             -- copy array from WASM linear memory → JS
+        → for each id:
+            NodeRegistry.getNodeOrThrow(id)  -- Map.get() per child
+        → new Array(ids.length)              -- allocate result array
 ```
 
-## Which testing-library calls trigger it
+**In JSDOM**, `getChildren()` returns a JavaScript array that's already in memory. Zero serialization, zero bridge crossing.
 
-| Call | How it reaches `getChildNodesArray()` |
-|------|---------------------------------------|
-| `screen.queryByText()` | querySelectorAll → findAll/getText → getChildren → `.values()` |
-| `screen.queryByRole()` | querySelectorAll → findAll/getText → getChildren → `.values()` |
-| `screen.queryByTestId()` | querySelector with attribute selector → same chain |
-| `screen.queryByTitle()` | querySelector with attribute selector → same chain |
-| `screen.queryByAltText()` | querySelector with attribute selector → same chain |
-| `screen.queryByPlaceholderText()` | querySelector with attribute selector → same chain |
-| `screen.queryByLabelText()` | querySelector → same chain |
-| `screen.queryByDisplayValue()` | querySelector → same chain |
-| `render()` (react) | React reconciler accesses `childNodes[i]` and `.length` during DOM mutations, which hit `getChildNode()` and `getChildNodesArray()` respectively |
-| `screen.debug()` | getText → getChildren → `.values()` |
+**In lazy-dom**, every `getChildren()` call requires:
+- 1 WASM function call (JS→WASM context switch)
+- 1 array copy from WASM linear memory to JavaScript heap
+- N `Map.get()` lookups (one per child node)
+- 1 new Array allocation
+- Plus `Array.from()` in `CssSelectAdapter.getChildren()` copies the array again
 
-Every query traverses the DOM tree recursively via `CssSelectAdapter.getChildren()` (`src/utils/CssSelectAdapter.ts:13`), which calls `node.childNodes.values()`, which calls `getChildNodesArray()`. The recursive `findAll()`/`findOne()`/`getText()` methods repeat this for every node visited.
+For a tree with 100 nodes, a single `querySelector()` call traverses the tree via `findOne()`/`findAll()`/`getText()`, calling `getChildNodesArray()` for **every node visited**:
+- ~100 WASM calls to `getChildIds()`
+- ~100 array copies from WASM memory
+- ~300 `Map.get()` lookups (avg 3 children per node)
+- ~100 array allocations
+- ~100 `Array.from()` copies in the adapter
+
+A typical React test that calls `render()` + 3-4 `screen.getBy*()` queries does this traversal 4-5 times. With 50-200 nodes in the tree, that's **500-1000 WASM round-trips per test**.
+
+#### `nextSibling`/`previousSibling`: equally expensive
+
+These properties are accessed during TreeWalker traversal and css-select sibling checks:
+
+```typescript
+// src/classes/Node/Node.ts:112-118
+get nextSibling(): Node | null {
+    const parentId = nodeOps.getParentId(this.wasmId)  // WASM call 1
+    const siblingIds = nodeOps.getChildIds(parentId)   // WASM call 2 + array copy
+    const myIndex = siblingIds.indexOf(this.wasmId)    // O(n) linear scan
+    return NodeRegistry.getNode(siblingIds[myIndex + 1]) ?? null  // Map lookup
+}
+```
+
+In JSDOM: one pointer dereference. In lazy-dom: 2 WASM calls + array copy + linear scan.
+
+#### `appendChild()`: multiple WASM calls per mutation
+
+```typescript
+// src/classes/Node/Node.ts:235-267  (simplified)
+appendChild(node: Node) {
+    nodeOps.getParentId(node.wasmId)         // WASM call 1: check old parent
+    nodeOps.removeChild(oldParentId, ...)    // WASM call 2: remove from old parent
+    nodeOps.setParentId(node.wasmId, ...)    // WASM call 3: set new parent
+    nodeOps.appendChild(this.wasmId, ...)    // WASM call 4: add to children
+    this.ownerDocument.documentStore.connect(node)  // WASM call 5: connectSubtree
+}
+```
+
+5 WASM round-trips for a single `appendChild()`. React's reconciler calls this for every element it creates.
+
+#### Why child nodes are NOT lazily managed
+
+Despite the architecture claiming "all fields are `Future<T>` values", child nodes are **eagerly fetched from WASM on every access**. `NodeStore.getChildNodesArray()` directly calls WASM — there is no thunk chain, no memoization:
+
+```typescript
+// src/classes/Node/NodeStore.ts:25-32
+getChildNodesArray(): Node[] {
+    const ids = nodeOps.getChildIds(this.wasmId);  // Always hits WASM
+    const result: Node[] = new Array(ids.length);
+    for (let i = 0; i < ids.length; i++) {
+        result[i] = NodeRegistry.getNodeOrThrow(ids[i]);
+    }
+    return result;
+}
+```
+
+The lazy thunks (`Future<T>`) are only used for scalar properties: `ownerDocument`, `nodeValue`, element attributes, `tagName`, `style`. The most frequently accessed data — child node arrays — bypasses the lazy system entirely.
+
+#### Why heavy tests win despite all this
+
+Heavy tests (>= 1s, 1.32x faster) succeed because:
+1. They render **large** component trees with many mutations before any reads
+2. Lazy evaluation of scalar properties (attributes, text content) skips intermediate states
+3. The high ratio of writes-to-reads means thunk chains collapse efficiently
+4. The amortized cost of WASM structural operations is competitive with JSDOM for bulk work
+
+#### Why medium tests are worst
+
+Medium tests (200-500ms, 0.42x) are the worst bracket because:
+1. They render moderate component trees (enough DOM for overhead to accumulate)
+2. They **read immediately after writing**: render → query → assert → repeat
+3. Every query forces a full tree traversal through the WASM bridge
+4. Lazy evaluation provides no benefit (everything is read, so all thunks are forced)
+5. The WASM overhead is a pure tax with no lazy-evaluation payoff
+
+#### Severe outliers: missing observer APIs cause timeouts
+
+The 7 tests that balloon to ~2s share a pattern: their consistent timing suggests `waitFor()` timeouts (testing-library default: 1000ms) rather than slow execution.
+
+**Missing APIs confirmed by code search:**
+- `ResizeObserver` — not provided by lazy-dom or jest-environment-lazy-dom
+- `IntersectionObserver` — not provided by lazy-dom or jest-environment-lazy-dom
+
+Affected tests:
+- `useBreakpointObserver.test.ts` — likely uses `ResizeObserver`
+- `LoadMore.test.tsx` (x2) — likely uses `IntersectionObserver`
+- `MainWidgetLayout.test.tsx` — likely uses `ResizeObserver` for layout
+- `usePageTitle.test.tsx` — may use `MutationObserver` on `<title>`
+- `deCamelCaseObjectKeys.test.ts` — pure utility; may import a module that triggers observer-dependent initialization
+- `reducer.test.ts` — may import components with observer dependencies
+
+Tests that `waitFor()` for observer callbacks that never fire wait for the full timeout period, explaining the consistent ~2s (1000ms timeout + overhead + possible retry).
+
+### Priority Optimization Targets (revised)
+
+1. **Cache `getChildNodesArray()` results on the JS side** — Invalidate on structural mutations (`appendChild`, `removeChild`, `insertBefore`). This is the single highest-impact change: css-select calls this for every node in every traversal, and the child array rarely changes between consecutive reads. A dirty-flag + cached array would eliminate ~90% of WASM round-trips during queries.
+
+2. **Cache `nextSibling`/`previousSibling` as JS-side references** — Store direct Node references, updated on structural mutations. Eliminates 2 WASM calls + array copy + linear scan per access.
+
+3. **Provide `ResizeObserver`/`IntersectionObserver` stubs** in the jest environment — Fixes the ~2s outliers. Even no-op stubs that call callbacks synchronously would work.
+
+4. **Reduce `appendChild()` WASM calls** — Batch the 5 separate WASM calls into a single compound operation, or maintain parent/child state on the JS side with WASM as secondary storage.
+
+5. **Fix failing suites** — The 11 `App/tests/` failures likely share a root cause (missing routing/navigation API).
 
 ---
 
-## COMPREHENSIVE TRACE: ALL CODE PATHS TO `getChildNodesArray()` ON A NodeStore
+## Call-Chain Reference: `getChildNodesArray()` Code Paths
 
-### 1. DIRECT CALL SITES OF `getChildNodesArray()`
+### All direct call sites
 
-**File: `/home/mike/workspace/lazy-dom/src/classes/Node/ChildNodeList.ts`**
-- **Line 27**: `this.nodeStore.getChildNodesArray().length` (in `get length()`)
-- **Line 35**: `this.nodeStore.getChildNodesArray().forEach(...)` (in `forEach()`)
-- **Line 40**: `this.nodeStore.getChildNodesArray().map((_, i) => i)` (in `keys()`)
-- **Line 44**: `this.nodeStore.getChildNodesArray().map<[number, Node]>(...)` (in `entries()`)
-- **Line 48**: `this.nodeStore.getChildNodesArray()` (in `values()`)
+**`src/classes/Node/ChildNodeList.ts`:**
+- `forEach()` (line 44): `this.nodeStore.getChildNodesArray()`
+- `keys()` (line 52): `this.nodeStore.getChildNodesArray().map()`
+- `entries()` (line 56): `this.nodeStore.getChildNodesArray().map()`
+- `values()` (line 60): `this.nodeStore.getChildNodesArray()`
+- `[Symbol.iterator]()` (line 64): `this.nodeStore.getChildNodesArray()`
 
-**File: `/home/mike/workspace/lazy-dom/src/classes/Element.ts`**
-- **Line 68**: `this.nodeStore.getChildNodesArray().map((node: Node)...)` (in `get outerHTML`)
-- **Line 88**: `const children = this.nodeStore.getChildNodesArray()` (in `get textContent`)
+**`src/classes/Element.ts`:**
+- `get outerHTML`: `this.nodeStore.getChildNodesArray().map()`
+- `get textContent`: `this.nodeStore.getChildNodesArray()`
 
-**File: `/home/mike/workspace/lazy-dom/src/classes/Node/NodeStore.ts`**
-- **Line 37**: `return this._childNodes()[index];` (in `getChildNode()`)
-- **Line 41**: `return this._childNodes();` (in `getChildNodesArray()` itself - returns the thunk result)
+**`src/classes/Node/NodeStore.ts`:**
+- `getChildNode(index)` (line 19): `nodeOps.getChildId()` — single WASM call
+- `getChildNodesArray()` (line 25): `nodeOps.getChildIds()` — WASM call + array build
 
-### 2. DIRECT CALL SITES OF `getChildNode()`
+### Key files
 
-**File: `/home/mike/workspace/lazy-dom/src/classes/Node/ChildNodeList.ts`**
-- **Line 18**: `return target.nodeStore.getChildNode(index);` (in Proxy `get` trap for numeric indices)
-- **Line 31**: `return this.nodeStore.getChildNode(index) ?? null;` (in `item()`)
-
-### 3. PUBLIC API CALL CHAIN - FROM TESTING-LIBRARY APIs TO getChildNodesArray()
-
-#### Path 1: Via `childNodes` Iterator Access
-
-```
-screen.queryByText()/queryByRole()/getByText()/getByRole()
-    ↓
-@testing-library/dom internal search
-    ↓
-Uses css-select library via querySelector/querySelectorAll/matches
-    ↓
-Element.querySelector() / Element.querySelectorAll() / Element.matches()
-    [File: /home/mike/workspace/lazy-dom/src/classes/Element.ts, lines 188-197]
-    ↓
-CSSselect.selectOne() / CSSselect.selectAll() / CSSselect.is()
-    [Uses CssSelectAdapter]
-    ↓
-CssSelectAdapter methods (File: /home/mike/workspace/lazy-dom/src/utils/CssSelectAdapter.ts):
-    - getChildren() [line 13]: calls node.childNodes.values()
-    - findAll() [line 108-123]: recursively calls getChildren()
-    - findOne() [line 91-106]: recursively calls getChildren()
-    - getText() [line 125-137]: calls getChildren()
-    ↓
-node.childNodes (getter in Node class)
-    [File: /home/mike/workspace/lazy-dom/src/classes/Node/Node.ts, line 46-48]
-    Returns: this._childNodes (a ChildNodeList instance)
-    ↓
-ChildNodeList.values() / [Symbol.iterator]()
-    [File: /home/mike/workspace/lazy-dom/src/classes/Node/ChildNodeList.ts]
-    - values() [line 47-49]: calls getChildNodesArray().map()
-    - [Symbol.iterator]() [line 51-53]: calls nodeStore.childNodes()
-    ↓
-NodeStore.childNodes (getter)
-    [File: /home/mike/workspace/lazy-dom/src/classes/Node/NodeStore.ts, line 31-34]
-    Returns an iterator created from: toIterator(this._childNodes())
-    ↓
-TRIGGERS: getChildNodesArray() / getChildNode()
-```
-
-#### Path 2: Via Direct ChildNodeList Methods
-
-```
-user code: node.childNodes.forEach()/length/item()/entries()/keys()
-    [ChildNodeList public methods]
-    ↓
-ChildNodeList.forEach() [line 34-36]
-ChildNodeList.get length() [line 26-28]
-ChildNodeList.item() [line 30-32]
-ChildNodeList.entries() [line 43-45]
-ChildNodeList.keys() [line 39-41]
-    ↓
-All call: nodeStore.getChildNodesArray() or nodeStore.getChildNode()
-```
-
-#### Path 3: Via Proxy Numeric Access
-
-```
-user code: node.childNodes[0] / node.childNodes[1] / etc
-    [Proxy trap on ChildNodeList]
-    ↓
-ChildNodeList constructor Proxy get trap [line 13-22]
-    ↓
-target.nodeStore.getChildNode(index)
-    ↓
-Returns node at that index
-```
-
-#### Path 4: Via Element Properties
-
-```
-user code: element.outerHTML / element.textContent
-    ↓
-Element.get outerHTML() [line 62-81]
-Element.get textContent() [line 87-97]
-    [File: /home/mike/workspace/lazy-dom/src/classes/Element.ts]
-    ↓
-this.nodeStore.getChildNodesArray()
-    ↓
-Processes all child nodes for rendering/text extraction
-```
-
-#### Path 5: Via Document Subtree Traversal
-
-```
-Document operations like disconnect/connect
-    [File: /home/mike/workspace/lazy-dom/src/classes/Document.ts, line 31-46]
-    ↓
-subtree() function which walks:
-    nextNode.childNodes.forEach((childNode: Node) => stack.push(childNode))
-    ↓
-This accesses ChildNodeList.forEach()
-    ↓
-Which calls nodeStore.getChildNodesArray()
-```
-
-### 4. DETAILED CssSelectAdapter ANALYSIS
-
-**File: `/home/mike/workspace/lazy-dom/src/utils/CssSelectAdapter.ts`**
-
-The CssSelectAdapter is the critical bridge between css-select (used by querySelector/querySelectorAll) and child node traversal:
-
-```typescript
-// Line 13-22: getChildren() - PRIMARY ENTRY POINT
-getChildren<NV>(node: Node<NV>): Node[] {
-  const result: Node[] = []
-  const iterator = node.childNodes.values()  // CALLS ChildNodeList.values()
-  for (let { value, done } = iterator.next(); !done; { value, done } = iterator.next()) {
-    result.push(value)
-  }
-  return result
-}
-
-// Line 71-74: getSiblings()
-getSiblings(node: Node): Node[] {
-  const parent = this.getParent(node)
-  return parent ? this.getChildren(parent) : [node]  // CALLS getChildren()
-}
-
-// Line 91-106: findOne() - RECURSIVE
-findOne(test: NodeTest, nodes: Node[]): Node | null | undefined {
-  for(let i = 0, l = nodes.length; i < l && !node; i++){
-    if(test(nodes[i])){
-      node = nodes[i];
-    } else {
-      const childs = this.getChildren(nodes[i]);  // CALLS getChildren()
-      if(childs && childs.length > 0){
-        node = this.findOne(test, childs);  // RECURSIVE
-      }
-    }
-  }
-  return node;
-}
-
-// Line 108-123: findAll() - RECURSIVE
-findAll(test: NodeTest, nodes: Node[]): Node[] {
-  let result: Node[] = [];
-  for(let i = 0, j = nodes.length; i < j; i++){
-    if(test(nodes[i])) {
-      result.push(nodes[i]);
-    }
-    const children = this.getChildren(nodes[i]);  // CALLS getChildren()
-    if(children) {
-      result = result.concat(this.findAll(test, children));  // RECURSIVE
-    }
-  }
-  return result;
-}
-
-// Line 125-137: getText() - RECURSIVE
-getText(input: Node[] | Node): string | undefined {
-  if (Array.isArray(input)) {
-    return input.map(this.getText).join('')
-  }
-  if (this.isTag(input)) {
-    return this.getText(this.getChildren(input))  // CALLS getChildren()
-  }
-  if (input.nodeType === NodeTypes.TEXT_NODE) {
-    return input.nodeValue!
-  }
-}
-```
-
-### 5. TESTING-LIBRARY CALL PATTERNS
-
-**From `/home/mike/workspace/lazy-dom/test/testing-library-dom.test.ts`:**
-
-Testing-library uses the following APIs that ultimately hit getChildNodesArray():
-
-1. **`screen.queryByText(text)`** - Searches DOM for elements containing text
-   - Internally uses querySelectorAll → CssSelectAdapter.findAll() → getChildren() → getChildNodesArray()
-
-2. **`screen.getByText(regex)`** - Like queryByText but throws if not found
-   - Same path as queryByText
-
-3. **`screen.queryByTestId(id)`** - Searches for elements with data-testid attribute
-   - Uses querySelector with attribute selector
-
-4. **`screen.queryByRole(role)`** - Searches for elements with specific ARIA role
-   - Uses querySelectorAll with attribute selectors
-   - May iterate childNodes to check role compatibility
-
-5. **`screen.queryByTitle(title)`** - Searches for title attribute
-6. **`screen.queryByAltText(altText)`** - Searches for alt attribute
-7. **`screen.queryByPlaceholderText(text)`** - Searches for placeholder attribute
-8. **`screen.queryByLabelText(text)`** - Searches label relationships
-
-**From `/home/mike/workspace/lazy-dom/test/testing-library-react.test.ts`:**
-
-React testing library adds:
-- **`render(element)`** - Renders React component into DOM
-- **`cleanup()`** - Cleans up after tests
-- **`screen.debug()`** - Outputs DOM for debugging (uses getText from CssSelectAdapter)
-
-All of these eventually need to traverse the DOM tree, which requires accessing childNodes.
-
-### 6. KEY ITERATOR/TRAVERSAL POINTS
-
-**ChildNodeList Symbol.iterator (Line 51-53):**
-```typescript
-[Symbol.iterator]() {
-  return this.nodeStore.childNodes()  // Returns iterator via NodeStore.childNodes getter
-}
-```
-
-**NodeStore.childNodes getter (Line 31-34):**
-```typescript
-get childNodes(): Future<Iterator<Node<any>>> {
-  const arrayThunk = this._childNodes;
-  return () => toIterator(arrayThunk());  // Converts array to iterator
-}
-```
-
-This is where the lazy evaluation happens - `_childNodes` is a thunk that gets called, which triggers getChildNodesArray().
-
-### 7. SUMMARY OF ALL DIRECT CALLERS
-
-| Method | Caller | File | Lines |
-|--------|--------|------|-------|
-| `getChildNodesArray()` | ChildNodeList.length getter | ChildNodeList.ts | 27 |
-| `getChildNodesArray()` | ChildNodeList.forEach() | ChildNodeList.ts | 35 |
-| `getChildNodesArray()` | ChildNodeList.keys() | ChildNodeList.ts | 40 |
-| `getChildNodesArray()` | ChildNodeList.entries() | ChildNodeList.ts | 44 |
-| `getChildNodesArray()` | ChildNodeList.values() | ChildNodeList.ts | 48 |
-| `getChildNodesArray()` | Element.outerHTML | Element.ts | 68 |
-| `getChildNodesArray()` | Element.textContent | Element.ts | 88 |
-| `getChildNode()` | ChildNodeList Proxy trap | ChildNodeList.ts | 18 |
-| `getChildNode()` | ChildNodeList.item() | ChildNodeList.ts | 31 |
-| `getChildNodesArray()` | NodeStore.getChildNode() | NodeStore.ts | 37 |
-
-### 8. COMPLETE CALL CHAIN SUMMARY
-
-**The most critical path for testing-library queries:**
-
-```
-screen.queryByText/Role/etc
-    ↓ (via @testing-library/dom)
-Document.querySelectorAll() or Element.querySelector/All/matches()
-    ↓
-css-select library (CSSselect.selectAll/selectOne/is)
-    ↓
-CssSelectAdapter.getChildren()
-    ↓
-node.childNodes.values()
-    ↓
-ChildNodeList.values()
-    ↓
-nodeStore.getChildNodesArray()
-    ↓
-nodeStore._childNodes() [the thunk/memoized function]
-    ↓
-Returns: Node<any>[]
-```
-
-**Each array access in css-select's recursive findAll/findOne/getText triggers this chain for every node in the tree.**
-
-### 9. KEY FILES
-
-1. **`/home/mike/workspace/lazy-dom/src/classes/Node/NodeStore.ts`** - Definition of getChildNodesArray() and getChildNode()
-2. **`/home/mike/workspace/lazy-dom/src/classes/Node/ChildNodeList.ts`** - 5 direct call sites of getChildNodesArray()
-3. **`/home/mike/workspace/lazy-dom/src/classes/Element.ts`** - 2 direct call sites + contains querySelector/querySelectorAll definitions
-4. **`/home/mike/workspace/lazy-dom/src/utils/CssSelectAdapter.ts`** - Critical bridge: getChildren() calls node.childNodes.values() which triggers the chain
-5. **`/home/mike/workspace/lazy-dom/src/classes/Node/Node.ts`** - Defines the childNodes property and ChildNodeList creation
-6. **`/home/mike/workspace/lazy-dom/test/testing-library-dom.test.ts`** - Uses screen.queryByText/Role which trigger the chain
-7. **`/home/mike/workspace/lazy-dom/test/testing-library-react.test.ts`** - Uses render() and screen queries
+1. `src/classes/Node/NodeStore.ts` — `getChildNodesArray()` and `getChildNode()`
+2. `src/classes/Node/ChildNodeList.ts` — 5 call sites of `getChildNodesArray()`
+3. `src/utils/CssSelectAdapter.ts` — `getChildren()` calls `Array.from(node.childNodes)`
+4. `src/classes/Node/Node.ts` — `nextSibling`/`previousSibling` with WASM round-trips, `appendChild()` with 5 WASM calls
+5. `src/wasm/nodeOps.ts` — JS wrapper over WASM; `getChildIds()` copies array from WASM memory
+6. `src/wasm/wasmLoader.ts` — Synchronous WASM instantiation at module import time

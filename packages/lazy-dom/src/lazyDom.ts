@@ -77,6 +77,8 @@ import { CustomEvent } from "./classes/CustomEvent"
 import { CompositionEvent } from "./classes/CompositionEvent"
 import { MutationObserver } from "./classes/MutationObserver"
 import { MutationRecord } from "./classes/MutationObserver"
+import { ResizeObserver } from "./classes/ResizeObserver"
+import { IntersectionObserver } from "./classes/IntersectionObserver"
 import { DocumentType } from "./classes/DocumentType"
 import { EventTarget } from "./classes/EventTarget"
 
@@ -182,6 +184,8 @@ const lazyDom = () => {
     Document,
     MutationObserver,
     MutationRecord,
+    ResizeObserver,
+    IntersectionObserver,
     DocumentType,
   }
   Object.assign(window, instances, classes)
