@@ -603,8 +603,15 @@ export default class LazyDomEnvironment extends NodeEnvironment {
   }
 
   async teardown() {
+    // Flush pending RAF callbacks first
+    if (this._rafFlush) {
+      this._rafFlush()
+    }
+
     await super.teardown()
     reset()
+
+    this._rafFlush = null
   }
 }
 
