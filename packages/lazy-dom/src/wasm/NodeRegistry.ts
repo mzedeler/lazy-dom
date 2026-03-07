@@ -28,3 +28,7 @@ export function getNodeOrThrow(wasmId: number): Node {
 export function has(wasmId: number): boolean {
   return idToNode.has(wasmId);
 }
+
+export function clear(): void {
+  idToNode.clear();
+}

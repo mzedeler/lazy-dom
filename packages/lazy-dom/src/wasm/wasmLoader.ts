@@ -40,6 +40,10 @@ export interface WasmExports extends ASUtil {
   disconnectElement(docId: number, elementId: number): void;
   getConnectedElementCount(docId: number): number;
   getConnectedElementIds(docId: number): number; // returns pointer to StaticArray<u32>
+
+  // Reset functions (for environment teardown)
+  resetNodeTable(): void;
+  resetDocumentTable(): void;
 }
 
 // Find the WASM file relative to this source file

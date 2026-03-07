@@ -30,36 +30,43 @@ export function destroyNode(nodeId: u32): void {
 }
 
 export function getNodeType(nodeId: u32): u8 {
+  if (!nodes.has(nodeId)) return 0;
   const entry = nodes.get(nodeId);
   return entry.nodeType;
 }
 
 export function getParentId(nodeId: u32): u32 {
+  if (!nodes.has(nodeId)) return 0;
   const entry = nodes.get(nodeId);
   return entry.parentId;
 }
 
 export function setParentId(nodeId: u32, parentId: u32): void {
+  if (!nodes.has(nodeId)) return;
   const entry = nodes.get(nodeId);
   entry.parentId = parentId;
 }
 
 export function getOwnerDocumentId(nodeId: u32): u32 {
+  if (!nodes.has(nodeId)) return 0;
   const entry = nodes.get(nodeId);
   return entry.ownerDocumentId;
 }
 
 export function setOwnerDocumentId(nodeId: u32, docId: u32): void {
+  if (!nodes.has(nodeId)) return;
   const entry = nodes.get(nodeId);
   entry.ownerDocumentId = docId;
 }
 
 export function appendChild(parentId: u32, childId: u32): void {
+  if (!nodes.has(parentId)) return;
   const parent = nodes.get(parentId);
   parent.childIds.push(childId);
 }
 
 export function insertBefore(parentId: u32, newChildId: u32, refChildId: u32): void {
+  if (!nodes.has(parentId)) return;
   const parent = nodes.get(parentId);
   const children = parent.childIds;
   if (refChildId === 0) {
@@ -81,6 +88,7 @@ export function insertBefore(parentId: u32, newChildId: u32, refChildId: u32): v
 }
 
 export function removeChild(parentId: u32, childId: u32): void {
+  if (!nodes.has(parentId)) return;
   const parent = nodes.get(parentId);
   const children = parent.childIds;
   const idx = children.indexOf(childId);
@@ -90,22 +98,26 @@ export function removeChild(parentId: u32, childId: u32): void {
 }
 
 export function clearChildren(nodeId: u32): void {
+  if (!nodes.has(nodeId)) return;
   const entry = nodes.get(nodeId);
   entry.childIds = new Array<u32>(0);
 }
 
 export function getChildCount(nodeId: u32): u32 {
+  if (!nodes.has(nodeId)) return 0;
   const entry = nodes.get(nodeId);
   return entry.childIds.length;
 }
 
 export function getChildId(nodeId: u32, index: u32): u32 {
+  if (!nodes.has(nodeId)) return 0;
   const entry = nodes.get(nodeId);
   if (index >= <u32>entry.childIds.length) return 0;
   return unchecked(entry.childIds[index]);
 }
 
 export function getChildIds(nodeId: u32): StaticArray<u32> {
+  if (!nodes.has(nodeId)) return new StaticArray<u32>(0);
   const entry = nodes.get(nodeId);
   const children = entry.childIds;
   const result = new StaticArray<u32>(children.length);
@@ -117,4 +129,9 @@ export function getChildIds(nodeId: u32): StaticArray<u32> {
 
 export function hasNode(nodeId: u32): bool {
   return nodes.has(nodeId);
+}
+
+export function resetNodeTable(): void {
+  nodes.clear();
+  nextId = 1;
 }

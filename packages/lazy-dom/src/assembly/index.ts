@@ -16,6 +16,7 @@ export {
   getChildId,
   getChildIds,
   hasNode,
+  resetNodeTable,
 } from "./NodeTable";
 
 export {
@@ -28,4 +29,5 @@ export {
   disconnectElement,
   getConnectedElementCount,
   getConnectedElementIds,
+  resetDocumentTable,
 } from "./DocumentTable";

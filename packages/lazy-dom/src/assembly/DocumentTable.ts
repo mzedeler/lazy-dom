@@ -30,16 +30,19 @@ export function destroyDocument(docId: u32): void {
 }
 
 export function getDocumentBodyId(docId: u32): u32 {
+  if (!documents.has(docId)) return 0;
   const doc = documents.get(docId);
   return doc.bodyId;
 }
 
 export function setDocumentBodyId(docId: u32, bodyId: u32): void {
+  if (!documents.has(docId)) return;
   const doc = documents.get(docId);
   doc.bodyId = bodyId;
 }
 
 export function connectSubtree(docId: u32, rootId: u32): void {
+  if (!documents.has(docId)) return;
   const doc = documents.get(docId);
   const connected = doc.connectedElementIds;
 
@@ -60,6 +63,7 @@ export function connectSubtree(docId: u32, rootId: u32): void {
 }
 
 export function disconnectSubtree(docId: u32, rootId: u32): void {
+  if (!documents.has(docId)) return;
   const doc = documents.get(docId);
   const connected = doc.connectedElementIds;
 
@@ -77,16 +81,19 @@ export function disconnectSubtree(docId: u32, rootId: u32): void {
 }
 
 export function disconnectElement(docId: u32, elementId: u32): void {
+  if (!documents.has(docId)) return;
   const doc = documents.get(docId);
   doc.connectedElementIds.delete(elementId);
 }
 
 export function getConnectedElementCount(docId: u32): u32 {
+  if (!documents.has(docId)) return 0;
   const doc = documents.get(docId);
   return doc.connectedElementIds.size;
 }
 
 export function getConnectedElementIds(docId: u32): StaticArray<u32> {
+  if (!documents.has(docId)) return new StaticArray<u32>(0);
   const doc = documents.get(docId);
   const ids = doc.connectedElementIds;
   const arr = ids.values();
@@ -95,4 +102,9 @@ export function getConnectedElementIds(docId: u32): StaticArray<u32> {
     unchecked(result[i] = unchecked(arr[i]));
   }
   return result;
+}
+
+export function resetDocumentTable(): void {
+  documents.clear();
+  nextDocId = 1;
 }

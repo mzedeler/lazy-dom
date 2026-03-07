@@ -82,7 +82,18 @@ import { IntersectionObserver } from "./classes/IntersectionObserver"
 import { DocumentType } from "./classes/DocumentType"
 import { EventTarget } from "./classes/EventTarget"
 
+import * as NodeRegistry from "./wasm/NodeRegistry"
+import * as nodeOps from "./wasm/nodeOps"
+
 export { JSDOM } from "./jsdom"
+
+/** Reset all accumulated WASM and JS-side node state.
+ *  Call between test files to prevent memory accumulation.
+ *  WASM functions have null guards so stale async callbacks are safe. */
+export function reset(): void {
+  NodeRegistry.clear()
+  nodeOps.resetAll()
+}
 
 class Navigator {
   private _userAgent = ''

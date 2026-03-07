@@ -1,7 +1,7 @@
 import NodeEnvironment from "jest-environment-node"
 import type { EnvironmentContext } from "@jest/environment"
 import type { JestEnvironmentConfig } from "@jest/environment"
-import lazyDom from "lazy-dom"
+import lazyDom, { reset } from "lazy-dom"
 
 export default class LazyDomEnvironment extends NodeEnvironment {
   private _rafFlush: (() => void) | null = null
@@ -602,6 +602,10 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     }
   }
 
+  async teardown() {
+    await super.teardown()
+    reset()
+  }
 }
 
 export const TestEnvironment = LazyDomEnvironment

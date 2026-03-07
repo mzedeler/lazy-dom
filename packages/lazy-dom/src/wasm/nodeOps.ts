@@ -106,3 +106,10 @@ export function getConnectedElementIds(docId: number): number[] {
   const ptr = wasm.getConnectedElementIds(docId);
   return wasm.__getArray(ptr);
 }
+
+// --- Reset (for environment teardown between test files) ---
+
+export function resetAll(): void {
+  wasm.resetNodeTable();
+  wasm.resetDocumentTable();
+}
