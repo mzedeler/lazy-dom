@@ -84,6 +84,8 @@ import { EventTarget } from "./classes/EventTarget"
 
 import * as NodeRegistry from "./wasm/NodeRegistry"
 import * as nodeOps from "./wasm/nodeOps"
+import { clearLiveRanges } from "./classes/Range"
+import { clearActiveObservers } from "./classes/mutationNotify"
 
 export { JSDOM } from "./jsdom"
 
@@ -91,6 +93,8 @@ export { JSDOM } from "./jsdom"
  *  Call between test files to prevent memory accumulation.
  *  WASM functions have null guards so stale async callbacks are safe. */
 export function reset(): void {
+  clearLiveRanges()
+  clearActiveObservers()
   NodeRegistry.clear()
   nodeOps.resetAll()
 }

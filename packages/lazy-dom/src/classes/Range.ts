@@ -9,6 +9,9 @@ import { parseHTML } from '../utils/parseHTML'
 // Global set of live Range objects for boundary point tracking
 const liveRanges = new Set<Range>()
 
+/** Clear all tracked live ranges (called by reset between test files). */
+export function clearLiveRanges(): void { liveRanges.clear() }
+
 export class Range {
   static readonly START_TO_START = 0
   static readonly START_TO_END = 1

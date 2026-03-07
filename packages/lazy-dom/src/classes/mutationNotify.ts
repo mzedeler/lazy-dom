@@ -20,6 +20,9 @@ const activeObservers = new Set<Observer>()
 export function registerObserver(obs: Observer) { activeObservers.add(obs) }
 export function unregisterObserver(obs: Observer) { activeObservers.delete(obs) }
 
+/** Clear all tracked observers (called by reset between test files). */
+export function clearActiveObservers(): void { activeObservers.clear() }
+
 export function notifyMutation(init: MutationInit) {
   if (activeObservers.size === 0) return
   for (const obs of activeObservers) {
