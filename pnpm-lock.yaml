@@ -41,6 +41,15 @@ importers:
 
   packages/jest-environment-lazy-dom:
     dependencies:
+      '@jest/fake-timers':
+        specifier: ^29.7.0
+        version: 29.7.0
+      jest-mock:
+        specifier: ^29.7.0
+        version: 29.7.0
+      jest-util:
+        specifier: ^29.7.0
+        version: 29.7.0
       lazy-dom:
         specifier: workspace:*
         version: link:../lazy-dom
@@ -48,10 +57,13 @@ importers:
       '@jest/environment':
         specifier: ^29.7.0
         version: 29.7.0
+      '@jest/types':
+        specifier: ^29.6.3
+        version: 29.6.3
       '@types/node':
         specifier: ^20.12.11
         version: 20.12.11
-      jest-environment-node:
+      jest-message-util:
         specifier: ^29.7.0
         version: 29.7.0
       typescript:
@@ -111,7 +123,7 @@ importers:
         version: 5.2.0
       global-jsdom:
         specifier: ^24.0.0
-        version: 24.0.0(jsdom@24.0.0(canvas@3.2.1))
+        version: 24.0.0(jsdom@24.0.0)
       jsdom:
         specifier: ^24.0.0
         version: 24.0.0(canvas@3.2.1)
@@ -3495,7 +3507,7 @@ snapshots:
 
   agent-base@7.1.1:
     dependencies:
-      debug: 4.3.4
+      debug: 4.3.4(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -3806,10 +3818,6 @@ snapshots:
     dependencies:
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.0.0
-
-  debug@4.3.4:
-    dependencies:
-      ms: 2.1.2
 
   debug@4.3.4(supports-color@5.5.0):
     dependencies:
@@ -4154,10 +4162,6 @@ snapshots:
       minimatch: 5.0.1
       once: 1.4.0
 
-  global-jsdom@24.0.0(jsdom@24.0.0(canvas@3.2.1)):
-    dependencies:
-      jsdom: 24.0.0(canvas@3.2.1)
-
   global-jsdom@24.0.0(jsdom@24.0.0):
     dependencies:
       jsdom: 24.0.0(canvas@3.2.1)
@@ -4223,7 +4227,7 @@ snapshots:
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.4
+      debug: 4.3.4(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -4237,7 +4241,7 @@ snapshots:
   https-proxy-agent@7.0.4:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.4
+      debug: 4.3.4(supports-color@5.5.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -4505,7 +4509,7 @@ snapshots:
 
   jest-message-util@29.7.0:
     dependencies:
-      '@babel/code-frame': 7.24.2
+      '@babel/code-frame': 7.29.0
       '@jest/types': 29.6.3
       '@types/stack-utils': 2.0.3
       chalk: 4.1.2

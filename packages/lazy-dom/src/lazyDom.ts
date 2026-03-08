@@ -206,7 +206,19 @@ const lazyDom = () => {
   Object.assign(window, instances, classes)
   Object.assign(global, { window, document }, classes)
 
-  return { window, document, classes }
+  const classNames = Object.keys(classes)
+
+  const cleanup = () => {
+    // Only clean up class constructors from the process global.
+    // window and document are left in place — async callbacks from
+    // React's scheduler or lodash timers may still reference them,
+    // and they'll be overwritten by the next lazyDom() call anyway.
+    for (const name of classNames) {
+      delete (global as Record<string, unknown>)[name]
+    }
+  }
+
+  return { window, document, classes, cleanup }
 }
 
 export default lazyDom

@@ -1,17 +1,146 @@
-import NodeEnvironment from "jest-environment-node"
-import type { EnvironmentContext } from "@jest/environment"
-import type { JestEnvironmentConfig } from "@jest/environment"
+import vm from "vm"
+import type { Context } from "vm"
+import type { JestEnvironmentConfig, EnvironmentContext } from "@jest/environment"
+import type { JestEnvironment } from "@jest/environment"
+import type { Circus } from "@jest/types"
+import type { Global } from "@jest/types"
+import { LegacyFakeTimers, ModernFakeTimers } from "@jest/fake-timers"
+import { ModuleMocker } from "jest-mock"
+import { installCommonGlobals } from "jest-util"
 import lazyDom, { reset } from "lazy-dom"
 
-export default class LazyDomEnvironment extends NodeEnvironment {
+// Globals we set ourselves or that are deprecated — skip when copying from Node.js
+const denyList = new Set([
+  'GLOBAL',
+  'root',
+  'global',
+  'globalThis',
+  'Buffer',
+  'ArrayBuffer',
+  'Uint8Array',
+  'jest-symbol-do-not-touch',
+])
+
+const nodeGlobals = new Map(
+  Object.getOwnPropertyNames(globalThis)
+    .filter(name => !denyList.has(name))
+    .map(name => {
+      const descriptor = Object.getOwnPropertyDescriptor(globalThis, name)
+      if (!descriptor) {
+        throw new Error(`No property descriptor for ${name}`)
+      }
+      return [name, descriptor] as const
+    })
+)
+
+interface TimerRef {
+  id: number
+  ref(): TimerRef
+  unref(): TimerRef
+}
+
+export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
+  context: Context | null
+  global: Global.Global
+  fakeTimers: LegacyFakeTimers<TimerRef> | null
+  fakeTimersModern: ModernFakeTimers | null
+  moduleMocker: ModuleMocker | null
+
   private _rafFlush: (() => void) | null = null
+  private _cleanup: (() => void) | null = null
 
-  constructor(config: JestEnvironmentConfig, context: EnvironmentContext) {
-    super(config, context)
+  constructor(config: JestEnvironmentConfig, _context: EnvironmentContext) {
+    const { projectConfig } = config
 
-    const { window, document, classes } = lazyDom()
+    // Create an isolated vm context — same approach as NodeEnvironment
+    this.context = vm.createContext()
+    const global = vm.runInContext(
+      'this',
+      Object.assign(this.context, projectConfig.testEnvironmentOptions)
+    ) as Global.Global
+    this.global = global
 
-    const g = this.global
+    // Copy Node.js globals into the sandbox via lazy getters (same as NodeEnvironment)
+    const contextGlobals = new Set(Object.getOwnPropertyNames(global))
+    for (const [nodeGlobalsKey, descriptor] of nodeGlobals) {
+      if (!contextGlobals.has(nodeGlobalsKey)) {
+        if (descriptor.configurable) {
+          Object.defineProperty(global, nodeGlobalsKey, {
+            configurable: true,
+            enumerable: descriptor.enumerable,
+            get() {
+              const value = (globalThis as Record<string, unknown>)[nodeGlobalsKey]
+              Object.defineProperty(global, nodeGlobalsKey, {
+                configurable: true,
+                enumerable: descriptor.enumerable,
+                value,
+                writable: true,
+              })
+              return value
+            },
+            set(value: unknown) {
+              Object.defineProperty(global, nodeGlobalsKey, {
+                configurable: true,
+                enumerable: descriptor.enumerable,
+                value,
+                writable: true,
+              })
+            },
+          })
+        } else if ('value' in descriptor) {
+          Object.defineProperty(global, nodeGlobalsKey, {
+            configurable: false,
+            enumerable: descriptor.enumerable,
+            value: descriptor.value,
+            writable: descriptor.writable,
+          })
+        } else {
+          Object.defineProperty(global, nodeGlobalsKey, {
+            configurable: false,
+            enumerable: descriptor.enumerable,
+            get: descriptor.get,
+            set: descriptor.set,
+          })
+        }
+      }
+    }
+
+    // Fundamental Node.js globals
+    const g = global as typeof globalThis
+    g.global = global as typeof globalThis
+    g.Buffer = Buffer
+    g.ArrayBuffer = ArrayBuffer
+    g.Uint8Array = Uint8Array
+    installCommonGlobals(global as typeof globalThis, projectConfig.globals)
+    g.Error.stackTraceLimit = 100
+
+    // ---------- Jest infrastructure ----------
+    this.moduleMocker = new ModuleMocker(global as typeof globalThis)
+
+    const timerIdToRef = (id: number): TimerRef => ({
+      id,
+      ref() { return this },
+      unref() { return this },
+    })
+    const timerRefToId = (timer: TimerRef) => timer?.id
+
+    this.fakeTimers = new LegacyFakeTimers({
+      config: projectConfig,
+      global: global as typeof globalThis,
+      moduleMocker: this.moduleMocker,
+      timerConfig: {
+        idToRef: timerIdToRef,
+        refToId: timerRefToId,
+      },
+    })
+    this.fakeTimersModern = new ModernFakeTimers({
+      config: projectConfig,
+      global: global as typeof globalThis,
+    })
+
+    // ---------- lazy-dom DOM setup ----------
+    const { window, document, classes, cleanup } = lazyDom()
+    this._cleanup = cleanup
 
     // Assign all DOM classes onto the global
     for (const [name, value] of Object.entries(classes)) {
@@ -59,6 +188,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       value: window.matchMedia.bind(window),
       writable: true,
     })
+
     // Override localStorage with a full in-memory implementation
     const storage = new Map<string, string>()
     const localStorageStub = {
@@ -84,6 +214,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       value: localStorageStub,
       writable: true,
     })
+
     // sessionStorage: separate Map-backed storage
     const sessionStore = new Map<string, string>()
     const sessionStorageStub = {
@@ -109,6 +240,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       value: sessionStorageStub,
       writable: true,
     })
+
     Object.defineProperty(g, "location", {
       configurable: true,
       enumerable: true,
@@ -556,8 +688,8 @@ export default class LazyDomEnvironment extends NodeEnvironment {
     defineStubOnBoth("_virtualConsole", virtualConsole)
 
     // React act environment flag
-    g.IS_REACT_ACT_ENVIRONMENT = true
-    g.__LAZY_DOM__ = true
+    defineStub("IS_REACT_ACT_ENVIRONMENT", true)
+    defineStub("__LAZY_DOM__", true)
 
     // Expose scroll properties on the global (matching JSDOM behavior)
     for (const name of ["scrollX", "scrollY", "pageXOffset", "pageYOffset"] as const) {
@@ -568,10 +700,9 @@ export default class LazyDomEnvironment extends NodeEnvironment {
         writable: true,
       })
     }
-
-    // Opt-out from browser-style resolution (matching pro's config)
-    this.customExportConditions = [""]
   }
+
+  async setup() {}
 
   // Flush pending RAF callbacks between tests so they don't leak across test
   // boundaries. lazy-dom is faster than JSDOM, so the ~16ms interval may not
@@ -582,7 +713,7 @@ export default class LazyDomEnvironment extends NodeEnvironment {
   // not real problems — the same tests pass functionally. We intercept at
   // test_fn_start (after beforeEach hooks like mockConsole have run) so our
   // filter sits in front of any throwing console.error wrapper.
-  async handleTestEvent(event: { name: string }) {
+  async handleTestEvent(event: Circus.Event) {
     if (event.name === 'test_fn_start') {
       const g = this.global as typeof globalThis
       const currentError = g.console.error
@@ -608,10 +739,36 @@ export default class LazyDomEnvironment extends NodeEnvironment {
       this._rafFlush()
     }
 
-    await super.teardown()
+    // Dispose jest fake timer infrastructure
+    if (this.fakeTimers) {
+      this.fakeTimers.dispose()
+    }
+    if (this.fakeTimersModern) {
+      this.fakeTimersModern.dispose()
+    }
+
+    // Clear WASM state, NodeRegistry, liveRanges, activeObservers
     reset()
 
+    // Remove window/document/classes from process global
+    if (this._cleanup) {
+      this._cleanup()
+    }
+
+    this.context = null
+    this.fakeTimers = null
+    this.fakeTimersModern = null
+    this.moduleMocker = null
     this._rafFlush = null
+    this._cleanup = null
+  }
+
+  exportConditions() {
+    return ['']
+  }
+
+  getVmContext(): Context | null {
+    return this.context
   }
 }
 
