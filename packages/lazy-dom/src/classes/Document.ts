@@ -283,8 +283,10 @@ export class Document implements EventTarget {
       // Build tree: html > head + body
       nodeOps.setParentId(head.wasmId, html.wasmId)
       nodeOps.appendChild(html.wasmId, head.wasmId)
+      ;(html._children ??= new Set()).add(head)
       nodeOps.setParentId(body.wasmId, html.wasmId)
       nodeOps.appendChild(html.wasmId, body.wasmId)
+      ;(html._children ??= new Set()).add(body)
 
       // Connect entire tree to document for element tracking
       this.documentStore.connect(html)

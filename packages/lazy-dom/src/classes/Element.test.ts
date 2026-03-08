@@ -1052,4 +1052,62 @@ describe('Element', () => {
       expect(el.childElementCount).to.equal(2)
     })
   })
+
+  describe('_children GC tracking', () => {
+    it('innerHTML setter keeps child nodes reachable after GC', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      el.innerHTML = '<span>hello</span><p>world</p>'
+
+      // Force GC if available
+      if (typeof globalThis.gc === 'function') globalThis.gc()
+
+      expect(el.childNodes.length).to.equal(2)
+      expect(el.firstChild!.nodeName).to.equal('SPAN')
+      expect(el.lastChild!.nodeName).to.equal('P')
+    })
+
+    it('textContent setter keeps text node reachable after GC', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      el.textContent = 'some text'
+
+      if (typeof globalThis.gc === 'function') globalThis.gc()
+
+      expect(el.childNodes.length).to.equal(1)
+      expect(el.firstChild!.nodeValue).to.equal('some text')
+    })
+
+    it('_removeAllChildren clears old _children references', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      el.innerHTML = '<span>first</span>'
+      expect(el.childNodes.length).to.equal(1)
+
+      el.innerHTML = '<p>second</p>'
+      expect(el.childNodes.length).to.equal(1)
+      expect(el.firstChild!.nodeName).to.equal('P')
+    })
+
+    it('innerHTML setter child nodes have correct tagName', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      el.innerHTML = '<i class="fa fa-check"></i>'
+
+      if (typeof globalThis.gc === 'function') globalThis.gc()
+
+      const child = el.firstChild!
+      expect(child.nodeName).to.equal('I')
+    })
+
+    it('document initTree head and body survive GC', () => {
+      // head and body should always be accessible
+      if (typeof globalThis.gc === 'function') globalThis.gc()
+
+      expect(document.head).to.not.be.null
+      expect(document.head.tagName).to.equal('HEAD')
+      expect(document.body).to.not.be.null
+      expect(document.body.tagName).to.equal('BODY')
+    })
+  })
 })

@@ -81,6 +81,7 @@ import { ResizeObserver } from "./classes/ResizeObserver"
 import { IntersectionObserver } from "./classes/IntersectionObserver"
 import { DocumentType } from "./classes/DocumentType"
 import { EventTarget } from "./classes/EventTarget"
+import { ShadowRoot } from "./classes/ShadowRoot"
 
 import * as NodeRegistry from "./wasm/NodeRegistry"
 import * as nodeOps from "./wasm/nodeOps"
@@ -202,6 +203,7 @@ const lazyDom = () => {
     ResizeObserver,
     IntersectionObserver,
     DocumentType,
+    ShadowRoot,
   }
   Object.assign(window, instances, classes)
   Object.assign(global, { window, document }, classes)

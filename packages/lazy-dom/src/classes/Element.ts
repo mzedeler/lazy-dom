@@ -22,6 +22,7 @@ import { DOMException } from "./DOMException"
 import { CSSStyleDeclaration } from "./CSSStyleDeclaration"
 import { FocusEvent } from "./FocusEvent"
 import { parseHTML } from "../utils/parseHTML"
+import { ShadowRoot } from "./ShadowRoot"
 import { parseQualifiedName, validateNamespace } from "../utils/validateNamespace"
 import { dispatchErrorToWindow } from "../utils/dispatchErrorToWindow"
 import { HTMLCollection } from "./HTMLCollection"
@@ -150,6 +151,8 @@ export class Element extends Node implements EventTarget {
   onload: ((ev: Event) => void) | null = null
   onerror: ((ev: Event) => void) | null = null
 
+  private _shadowRoot: ShadowRoot | null = null
+
   constructor() {
     super(NodeTypes.ELEMENT_NODE)
   }
@@ -226,6 +229,7 @@ export class Element extends Node implements EventTarget {
       for (const node of nodes) {
         nodeOps.setParentId(node.wasmId, this.wasmId)
         nodeOps.appendChild(this.wasmId, node.wasmId)
+        ;(this._children ??= new Set()).add(node)
         ownerDocument.documentStore.connect(node)
         addedNodes.push(node)
       }
@@ -284,6 +288,7 @@ export class Element extends Node implements EventTarget {
       const textNode = ownerDocument.createTextNode(coerced)
       nodeOps.setParentId(textNode.wasmId, this.wasmId)
       nodeOps.appendChild(this.wasmId, textNode.wasmId)
+      ;(this._children ??= new Set()).add(textNode)
       addedNodes.push(textNode)
     }
 
@@ -554,6 +559,7 @@ export class Element extends Node implements EventTarget {
       }
     }
     nodeOps.clearChildren(this.wasmId)
+    this._children = undefined
   }
 
   private _dispatchErrorToWindow(err: unknown) {
@@ -563,6 +569,26 @@ export class Element extends Node implements EventTarget {
   click() {
     const event = new PointerEvent('click', { bubbles: true, cancelable: true })
     this.dispatchEvent(event)
+  }
+
+  attachShadow(init: { mode: 'open' | 'closed' }): ShadowRoot {
+    if (this._shadowRoot) {
+      throw new DOMException(
+        "Failed to execute 'attachShadow' on 'Element': Shadow root cannot be created on a host which already hosts a shadow tree.",
+        'NotSupportedError',
+        DOMException.NOT_SUPPORTED_ERR
+      )
+    }
+    const shadow = new ShadowRoot(this, init)
+    this._shadowRoot = shadow
+    return shadow
+  }
+
+  get shadowRoot(): ShadowRoot | null {
+    if (this._shadowRoot && this._shadowRoot.mode === 'open') {
+      return this._shadowRoot
+    }
+    return null
   }
 
   get hidden(): boolean {
