@@ -1,20 +1,14 @@
 // Bidirectional u32 (wasmId) ↔ Node map
 // Every Node gets a wasmId at construction; this registry maps between them.
-// Uses WeakRef so orphaned DOM subtrees can be garbage collected.
-// Parent nodes hold strong references to children via Node._children,
-// so children stay alive as long as their parent is reachable.
+// Uses strong references to prevent GC from collecting nodes that are still
+// in the WASM child tree. Nodes are freed via clear() between test files.
 
 import type { Node } from "../classes/Node/Node";
 
-const idToNode = new Map<number, WeakRef<Node>>();
-
-const cleanupRegistry = new FinalizationRegistry<number>((wasmId) => {
-  idToNode.delete(wasmId);
-});
+const idToNode = new Map<number, Node>();
 
 export function register(wasmId: number, node: Node): void {
-  idToNode.set(wasmId, new WeakRef(node));
-  cleanupRegistry.register(node, wasmId);
+  idToNode.set(wasmId, node);
 }
 
 export function unregister(wasmId: number): void {
@@ -22,12 +16,11 @@ export function unregister(wasmId: number): void {
 }
 
 export function getNode(wasmId: number): Node | undefined {
-  return idToNode.get(wasmId)?.deref();
+  return idToNode.get(wasmId);
 }
 
 export function getNodeOrThrow(wasmId: number): Node {
-  const ref = idToNode.get(wasmId);
-  const node = ref?.deref();
+  const node = idToNode.get(wasmId);
   if (!node) {
     throw new Error(`NodeRegistry: no node for wasmId ${wasmId}`);
   }
@@ -35,7 +28,7 @@ export function getNodeOrThrow(wasmId: number): Node {
 }
 
 export function has(wasmId: number): boolean {
-  return idToNode.get(wasmId)?.deref() !== undefined;
+  return idToNode.has(wasmId);
 }
 
 export function clear(): void {
