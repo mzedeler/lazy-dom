@@ -116,3 +116,57 @@ This severs all reference chains within the JSDOM Window context, allowing V8 to
 The `lazy+vm` approach reduces peak memory by 13% vs `lazy+reset`, but the growth pattern is still linear (~14 MB/file). To match JSDOM's flat profile, lazy-dom would need to implement a `window.close()`-style teardown that breaks all internal reference chains within the lazy-dom Window/Document objects, allowing V8 to release the compiled code that closes over them. This is a significant refactoring effort.
 
 In practice, most CI runs use `--maxWorkers` which creates a fresh process per worker, avoiding accumulation entirely. The `--runInBand` memory issue primarily affects local development with large test suites.
+
+## Tools
+
+### `bin/run-memmon.sh`
+
+Monitors the RSS of a jest process over time, writing a CSV for later analysis.
+
+```
+Usage: bin/run-memmon.sh <label> <test-environment> [extra-jest-args...]
+```
+
+Launches jest with `--runInBand --forceExit` using the given test environment, then polls `/proc/$PID/status` every 2 seconds and records RSS to `/tmp/memmon-<label>.csv` (columns: `elapsed_s,rss_mb`). Jest stdout/stderr goes to `/tmp/jest-<label>.log`.
+
+Example:
+
+```bash
+bin/run-memmon.sh jsdom jest-fixed-jsdom
+bin/run-memmon.sh lazydom jest-environment-lazy-dom
+```
+
+### `bin/collect-memory-data.sh`
+
+Convenience wrapper that runs `run-memmon.sh` twice — once with `jest-environment-lazy-dom` (labeled `lazy-vm`) and once with `jest-fixed-jsdom` (labeled `jsdom`) — producing two CSV files for side-by-side comparison.
+
+```
+Usage: bin/collect-memory-data.sh
+```
+
+### `packages/lazy-dom/src/benchmark/leak-detect.ts`
+
+Micro-benchmark for detecting memory leaks in lazy-dom's DOM lifecycle, independent of jest.
+
+```
+Usage: cd packages/lazy-dom && npx tsx --expose-gc src/benchmark/leak-detect.ts
+```
+
+Runs in two phases:
+
+- **Phase 1 (monotonic growth check):** Executes `outerHTMLRealisticTree` (~70 elements + full serialization) 10,000 times, printing RSS and heap usage every 1,000 iterations. A flat heap line means no leak; monotonic growth indicates retained objects.
+
+- **Phase 2 (heap snapshots):** After a `reset()` (simulating jest teardown), takes three V8 heap snapshots — baseline, after 500 runs, after 1,000 runs — for differential analysis with `analyze-snapshots.ts` or Chrome DevTools.
+
+Uses async GC (`global.gc()` + `setImmediate`) between batches because V8 only clears `WeakRef` targets after an event-loop turn.
+
+### `packages/lazy-dom/src/benchmark/analyze-snapshots.ts`
+
+Parses V8 `.heapsnapshot` files and compares object counts and sizes by constructor, showing which object types grew between snapshots.
+
+```
+Usage: npx tsx --max-old-space-size=4096 src/benchmark/analyze-snapshots.ts \
+  snapshot1.heapsnapshot snapshot2.heapsnapshot [snapshot3.heapsnapshot]
+```
+
+For each pair of snapshots, prints a summary table of the top growers by size delta — useful for identifying exactly which object types are leaking.

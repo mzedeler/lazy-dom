@@ -28,6 +28,8 @@ export abstract class Node {
   readonly _childNodes: ChildNodeList
   /** Set by Document when this node is a direct child of the document. */
   _parentDocument: Document | null = null
+  /** Strong references to child nodes — prevents GC while parent is alive. */
+  _children: Set<Node> | undefined
 
   // Static constants (accessed as Node.TEXT_NODE, etc.)
   static readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE
@@ -178,6 +180,7 @@ export abstract class Node {
 
     nodeOps.setParentId(node.wasmId, 0)
     nodeOps.removeChild(this.wasmId, node.wasmId)
+    this._children?.delete(node)
     this.ownerDocument.documentStore.disconnect(node)
 
     Range._notifyChildRemoved(this, childIndex)
@@ -220,11 +223,14 @@ export abstract class Node {
     // Remove from old parent if needed
     const oldParentId = nodeOps.getParentId(newNode.wasmId)
     if (oldParentId !== 0) {
+      const oldParent = NodeRegistry.getNode(oldParentId)
+      oldParent?._children?.delete(newNode)
       nodeOps.removeChild(oldParentId, newNode.wasmId)
     }
 
     nodeOps.setParentId(newNode.wasmId, this.wasmId)
     nodeOps.insertBefore(this.wasmId, newNode.wasmId, referenceNode ? referenceNode.wasmId : 0)
+    ;(this._children ??= new Set()).add(newNode)
     this.ownerDocument.documentStore.connect(newNode)
 
     notifyMutation({ type: 'childList', target: this, addedNodes: [newNode] })
@@ -254,11 +260,14 @@ export abstract class Node {
     // Remove from old parent if needed
     const oldParentId = nodeOps.getParentId(node.wasmId)
     if (oldParentId !== 0) {
+      const oldParent = NodeRegistry.getNode(oldParentId)
+      oldParent?._children?.delete(node)
       nodeOps.removeChild(oldParentId, node.wasmId)
     }
 
     nodeOps.setParentId(node.wasmId, this.wasmId)
     nodeOps.appendChild(this.wasmId, node.wasmId)
+    ;(this._children ??= new Set()).add(node)
     this.ownerDocument.documentStore.connect(node)
 
     notifyMutation({ type: 'childList', target: this, addedNodes: [node] })
