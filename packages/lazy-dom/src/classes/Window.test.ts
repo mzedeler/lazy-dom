@@ -1,6 +1,5 @@
 
 import { expect } from 'chai'
-import sinon from 'sinon'
 
 describe('Window', () => {
   describe('matchMedia()', () => {
@@ -229,71 +228,62 @@ describe('Window', () => {
     })
   })
 
-  describe('requestAnimationFrame timing', () => {
+  describe('requestAnimationFrame deterministic model', () => {
     // The jest-environment-lazy-dom provides requestAnimationFrame using
-    // setTimeout with a 16ms delay, matching JSDOM's pretendToBeVisual
-    // behavior (~60fps). These tests verify that timing pattern ensures
-    // callbacks don't fire prematurely during event processing.
+    // a deterministic "next-frame" model: when a NEW requestAnimationFrame
+    // is registered, all PREVIOUSLY registered callbacks fire synchronously.
+    // This avoids wall-clock timing flakiness under CPU contention.
+    //
+    // These tests replicate the same model to verify the behavior.
 
-    let clock: sinon.SinonFakeTimers
-
-    beforeEach(() => {
-      clock = sinon.useFakeTimers()
-    })
-
-    afterEach(() => {
-      clock.restore()
-    })
-
-    // Replicate the rAF implementation from jest-environment-lazy-dom
     function createRaf() {
       let rafId = 0
-      const pendingTimers = new Map<number, ReturnType<typeof globalThis.setTimeout>>()
+      const mapOfCallbacks = new Map<number, FrameRequestCallback>()
+
+      const runCallbacks = (stamp: number) => {
+        const ids = Array.from(mapOfCallbacks.keys())
+        for (const id of ids) {
+          const cb = mapOfCallbacks.get(id)
+          if (cb) {
+            mapOfCallbacks.delete(id)
+            try { cb(stamp) } catch { /* swallow */ }
+          }
+        }
+      }
+
+      const flush = () => runCallbacks(performance.now())
 
       const raf = (cb: FrameRequestCallback) => {
+        if (mapOfCallbacks.size > 0) {
+          runCallbacks(performance.now())
+        }
         const id = ++rafId
-        const timerId = setTimeout(() => {
-          pendingTimers.delete(id)
-          cb(Date.now())
-        }, 16)
-        pendingTimers.set(id, timerId)
+        mapOfCallbacks.set(id, cb)
         return id
       }
 
       const cancel = (id: number) => {
-        const timerId = pendingTimers.get(id)
-        if (timerId !== undefined) {
-          clearTimeout(timerId)
-          pendingTimers.delete(id)
-        }
+        mapOfCallbacks.delete(id)
       }
 
-      const cancelAll = () => {
-        for (const [, timerId] of pendingTimers) {
-          clearTimeout(timerId)
-        }
-        pendingTimers.clear()
-      }
-
-      return { raf, cancel, cancelAll, pendingTimers }
+      return { raf, cancel, flush, mapOfCallbacks }
     }
 
-    it('does not fire callback before 16ms', () => {
+    it('first rAF callback does not fire immediately', () => {
       const { raf } = createRaf()
       let called = false
       raf(() => { called = true })
-
-      clock.tick(15)
       expect(called).to.be.false
     })
 
-    it('fires callback after 16ms', () => {
+    it('previous callback fires when a new rAF is registered', () => {
       const { raf } = createRaf()
-      let called = false
-      raf(() => { called = true })
+      const calls: number[] = []
+      raf(() => { calls.push(1) })
+      expect(calls).to.deep.equal([])
 
-      clock.tick(16)
-      expect(called).to.be.true
+      raf(() => { calls.push(2) })
+      expect(calls).to.deep.equal([1])
     })
 
     it('passes a timestamp argument to the callback', () => {
@@ -301,7 +291,8 @@ describe('Window', () => {
       let receivedTimestamp: number | undefined
       raf((ts) => { receivedTimestamp = ts })
 
-      clock.tick(16)
+      // Fire by registering a second callback
+      raf(() => {})
       expect(receivedTimestamp).to.be.a('number')
     })
 
@@ -311,55 +302,65 @@ describe('Window', () => {
       const id = raf(() => { called = true })
 
       cancel(id)
-      clock.tick(100)
+
+      // Register another callback — cancelled one should NOT fire
+      raf(() => {})
       expect(called).to.be.false
     })
 
-    it('cancelling all pending rAFs prevents cross-test leaks', () => {
-      const { raf, cancelAll } = createRaf()
-      let call1 = false
-      let call2 = false
-      raf(() => { call1 = true })
-      raf(() => { call2 = true })
+    it('flush fires all pending callbacks', () => {
+      const { raf, flush } = createRaf()
+      const calls: number[] = []
+      raf(() => { calls.push(1) })
+      expect(calls).to.deep.equal([])
 
-      // Simulate test boundary cleanup
-      cancelAll()
-
-      clock.tick(100)
-      expect(call1).to.be.false
-      expect(call2).to.be.false
+      flush()
+      expect(calls).to.deep.equal([1])
     })
 
-    it('multiple rAF callbacks fire independently', () => {
-      const { raf } = createRaf()
+    it('flush after cancel does not fire cancelled callback', () => {
+      const { raf, cancel, flush } = createRaf()
+      let called = false
+      const id = raf(() => { called = true })
+      cancel(id)
+      flush()
+      expect(called).to.be.false
+    })
+
+    it('multiple callbacks fire in registration order on next rAF', () => {
+      const { raf, flush } = createRaf()
       const calls: number[] = []
       raf(() => { calls.push(1) })
 
-      clock.tick(10)
-      raf(() => { calls.push(2) })
-
-      // First fires at 16ms, second at 26ms (10 + 16)
-      clock.tick(6) // total: 16ms
+      // flush simulates test_done — fires callback 1
+      flush()
       expect(calls).to.deep.equal([1])
 
-      clock.tick(10) // total: 26ms
+      // New rAF — no previous callbacks pending
+      raf(() => { calls.push(2) })
+      expect(calls).to.deep.equal([1])
+
+      // Another rAF — callback 2 fires
+      raf(() => { calls.push(3) })
       expect(calls).to.deep.equal([1, 2])
     })
 
-    it('callback from previous frame does not fire after cancelAll', () => {
-      const { raf, cancelAll } = createRaf()
-      const calls: string[] = []
+    it('simulates scroll-position test pattern correctly', () => {
+      const { raf } = createRaf()
+      const scrollToCalls: Array<[number, number]> = []
+      const scrollTo = (x: number, y: number) => scrollToCalls.push([x, y])
 
-      raf(() => { calls.push('previous-test-callback') })
+      // Click overlay tab → rAF registers scrollTo
+      raf(() => { scrollTo(0, 300) })
 
-      // Simulate test boundary: cancel all pending rAFs
-      cancelAll()
+      // Assertion: scrollTo should NOT have been called yet
+      expect(scrollToCalls).to.deep.equal([])
 
-      // New test schedules its own rAF
-      raf(() => { calls.push('current-test-callback') })
+      // Click page tab → new rAF fires previous one
+      raf(() => { scrollTo(0, 300) })
 
-      clock.tick(16)
-      expect(calls).to.deep.equal(['current-test-callback'])
+      // Assertion: scrollTo should have been called (from first rAF)
+      expect(scrollToCalls).to.deep.equal([[0, 300]])
     })
   })
 })

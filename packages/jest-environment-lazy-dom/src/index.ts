@@ -557,57 +557,76 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
     }
 
     // requestAnimationFrame/cancelAnimationFrame polyfills (not in Node.js by default)
-    // Matches JSDOM's setInterval-based approach: a shared interval at ~60Hz runs
-    // all pending callbacks on each tick. The interval starts lazily when the first
-    // callback is registered and stops when no callbacks remain. Between tests,
-    // handleTestEvent flushes any remaining callbacks to prevent cross-test leaks.
+    //
+    // Hybrid approach combining deterministic and timer-based firing:
+    //
+    //   1. When a NEW requestAnimationFrame is registered, all PREVIOUSLY
+    //      registered callbacks fire synchronously first.  This simulates
+    //      "the previous frame completed before the next one starts" and
+    //      prevents timing-dependent flakiness under CPU contention.
+    //
+    //   2. A per-callback fallback timer (32ms) ensures single-rAF callbacks
+    //      fire even without a subsequent registration — needed by tests
+    //      that wait for rAF-triggered state changes (e.g., waitFor).
+    //      32ms is 2x the browser's 16ms frame budget, providing enough
+    //      margin to avoid premature firing during event processing under
+    //      CPU contention while still being fast enough for render tests.
+    //
+    //   3. handleTestEvent('test_done') flushes any remaining callbacks
+    //      so they don't leak across test boundaries.
     {
       let rafId = 0
       const mapOfCallbacks = new Map<number, FrameRequestCallback>()
-      let numberOfOngoing = 0
-      let intervalHandle: ReturnType<typeof setInterval> | null = null
+      const mapOfTimers = new Map<number, ReturnType<typeof globalThis.setTimeout>>()
 
-      const runCallbacks = (stamp: number) => {
-        const ids = Array.from(mapOfCallbacks.keys())
-        for (const id of ids) {
-          const cb = mapOfCallbacks.get(id)
-          if (cb) {
-            removeCallback(id)
-            try {
-              cb(stamp)
-            } catch {
-              // swallow — matches JSDOM behavior
-            }
+      const fireCallback = (id: number, stamp: number) => {
+        const cb = mapOfCallbacks.get(id)
+        if (cb) {
+          mapOfCallbacks.delete(id)
+          const timer = mapOfTimers.get(id)
+          if (timer !== undefined) {
+            globalThis.clearTimeout(timer)
+            mapOfTimers.delete(id)
+          }
+          try {
+            cb(stamp)
+          } catch {
+            // swallow — matches JSDOM behavior
           }
         }
       }
 
-      const removeCallback = (id: number) => {
-        if (mapOfCallbacks.has(id)) {
-          numberOfOngoing--
-          if (numberOfOngoing === 0 && intervalHandle !== null) {
-            globalThis.clearInterval(intervalHandle)
-            intervalHandle = null
-          }
-          mapOfCallbacks.delete(id)
+      const runCallbacks = (stamp: number) => {
+        const ids = Array.from(mapOfCallbacks.keys())
+        for (const id of ids) {
+          fireCallback(id, stamp)
         }
       }
 
       this._rafFlush = () => runCallbacks(performance.now())
 
       defineStubOnBoth("requestAnimationFrame", (cb: FrameRequestCallback) => {
+        // Fire all previously registered callbacks ("previous frame")
+        if (mapOfCallbacks.size > 0) {
+          runCallbacks(performance.now())
+        }
         const id = ++rafId
         mapOfCallbacks.set(id, cb)
-        numberOfOngoing++
-        if (numberOfOngoing === 1) {
-          intervalHandle = globalThis.setInterval(() => {
-            runCallbacks(performance.now())
-          }, 1000 / 60)
-        }
+        // Fallback timer: fire after 32ms if not already fired by next registration
+        const timer = globalThis.setTimeout(() => {
+          mapOfTimers.delete(id)
+          fireCallback(id, performance.now())
+        }, 32)
+        mapOfTimers.set(id, timer)
         return id
       })
       defineStubOnBoth("cancelAnimationFrame", (id: number) => {
-        removeCallback(id)
+        const timer = mapOfTimers.get(id)
+        if (timer !== undefined) {
+          globalThis.clearTimeout(timer)
+          mapOfTimers.delete(id)
+        }
+        mapOfCallbacks.delete(id)
       })
     }
 
