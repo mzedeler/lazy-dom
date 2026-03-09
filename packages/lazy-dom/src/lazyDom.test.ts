@@ -2,6 +2,10 @@ import { expect } from 'chai'
 import lazyDom from './lazyDom'
 
 describe('lazyDom', () => {
+  before(function () {
+    if (!globalThis.__LAZY_DOM__) this.skip()
+  })
+
   describe('cleanup', () => {
     it('cleanup does not remove class constructors from process global', () => {
       const { classes, cleanup } = lazyDom()

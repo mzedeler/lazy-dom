@@ -1,10 +1,5 @@
 import { expect } from 'chai'
 import { div } from '../utils/div'
-import type { Node } from './Node/Node'
-
-// At runtime, document.createElement returns lazy-dom nodes.
-// This type exposes _children which is a lazy-dom internal.
-type LazyDomNode = globalThis.Node & Node
 
 describe('Element', () => {
   beforeEach(() => {
@@ -1058,108 +1053,91 @@ describe('Element', () => {
     })
   })
 
-  describe('_children tracking', () => {
-    it('innerHTML setter populates _children with parsed nodes', () => {
-      const el = document.createElement('div') as LazyDomNode
+  describe('child node stability after mutations', () => {
+    it('innerHTML children are accessible and correctly parented', () => {
+      const el = document.createElement('div')
       document.body.appendChild(el)
       el.innerHTML = '<span>hello</span><p>world</p>'
 
-      // _children must contain the two parsed child nodes
-      expect(el._children).to.not.be.undefined
-      expect(el._children!.size).to.equal(2)
-
-      const span = el.firstChild as LazyDomNode
-      const p = el.lastChild as LazyDomNode
-      expect(el._children!.has(span)).to.be.true
-      expect(el._children!.has(p)).to.be.true
+      expect(el.childNodes.length).to.equal(2)
+      expect(el.firstChild!.nodeName).to.equal('SPAN')
+      expect(el.lastChild!.nodeName).to.equal('P')
+      expect(el.firstChild!.parentNode).to.equal(el)
+      expect(el.lastChild!.parentNode).to.equal(el)
     })
 
-    it('innerHTML setter clears _children from previous content', () => {
-      const el = document.createElement('div') as LazyDomNode
+    it('innerHTML replacement detaches old children and attaches new ones', () => {
+      const el = document.createElement('div')
       document.body.appendChild(el)
       el.innerHTML = '<span>first</span>'
-      const oldSpan = el.firstChild as LazyDomNode
+      const oldSpan = el.firstChild!
 
       el.innerHTML = '<p>second</p>'
-      const newP = el.firstChild as LazyDomNode
 
-      // Old child must not be in _children; new child must be
-      expect(el._children).to.not.be.undefined
-      expect(el._children!.has(oldSpan)).to.be.false
-      expect(el._children!.has(newP)).to.be.true
-      expect(el._children!.size).to.equal(1)
+      expect(el.childNodes.length).to.equal(1)
+      expect(el.firstChild!.nodeName).to.equal('P')
+      expect(el.firstChild!.parentNode).to.equal(el)
+      expect(oldSpan.parentNode).to.be.null
     })
 
-    it('innerHTML setter with empty string clears _children', () => {
-      const el = document.createElement('div') as LazyDomNode
-      document.body.appendChild(el)
-      el.innerHTML = '<span>content</span>'
-      expect(el._children).to.not.be.undefined
-
-      el.innerHTML = ''
-      // After clearing, _children should be undefined (reset by _removeAllChildren)
-      expect(el._children).to.be.undefined
-    })
-
-    it('textContent setter populates _children with text node', () => {
-      const el = document.createElement('div') as LazyDomNode
+    it('textContent setter creates accessible text node', () => {
+      const el = document.createElement('div')
       document.body.appendChild(el)
       el.textContent = 'hello world'
 
-      expect(el._children).to.not.be.undefined
-      expect(el._children!.size).to.equal(1)
-
-      const textNode = el.firstChild as LazyDomNode
-      expect(el._children!.has(textNode)).to.be.true
+      expect(el.childNodes.length).to.equal(1)
+      expect(el.firstChild!.nodeType).to.equal(3) // TEXT_NODE
+      expect(el.firstChild!.textContent).to.equal('hello world')
+      expect(el.firstChild!.parentNode).to.equal(el)
     })
 
-    it('textContent setter clears _children from previous content', () => {
-      const el = document.createElement('div') as LazyDomNode
+    it('textContent replacement detaches old children', () => {
+      const el = document.createElement('div')
       document.body.appendChild(el)
       el.innerHTML = '<span>old</span><p>content</p>'
-      const oldSpan = el.firstChild as LazyDomNode
+      const oldSpan = el.firstChild!
 
       el.textContent = 'replaced'
-      const textNode = el.firstChild as LazyDomNode
 
-      expect(el._children!.has(oldSpan)).to.be.false
-      expect(el._children!.has(textNode)).to.be.true
-      expect(el._children!.size).to.equal(1)
+      expect(el.childNodes.length).to.equal(1)
+      expect(el.firstChild!.textContent).to.equal('replaced')
+      expect(oldSpan.parentNode).to.be.null
     })
 
-    it('textContent setter with empty string clears _children', () => {
-      const el = document.createElement('div') as LazyDomNode
+    it('textContent empty string clears all children', () => {
+      const el = document.createElement('div')
       document.body.appendChild(el)
       el.textContent = 'content'
-      expect(el._children!.size).to.equal(1)
+      expect(el.childNodes.length).to.equal(1)
 
       el.textContent = ''
-      expect(el._children).to.be.undefined
+      expect(el.childNodes.length).to.equal(0)
     })
 
-    it('document html element has _children containing head and body', () => {
-      const html = document.documentElement as LazyDomNode
-      expect(html._children).to.not.be.undefined
-      expect(html._children!.has(document.head as LazyDomNode)).to.be.true
-      expect(html._children!.has(document.body as LazyDomNode)).to.be.true
+    it('document html element has head and body as children', () => {
+      const html = document.documentElement
+      const children = Array.from(html.childNodes)
+      expect(children).to.include(document.head)
+      expect(children).to.include(document.body)
     })
 
-    it('innerHTML setter preserves deeply nested nodes via _children chain', () => {
-      const el = document.createElement('div') as LazyDomNode
+    it('deeply nested innerHTML nodes remain traversable', () => {
+      const el = document.createElement('div')
       document.body.appendChild(el)
       el.innerHTML = '<ul><li><a href="#">link</a></li></ul>'
 
-      // Top-level child (ul) must be in el._children
-      const ul = el.firstChild as LazyDomNode
-      expect(el._children!.has(ul)).to.be.true
+      const ul = el.firstChild!
+      expect(ul.nodeName).to.equal('UL')
+      expect(ul.parentNode).to.equal(el)
 
-      // li must be in ul._children (added by parseHTML via appendChild)
-      const li = ul.firstChild as LazyDomNode
-      expect(ul._children!.has(li)).to.be.true
+      const li = ul.firstChild!
+      expect(li.nodeName).to.equal('LI')
+      expect(li.parentNode).to.equal(ul)
 
-      // anchor must be in li._children
-      const a = li.firstChild as LazyDomNode
-      expect(li._children!.has(a)).to.be.true
+      const a = li.firstChild!
+      expect(a.nodeName).to.equal('A')
+      expect(a.parentNode).to.equal(li)
+      expect(a.textContent).to.equal('link')
     })
   })
 })

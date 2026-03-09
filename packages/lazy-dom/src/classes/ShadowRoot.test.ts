@@ -1,9 +1,4 @@
 import { expect } from 'chai'
-import type { Node } from './Node/Node'
-
-// At runtime, attachShadow returns our ShadowRoot which extends Node.
-// Cast so TypeScript sees _children and other internal properties.
-type LazyDomShadowRoot = ShadowRoot & Node
 
 describe('ShadowRoot', () => {
   describe('attachShadow', () => {
@@ -116,35 +111,37 @@ describe('ShadowRoot', () => {
       expect(shadow.firstChild!.nodeName).to.equal('DIV')
     })
 
-    it('setter populates _children for parsed nodes', () => {
+    it('setter creates correctly parented child nodes', () => {
       const el = document.createElement('div')
-      const shadow = el.attachShadow({ mode: 'open' }) as LazyDomShadowRoot
+      const shadow = el.attachShadow({ mode: 'open' })
       shadow.innerHTML = '<span>a</span><p>b</p>'
 
-      expect(shadow._children).to.not.be.undefined
-      expect(shadow._children!.size).to.equal(2)
+      expect(shadow.childNodes.length).to.equal(2)
+      expect(shadow.firstChild!.nodeName).to.equal('SPAN')
+      expect(shadow.lastChild!.nodeName).to.equal('P')
+      expect(shadow.firstChild!.parentNode).to.equal(shadow)
+      expect(shadow.lastChild!.parentNode).to.equal(shadow)
     })
 
-    it('setter clears _children from previous content', () => {
+    it('setter detaches old children when replacing content', () => {
       const el = document.createElement('div')
-      const shadow = el.attachShadow({ mode: 'open' }) as LazyDomShadowRoot
+      const shadow = el.attachShadow({ mode: 'open' })
       shadow.innerHTML = '<span>old</span>'
-      const oldSpan = shadow.firstChild! as unknown as Node
+      const oldSpan = shadow.firstChild!
 
       shadow.innerHTML = '<p>new</p>'
-      const newP = shadow.firstChild! as unknown as Node
 
-      expect(shadow._children!.has(oldSpan)).to.be.false
-      expect(shadow._children!.has(newP)).to.be.true
+      expect(oldSpan.parentNode).to.be.null
+      expect(shadow.firstChild!.nodeName).to.equal('P')
+      expect(shadow.firstChild!.parentNode).to.equal(shadow)
     })
 
     it('setter with empty string clears all children', () => {
       const el = document.createElement('div')
-      const shadow = el.attachShadow({ mode: 'open' }) as LazyDomShadowRoot
+      const shadow = el.attachShadow({ mode: 'open' })
       shadow.innerHTML = '<span>content</span>'
       shadow.innerHTML = ''
       expect(shadow.childNodes.length).to.equal(0)
-      expect(shadow._children).to.be.undefined
     })
 
     it('getter returns empty string when no children', () => {
@@ -203,6 +200,10 @@ describe('ShadowRoot', () => {
   })
 
   describe('adoptedStyleSheets', () => {
+    before(function () {
+      if (!globalThis.__LAZY_DOM__) this.skip()
+    })
+
     it('defaults to empty array', () => {
       const el = document.createElement('div')
       const shadow = el.attachShadow({ mode: 'open' })

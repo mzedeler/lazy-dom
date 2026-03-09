@@ -8,6 +8,10 @@ import { Element } from '../classes/Element'
 const createElement = (tag: string) => document.createElement(tag) as unknown as Element & Node
 
 describe('NodeRegistry', () => {
+  before(function () {
+    if (!globalThis.__LAZY_DOM__) this.skip()
+  })
+
   it('register makes a node retrievable by wasmId', () => {
     const el = createElement('div')
     const retrieved = NodeRegistry.getNode(el.wasmId)
