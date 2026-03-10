@@ -1,6 +1,13 @@
 import { expect } from 'chai'
 
 describe('DocumentFragment', () => {
+  describe('constructor', () => {
+    it('new DocumentFragment() has ownerDocument set to the current document', () => {
+      const frag = new DocumentFragment()
+      expect(frag.ownerDocument).to.eq(document)
+    })
+  })
+
   afterEach(() => {
     document.body?.childNodes.forEach(childNode => document.body.removeChild(childNode))
   })

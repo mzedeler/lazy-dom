@@ -6,11 +6,12 @@ describe('lazyDom', () => {
     if (!globalThis.__LAZY_DOM__) this.skip()
   })
 
-  describe('cleanup', () => {
-    it('cleanup does not remove class constructors from process global', () => {
-      const { classes, cleanup } = lazyDom()
+  describe('lazyDom() assigns class constructors to process global', () => {
+    it('puts class constructors (but not instances) on the process global', () => {
+      const { classes } = lazyDom()
 
-      // Classes should be on the process global after lazyDom()
+      // Class constructors must be on process global for instanceof
+      // checks in lazy-dom's own code (e.g. Element.dispatchEvent).
       for (const name of Object.keys(classes)) {
         expect(
           (global as Record<string, unknown>)[name],
@@ -18,16 +19,12 @@ describe('lazyDom', () => {
         ).to.not.be.undefined
       }
 
-      cleanup()
-
-      // After cleanup, classes must STILL be on the process global.
-      // Removing them races with setupFilesAfterEnv scripts like jest-canvas-mock.
-      for (const name of Object.keys(classes)) {
-        expect(
-          (global as Record<string, unknown>)[name],
-          `${name} should still be on global after cleanup()`
-        ).to.not.be.undefined
-      }
+      // But window and document instances must NOT be on the process
+      // global — they would leak per-environment DOM state.
+      expect(
+        (global as Record<string, unknown>).window,
+        'window instance should not be overwritten on process global'
+      ).to.not.have.property('documentStore')
     })
   })
 

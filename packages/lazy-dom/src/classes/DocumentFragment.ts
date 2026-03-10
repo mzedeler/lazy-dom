@@ -12,7 +12,7 @@ import {
   fireListenersAtTarget,
 } from "./EventTargetImpl"
 
-import type { Document } from "./Document"
+import { getCurrentDocument } from "../utils/currentDocument"
 
 export class DocumentFragment extends Node {
   readonly nodeName = '#document-fragment'
@@ -22,7 +22,7 @@ export class DocumentFragment extends Node {
     super(NodeTypes.DOCUMENT_FRAGMENT_NODE)
     // Per spec, new DocumentFragment() sets ownerDocument to the
     // current global object's associated document.
-    const globalDoc = (globalThis as Record<string, unknown>).document as Document | undefined
+    const globalDoc = getCurrentDocument()
     if (globalDoc) {
       this.nodeStore.ownerDocument = () => globalDoc
     }

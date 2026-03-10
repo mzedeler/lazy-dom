@@ -5,6 +5,7 @@ import { CharacterData } from './CharacterData'
 import { DOMException } from './DOMException'
 import type { Document } from './Document'
 import { parseHTML } from '../utils/parseHTML'
+import { getCurrentDocument } from '../utils/currentDocument'
 
 // Global set of live Range objects for boundary point tracking
 const liveRanges = new Set<Range>()
@@ -204,8 +205,8 @@ export class Range {
   createContextualFragment(html: string): DocumentFragment {
     const container = this.startContainer
     const doc = (container
-      ? (container as Element).ownerDocument ?? (globalThis as Record<string, unknown>).document
-      : (globalThis as Record<string, unknown>).document) as Document
+      ? (container as Element).ownerDocument ?? getCurrentDocument()
+      : getCurrentDocument()) as Document
     const fragment = doc.createDocumentFragment()
     const nodes = parseHTML(html, doc)
     for (const node of nodes) {
@@ -429,7 +430,7 @@ export class Range {
 
   cloneContents(): DocumentFragment {
     if (!this.startContainer || !this.endContainer) {
-      const doc = (globalThis as Record<string, unknown>).document as Document
+      const doc = getCurrentDocument() as Document
       return doc.createDocumentFragment()
     }
 
@@ -524,7 +525,7 @@ export class Range {
 
   extractContents(): DocumentFragment {
     if (!this.startContainer || !this.endContainer) {
-      const doc = (globalThis as Record<string, unknown>).document as Document
+      const doc = getCurrentDocument() as Document
       return doc.createDocumentFragment()
     }
 

@@ -87,6 +87,7 @@ import * as NodeRegistry from "./wasm/NodeRegistry"
 import * as nodeOps from "./wasm/nodeOps"
 import { clearLiveRanges } from "./classes/Range"
 import { clearActiveObservers } from "./classes/mutationNotify"
+import { setCurrentDocument } from "./utils/currentDocument"
 
 export { JSDOM } from "./jsdom"
 
@@ -94,6 +95,7 @@ export { JSDOM } from "./jsdom"
  *  Call between test files to prevent memory accumulation.
  *  WASM functions have null guards so stale async callbacks are safe. */
 export function reset(): void {
+  setCurrentDocument(null)
   clearLiveRanges()
   clearActiveObservers()
   NodeRegistry.clear()
@@ -206,16 +208,18 @@ const lazyDom = () => {
     ShadowRoot,
   }
   Object.assign(window, instances, classes)
-  Object.assign(global, { window, document }, classes)
 
-  const cleanup = () => {
-    // No-op: class constructors on the process global are overwritten
-    // by the next lazyDom() call. Deleting them here races with
-    // setupFilesAfterEnv scripts (e.g. jest-canvas-mock) that reference
-    // HTMLCanvasElement before the next environment constructor runs.
-  }
+  // Put class constructors on the process global so that lazy-dom's own
+  // instanceof checks (e.g. `event instanceof MouseEvent` in Element.ts)
+  // work correctly. Only classes — NOT window/document instances, which
+  // would leak per-environment DOM state onto the process global.
+  Object.assign(global, classes)
 
-  return { window, document, classes, cleanup }
+  // Set the module-level current document so Range and DocumentFragment
+  // can find it without relying on globalThis.document.
+  setCurrentDocument(document)
+
+  return { window, document, classes }
 }
 
 export default lazyDom

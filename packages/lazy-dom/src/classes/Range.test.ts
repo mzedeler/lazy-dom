@@ -1,6 +1,70 @@
 import { expect } from 'chai'
 
 describe('Range', () => {
+  describe('createContextualFragment()', () => {
+    it('creates a fragment from HTML', () => {
+      const div = document.createElement('div')
+      document.body.appendChild(div)
+
+      const range = document.createRange()
+      range.selectNodeContents(div)
+
+      const fragment = range.createContextualFragment('<span>hello</span>')
+      expect(fragment.childNodes.length).to.eq(1)
+      expect(fragment.firstChild!.nodeName.toLowerCase()).to.eq('span')
+      expect(fragment.firstChild!.textContent).to.eq('hello')
+
+      document.body.removeChild(div)
+    })
+
+    it('creates a fragment with multiple elements', () => {
+      const div = document.createElement('div')
+      document.body.appendChild(div)
+
+      const range = document.createRange()
+      range.selectNodeContents(div)
+
+      const fragment = range.createContextualFragment('<em>a</em><strong>b</strong>')
+      expect(fragment.childNodes.length).to.eq(2)
+      expect(fragment.childNodes[0]!.nodeName.toLowerCase()).to.eq('em')
+      expect(fragment.childNodes[1]!.nodeName.toLowerCase()).to.eq('strong')
+
+      document.body.removeChild(div)
+    })
+  })
+
+  describe('cloneContents() returns a DocumentFragment', () => {
+    it('returns an empty fragment for a collapsed range', () => {
+      const div = document.createElement('div')
+      const text = document.createTextNode('hello')
+      div.appendChild(text)
+
+      const range = document.createRange()
+      range.setStart(text, 3)
+      range.setEnd(text, 3)
+
+      const fragment = range.cloneContents()
+      expect(fragment).to.be.instanceOf(DocumentFragment)
+      expect(fragment.childNodes.length).to.eq(0)
+    })
+  })
+
+  describe('extractContents() returns a DocumentFragment', () => {
+    it('returns a fragment when extracting from a collapsed range', () => {
+      const div = document.createElement('div')
+      const text = document.createTextNode('hello')
+      div.appendChild(text)
+
+      const range = document.createRange()
+      range.setStart(text, 3)
+      range.setEnd(text, 3)
+
+      const fragment = range.extractContents()
+      expect(fragment).to.be.instanceOf(DocumentFragment)
+      expect(fragment.childNodes.length).to.eq(0)
+    })
+  })
+
   describe('constants', () => {
     it('has static constants', () => {
       expect(Range.START_TO_START).to.eq(0)

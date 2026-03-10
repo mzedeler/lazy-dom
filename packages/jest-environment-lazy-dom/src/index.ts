@@ -47,7 +47,6 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
   moduleMocker: ModuleMocker | null
 
   private _rafFlush: (() => void) | null = null
-  private _cleanup: (() => void) | null = null
 
   constructor(config: JestEnvironmentConfig, _context: EnvironmentContext) {
     const { projectConfig } = config
@@ -139,8 +138,7 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
     })
 
     // ---------- lazy-dom DOM setup ----------
-    const { window, document, classes, cleanup } = lazyDom()
-    this._cleanup = cleanup
+    const { window, document, classes } = lazyDom()
 
     // Assign all DOM classes onto the global
     for (const [name, value] of Object.entries(classes)) {
@@ -769,17 +767,11 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
     // Clear WASM state, NodeRegistry, liveRanges, activeObservers
     reset()
 
-    // Remove window/document/classes from process global
-    if (this._cleanup) {
-      this._cleanup()
-    }
-
     this.context = null
     this.fakeTimers = null
     this.fakeTimersModern = null
     this.moduleMocker = null
     this._rafFlush = null
-    this._cleanup = null
   }
 
   exportConditions() {
