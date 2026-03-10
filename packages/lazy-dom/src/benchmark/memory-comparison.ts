@@ -139,7 +139,7 @@ async function runLazy(iterations: number): Promise<MemSample[]> {
   const samples: MemSample[] = []
 
   await gcAsync()
-  const snapBefore = writeHeapSnapshot()
+  const snapBefore = writeHeapSnapshot('lazy-dom-before.heapsnapshot')
   console.log(`Heap snapshot (before): ${snapBefore}`)
 
   for (let i = 0; i < iterations; i++) {
@@ -174,7 +174,7 @@ async function runLazy(iterations: number): Promise<MemSample[]> {
   }
 
   await gcAsync()
-  const snapAfter = writeHeapSnapshot()
+  const snapAfter = writeHeapSnapshot('lazy-dom-after.heapsnapshot')
   console.log(`Heap snapshot (after):  ${snapAfter}`)
 
   return samples
@@ -291,7 +291,7 @@ async function runJsdom(iterations: number): Promise<MemSample[]> {
   const samples: MemSample[] = []
 
   await gcAsync()
-  const snapBefore = writeHeapSnapshot()
+  const snapBefore = writeHeapSnapshot('jsdom-before.heapsnapshot')
   console.log(`Heap snapshot (before): ${snapBefore}`)
 
   for (let i = 0; i < iterations; i++) {
@@ -318,7 +318,7 @@ async function runJsdom(iterations: number): Promise<MemSample[]> {
   }
 
   await gcAsync()
-  const snapAfter = writeHeapSnapshot()
+  const snapAfter = writeHeapSnapshot('jsdom-after.heapsnapshot')
   console.log(`Heap snapshot (after):  ${snapAfter}`)
 
   return samples
@@ -347,7 +347,7 @@ async function runPlainVm(iterations: number): Promise<MemSample[]> {
   const samples: MemSample[] = []
 
   await gcAsync()
-  const snapBefore = writeHeapSnapshot()
+  const snapBefore = writeHeapSnapshot('plain-vm-before.heapsnapshot')
   console.log(`Heap snapshot (before): ${snapBefore}`)
 
   for (let i = 0; i < iterations; i++) {
@@ -370,7 +370,7 @@ async function runPlainVm(iterations: number): Promise<MemSample[]> {
   }
 
   await gcAsync()
-  const snapAfter = writeHeapSnapshot()
+  const snapAfter = writeHeapSnapshot('plain-vm-after.heapsnapshot')
   console.log(`Heap snapshot (after):  ${snapAfter}`)
 
   return samples
