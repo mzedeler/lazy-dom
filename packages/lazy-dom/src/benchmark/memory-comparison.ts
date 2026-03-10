@@ -26,6 +26,7 @@
  *   done
  */
 import vm from 'node:vm'
+import { writeHeapSnapshot } from 'node:v8'
 import { execFileSync } from 'node:child_process'
 import lazyDom, { reset } from '../lazyDom'
 
@@ -137,6 +138,10 @@ function measure(iter: number): MemSample {
 async function runLazy(iterations: number): Promise<MemSample[]> {
   const samples: MemSample[] = []
 
+  await gcAsync()
+  const snapBefore = writeHeapSnapshot()
+  console.log(`Heap snapshot (before): ${snapBefore}`)
+
   for (let i = 0; i < iterations; i++) {
     // --- Setup (mirrors LazyDomEnvironment constructor) ---
     const context = vm.createContext()
@@ -167,6 +172,10 @@ async function runLazy(iterations: number): Promise<MemSample[]> {
       samples.push(measure(i))
     }
   }
+
+  await gcAsync()
+  const snapAfter = writeHeapSnapshot()
+  console.log(`Heap snapshot (after):  ${snapAfter}`)
 
   return samples
 }
@@ -281,6 +290,10 @@ async function runJsdom(iterations: number): Promise<MemSample[]> {
   const { JSDOM } = await import('jsdom')
   const samples: MemSample[] = []
 
+  await gcAsync()
+  const snapBefore = writeHeapSnapshot()
+  console.log(`Heap snapshot (before): ${snapBefore}`)
+
   for (let i = 0; i < iterations; i++) {
     // --- Setup (mirrors jest-environment-jsdom) ---
     const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
@@ -303,6 +316,10 @@ async function runJsdom(iterations: number): Promise<MemSample[]> {
       samples.push(measure(i))
     }
   }
+
+  await gcAsync()
+  const snapAfter = writeHeapSnapshot()
+  console.log(`Heap snapshot (after):  ${snapAfter}`)
 
   return samples
 }
@@ -329,6 +346,10 @@ function makePlainModule(index: number): string {
 async function runPlainVm(iterations: number): Promise<MemSample[]> {
   const samples: MemSample[] = []
 
+  await gcAsync()
+  const snapBefore = writeHeapSnapshot()
+  console.log(`Heap snapshot (before): ${snapBefore}`)
+
   for (let i = 0; i < iterations; i++) {
     const context = vm.createContext()
 
@@ -347,6 +368,10 @@ async function runPlainVm(iterations: number): Promise<MemSample[]> {
       samples.push(measure(i))
     }
   }
+
+  await gcAsync()
+  const snapAfter = writeHeapSnapshot()
+  console.log(`Heap snapshot (after):  ${snapAfter}`)
 
   return samples
 }
