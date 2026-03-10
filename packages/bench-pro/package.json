@@ -6,7 +6,8 @@
     "compare": "tsx src/compare.ts",
     "typecheck": "tsc --noEmit",
     "test:lazydom": "ls ..; cd ../../pro; npx jest --testEnvironment=jest-environment-lazy-dom",
-    "test:jsdom": "ls ..; cd ../../pro; npx jest"
+    "test:jsdom": "ls ..; cd ../../pro; npx jest",
+    "memory:bench": "tsx src/memory-bench.ts"
   },
   "devDependencies": {
     "@types/node": "^20.12.11",

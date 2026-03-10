@@ -767,7 +767,31 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
     // Clear WASM state, NodeRegistry, liveRanges, activeObservers
     reset()
 
+    // Break references from the vm context global to lazy-dom objects.
+    // Without this, V8 retains all compiled code (SharedFunctionInfo,
+    // BytecodeArray, FeedbackMetadata) for every module loaded in this
+    // context. JSDOM's window.close() does equivalent cleanup — emptying
+    // document.body, clearing event listeners, and deleting the document
+    // reference. We delete all configurable properties from the global to
+    // allow V8 to collect the context and its compiled code.
+    if (this.global) {
+      const g = this.global as typeof globalThis
+      for (const key of Object.getOwnPropertyNames(g)) {
+        const desc = Object.getOwnPropertyDescriptor(g, key)
+        if (desc?.configurable) {
+          try {
+            delete (g as Record<string, unknown>)[key]
+          } catch {
+            // Some properties may resist deletion — skip them
+          }
+        }
+      }
+    }
+
     this.context = null
+    // @ts-expect-error — null not assignable to Global.Global, but necessary
+    // to release the vm context (matches jest-environment-jsdom behavior)
+    this.global = null
     this.fakeTimers = null
     this.fakeTimersModern = null
     this.moduleMocker = null
