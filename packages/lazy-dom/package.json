@@ -25,6 +25,7 @@
   "scripts": {
     "benchmark:watch": "tsx watch src/benchmark/benchmark.ts",
     "benchmark": "pnpm build:wasm && tsx src/benchmark/benchmark.ts",
+    "memory:bench": "tsx --expose-gc src/benchmark/memory-comparison.ts compare 500",
     "build:wasm": "asc src/assembly/index.ts --outFile build/wasm/lazy-dom.wasm --optimize --exportRuntime",
     "build": "pnpm build:wasm && tsc -p tsconfig.build.json",
     "build:watch": "pnpm exec tsc --watch ./src/lazyDom.ts --outDir dist",

@@ -111,11 +111,36 @@ This severs all reference chains within the JSDOM Window context, allowing V8 to
 
 `jest-environment-node` (which lazy-dom previously extended) only calls `this.context = null` — a shallow cleanup that doesn't break internal reference chains within the VM context.
 
+## Approaches tried and ruled out (March 2026)
+
+### 1. Nulling `this.global` in teardown
+Setting `this.global = null` in the jest environment's `teardown()` (matching jest-environment-jsdom's pattern) causes stale async callbacks from React's scheduler to crash with TypeError accessing properties on `undefined`. Unlike JSDOM — where `this.global` IS the Window and `window.close()` neuters it from the inside — lazy-dom's `this.global` is the vm context global. Nulling it from outside doesn't neuter the context from inside.
+
+### 2. Neutering DOM properties on the vm sandbox global
+Overwriting all DOM-specific properties on `g` with `undefined` in teardown (e.g., `g.document = undefined`, `g.window = undefined`) crashes immediately: React's scheduler accesses `window.event` in a `setImmediate` callback that fires after teardown. Setting `window` to `undefined` causes `TypeError: Cannot read properties of undefined (reading 'event')`.
+
+### 3. DOM teardown (Document._teardown / Window.close)
+Implementing JSDOM-style internal cleanup — clearing `body.innerHTML`, breaking event listener chains, nulling `document.defaultView` — does not reduce memory. The retained V8 compiled code references DOM nodes via local variables in closures, not via the document/window graph. Breaking the graph doesn't make those closures collectible.
+
+### 4. Timer tracking and clearing
+Wrapping `setTimeout`/`setInterval`/`setImmediate` on the vm sandbox global to track active handles, then clearing them all in teardown (matching JSDOM's timer cleanup in `window.close()`). This reduced peak RSS by ~17% (4,306 → 3,560 MB) but introduced 7 new test failures: tests that depend on timers firing between test lifecycle phases crash when those timers are prematurely cleared. The benefit was insufficient to justify the breakage.
+
+## Why JSDOM succeeds where lazy-dom can't
+
+The fundamental architectural difference: in `jest-environment-jsdom`, the JSDOM Window **IS** the vm context's global proxy. When `window.close()` neuters the Window from the inside, it neuters the vm context's global from the inside. All compiled code within the context that accesses `this.document`, `this.window`, etc. finds neutered stubs rather than live objects.
+
+In lazy-dom, the vm context global is a plain object, and the lazy-dom Window is a separate object assigned to `g.window`. The vm context and the Window are different objects. There is no way to neuter the vm context global from the inside without either (a) deleting/overwriting properties (which crashes stale callbacks) or (b) making the Window be the vm context global (which would require JSDOM-style `runScripts: 'dangerously'` integration).
+
 ## Path Forward
 
-The `lazy+vm` approach reduces peak memory by 13% vs `lazy+reset`, but the growth pattern is still linear (~14 MB/file). To match JSDOM's flat profile, lazy-dom would need to implement a `window.close()`-style teardown that breaks all internal reference chains within the lazy-dom Window/Document objects, allowing V8 to release the compiled code that closes over them. This is a significant refactoring effort.
+The memory growth is linear at ~14 MB/file, entirely in V8 compiled code objects and jest module wrapper strings. This is a fundamental characteristic of Jest's module system with a custom vm context that differs from JSDOM's integrated approach.
 
-In practice, most CI runs use `--maxWorkers` which creates a fresh process per worker, avoiding accumulation entirely. The `--runInBand` memory issue primarily affects local development with large test suites.
+Practical mitigations:
+- **Use `--maxWorkers`** (default in CI): creates a fresh process per worker, avoiding accumulation entirely
+- **Increase Node.js heap limit**: `NODE_OPTIONS=--max-old-space-size=8192` for large `--runInBand` runs
+- **Split test suites**: use `--shard` to distribute tests across separate processes
+
+The `--runInBand` memory issue primarily affects local development with very large test suites (400+ files).
 
 ## Tools
 
