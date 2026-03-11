@@ -47,6 +47,7 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
   moduleMocker: ModuleMocker | null
 
   private _rafFlush: (() => void) | null = null
+  private _clearAllTimers: (() => void) | null = null
 
   constructor(config: JestEnvironmentConfig, _context: EnvironmentContext) {
     const { projectConfig } = config
@@ -533,22 +534,84 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
     })
 
     // Provide timer functions on the lazy-dom window object and jest global so that
-    // libraries accessing them via ownerDocument.defaultView work correctly
-    const timerNames = ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] as const
-    for (const name of timerNames) {
-      const fn = globalThis[name]
-      if (fn) {
-        const bound = fn.bind(globalThis)
+    // libraries accessing them via ownerDocument.defaultView work correctly.
+    //
+    // We track all active timer IDs so teardown can cancel them. Without this,
+    // deferred callbacks (e.g. @rails/activestorage autostart, lodash debounce)
+    // fire after the global has been stripped, crashing the worker process.
+    {
+      const activeTimeouts = new Set<ReturnType<typeof globalThis.setTimeout>>()
+      const activeIntervals = new Set<ReturnType<typeof globalThis.setInterval>>()
+      const activeImmediates = new Set<ReturnType<typeof globalThis.setImmediate>>()
+
+      const wrappedSetTimeout = (callback: (...args: unknown[]) => void, ms?: number, ...args: unknown[]) => {
+        const id = globalThis.setTimeout((...a: unknown[]) => {
+          activeTimeouts.delete(id)
+          callback(...a)
+        }, ms, ...args)
+        activeTimeouts.add(id)
+        return id
+      }
+
+      const wrappedClearTimeout = (id: ReturnType<typeof globalThis.setTimeout>) => {
+        activeTimeouts.delete(id)
+        globalThis.clearTimeout(id)
+      }
+
+      const wrappedSetInterval = (callback: (...args: unknown[]) => void, ms?: number, ...args: unknown[]) => {
+        const id = globalThis.setInterval(callback, ms, ...args)
+        activeIntervals.add(id)
+        return id
+      }
+
+      const wrappedClearInterval = (id: ReturnType<typeof globalThis.setInterval>) => {
+        activeIntervals.delete(id)
+        globalThis.clearInterval(id)
+      }
+
+      const wrappedSetImmediate = (callback: (...args: unknown[]) => void, ...args: unknown[]) => {
+        const id = globalThis.setImmediate((...a: unknown[]) => {
+          activeImmediates.delete(id)
+          callback(...a)
+        }, ...args)
+        activeImmediates.add(id)
+        return id
+      }
+
+      const wrappedClearImmediate = (id: ReturnType<typeof globalThis.setImmediate>) => {
+        activeImmediates.delete(id)
+        globalThis.clearImmediate(id)
+      }
+
+      this._clearAllTimers = () => {
+        for (const id of activeTimeouts) globalThis.clearTimeout(id)
+        activeTimeouts.clear()
+        for (const id of activeIntervals) globalThis.clearInterval(id)
+        activeIntervals.clear()
+        for (const id of activeImmediates) globalThis.clearImmediate(id)
+        activeImmediates.clear()
+      }
+
+      const timerFns = {
+        setTimeout: wrappedSetTimeout,
+        clearTimeout: wrappedClearTimeout,
+        setInterval: wrappedSetInterval,
+        clearInterval: wrappedClearInterval,
+        setImmediate: wrappedSetImmediate,
+        clearImmediate: wrappedClearImmediate,
+      } as const
+
+      for (const [name, fn] of Object.entries(timerFns)) {
         Object.defineProperty(window, name, {
           configurable: true,
           enumerable: true,
-          value: bound,
+          value: fn,
           writable: true,
         })
         Object.defineProperty(g, name, {
           configurable: true,
           enumerable: true,
-          value: bound,
+          value: fn,
           writable: true,
         })
       }
@@ -751,7 +814,15 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
   }
 
   async teardown() {
-    // Flush pending RAF callbacks first
+    // Cancel all tracked timers before stripping the global. Without this,
+    // deferred callbacks (e.g. @rails/activestorage autostart, lodash
+    // debounce) fire after properties have been deleted from the global,
+    // throwing ReferenceError and crashing the Jest worker process.
+    if (this._clearAllTimers) {
+      this._clearAllTimers()
+    }
+
+    // Flush pending RAF callbacks
     if (this._rafFlush) {
       this._rafFlush()
     }
@@ -796,6 +867,7 @@ export default class LazyDomEnvironment implements JestEnvironment<TimerRef> {
     this.fakeTimersModern = null
     this.moduleMocker = null
     this._rafFlush = null
+    this._clearAllTimers = null
   }
 
   exportConditions() {
