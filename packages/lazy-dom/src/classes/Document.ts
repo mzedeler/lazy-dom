@@ -263,6 +263,42 @@ export class Document implements EventTarget {
     return this.documentStore.elements
   }
 
+  /** Break closure chains and references for GC.
+   *  Called by reset() between test suites. */
+  _dispose(): void {
+    this._docChildren = []
+    this.implementation._dispose()
+    this.defaultView = null
+    // Dispose the document store itself to break all thunk chains
+    this.documentStore = null as unknown as DocumentStore
+    // Null on* handlers to break references to test code closures
+    this.onclick = null
+    this.ondblclick = null
+    this.onmousedown = null
+    this.onmouseup = null
+    this.onmousemove = null
+    this.onmouseover = null
+    this.onmouseout = null
+    this.onkeydown = null
+    this.onkeyup = null
+    this.onkeypress = null
+    this.onfocus = null
+    this.onblur = null
+    this.onchange = null
+    this.oninput = null
+    this.onsubmit = null
+    this.onreset = null
+    this.onscroll = null
+    this.onresize = null
+    this.onload = null
+    this.onerror = null
+    this.onselect = null
+    this.ontouchstart = null
+    this.ontouchmove = null
+    this.ontouchend = null
+    this.ontouchcancel = null
+  }
+
   constructor() {
     // Lazy init: the entire html > head + body tree is built on first access
     const initTree = () => {

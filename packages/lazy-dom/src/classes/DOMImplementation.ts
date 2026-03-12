@@ -51,4 +51,10 @@ export class DOMImplementation {
     }
     return doc
   }
+
+  /** Break closure references to the owning Document. */
+  _dispose(): void {
+    this._createDocument = () => { throw new Error('disposed') }
+    this._ownerDocument = () => { throw new Error('disposed') }
+  }
 }

@@ -7,6 +7,10 @@ export class EventTargetStore {
   eventListeners: Future<Listeners> = () => ({})
 }
 
+/** Shared singleton for disposed nodes — avoids per-node EventTargetStore objects. */
+export const disposedEventTargetStore = new EventTargetStore()
+disposedEventTargetStore.eventListeners = () => ({})
+
 export function parseListenerOptions(options?: boolean | AddEventListenerOptions): { capture: boolean; passive: boolean; once: boolean } {
   if (typeof options === 'boolean') return { capture: options, passive: false, once: false }
   // Reading passive/once from the options object triggers getter-based feature detection

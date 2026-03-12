@@ -101,17 +101,11 @@ Key: **External/ArrayBuffers stay flat at ~10-26 MB** — WASM linear memory is 
 
 ## Why JSDOM doesn't leak
 
-JSDOM's `jest-environment-jsdom` teardown calls `global.close()`, which aggressively:
-1. Clears all event listeners: `_eventListeners = Object.create(null)`
-2. Empties the DOM: `this._document.body.innerHTML = ""`
-3. Stops all timers
-4. Deletes the document reference
-
-This severs all reference chains within the JSDOM Window context, allowing V8 to release both the DOM objects AND the compiled code that referenced them.
+JSDOM's Window IS the vm context's global proxy, so `window.close()` neuters the context from the inside — clearing event listeners, emptying the DOM, stopping timers, and deleting the document reference. This severs all reference chains, including Symbol-keyed closures on prototypes. See [Why JSDOM doesn't need this fix](#why-jsdom-doesnt-need-this-fix) for details.
 
 `jest-environment-node` (which lazy-dom previously extended) only calls `this.context = null` — a shallow cleanup that doesn't break internal reference chains within the VM context.
 
-## Approaches tried and ruled out (March 2026)
+## Approaches tried and ruled out (pre-fix, March 2026)
 
 ### 1. Nulling `this.global` in teardown
 Setting `this.global = null` in the jest environment's `teardown()` (matching jest-environment-jsdom's pattern) causes stale async callbacks from React's scheduler to crash with TypeError accessing properties on `undefined`. Unlike JSDOM — where `this.global` IS the Window and `window.close()` neuters it from the inside — lazy-dom's `this.global` is the vm context global. Nulling it from outside doesn't neuter the context from inside.
@@ -125,22 +119,82 @@ Implementing JSDOM-style internal cleanup — clearing `body.innerHTML`, breakin
 ### 4. Timer tracking and clearing
 Wrapping `setTimeout`/`setInterval`/`setImmediate` on the vm sandbox global to track active handles, then clearing them all in teardown (matching JSDOM's timer cleanup in `window.close()`). This reduced peak RSS by ~17% (4,306 → 3,560 MB) but introduced 7 new test failures: tests that depend on timers firing between test lifecycle phases crash when those timers are prematurely cleared. The benefit was insufficient to justify the breakage.
 
-## Why JSDOM succeeds where lazy-dom can't
+## Root Cause: Symbol-Keyed Properties on Shared Prototypes
 
-The fundamental architectural difference: in `jest-environment-jsdom`, the JSDOM Window **IS** the vm context's global proxy. When `window.close()` neuters the Window from the inside, it neuters the vm context's global from the inside. All compiled code within the context that accesses `this.document`, `this.window`, etc. finds neutered stubs rather than live objects.
+### Discovery
 
-In lazy-dom, the vm context global is a plain object, and the lazy-dom Window is a separate object assigned to `g.window`. The vm context and the Window are different objects. There is no way to neuter the vm context global from the inside without either (a) deleting/overwriting properties (which crashes stale callbacks) or (b) making the Window be the vm context global (which would require JSDOM-style `runScripts: 'dangerously'` integration).
+V8 heap snapshot analysis with custom BFS-based retention tracing scripts revealed the actual retention chain keeping VM contexts alive:
 
-## Path Forward
+```
+NativeContext (VM context)
+  ← context ← closure (anonymous)
+    ← __proto__ ← closure:get
+      ← Symbol('patched focus/blur methods') ← Element.prototype
+        ← HTMLElement.prototype ← module exports ← Module._cache
+          ← process.getBuiltinModule → GC root (Global handles)
+```
 
-The memory growth is linear at ~14 MB/file, entirely in V8 compiled code objects and jest module wrapper strings. This is a fundamental characteristic of Jest's module system with a custom vm context that differs from JSDOM's integrated approach.
+`@testing-library/dom` patches `Element.prototype` with a Symbol-keyed property (`Symbol('patched focus/blur methods')`) whose value is a closure compiled in the VM context. V8 keeps a NativeContext alive as long as ANY function compiled in that context is reachable from GC roots.
 
-Practical mitigations:
-- **Use `--maxWorkers`** (default in CI): creates a fresh process per worker, avoiding accumulation entirely
-- **Increase Node.js heap limit**: `NODE_OPTIONS=--max-old-space-size=8192` for large `--runInBand` runs
-- **Split test suites**: use `--shard` to distribute tests across separate processes
+### Why it wasn't cleaned up
 
-The `--runInBand` memory issue primarily affects local development with very large test suites (400+ files).
+The prototype snapshot/restore code in `jest-environment-lazy-dom` used `Object.getOwnPropertyNames()` to capture and restore prototype state between tests. `getOwnPropertyNames()` only returns **string** keys — it silently skips Symbol keys. The Symbol-keyed closure was never captured in the snapshot, so it was never removed during restore, leaving a VM-context reference permanently attached to a shared prototype that lives in the host context (Module._cache → GC root).
+
+### Why earlier approaches failed
+
+All earlier approaches (sections below) tried to break references from the wrong direction:
+- Nulling `this.global`, neutering DOM properties, clearing timers — none of these affect `Element.prototype` in the host context
+- The prototype restore WAS running, but only on string-keyed properties
+- The WeakMap hypothesis (from `_interopRequireWildcard`) was a red herring: the WeakMap table had no path to GC roots within 12 levels and relied on ephemeron semantics
+
+## The Fix (March 2026)
+
+Three changes in `packages/jest-environment-lazy-dom/src/index.ts`:
+
+### 1. Symbol-key handling in prototype snapshot/restore (primary fix)
+
+Changed prototype snapshot capture to include Symbol keys:
+
+```typescript
+// Before: only string keys
+for (const key of Object.getOwnPropertyNames(proto)) { ... }
+
+// After: string AND symbol keys
+for (const key of [...Object.getOwnPropertyNames(proto), ...Object.getOwnPropertySymbols(proto)]) { ... }
+```
+
+Same change applied to the restore loop. The `_prototypeSnapshots` type changed from `Map<string, PropertyDescriptor>` to `Map<string | symbol, PropertyDescriptor>`.
+
+### 2. VM builtin prototype neutralization (defense-in-depth)
+
+Replaces VM-context built-in prototype methods (Object.prototype.toString, etc.) with host-context equivalents. This breaks the secondary retention path through V8's internal Map (hidden class) → NativeContext chain, though the Symbol fix alone is sufficient.
+
+### 3. Host replacement for VM globals (crash prevention)
+
+Instead of deleting VM globals in teardown (which crashes deferred React act() callbacks), replaces them with host-context equivalents. Key globals that must survive: `Error`, `TypeError`, `globalThis`, `console`, `setTimeout`, `clearTimeout`, `setImmediate`, `clearImmediate`.
+
+## Results
+
+| Metric | Before fix | After fix | JSDOM |
+|--------|-----------|-----------|-------|
+| **Context retention** | 197/466 (42%) | 1/466 (0.2%) | 1-13/466 (0.2-2.8%) |
+| **Heap growth** | ~2,200 MB | ~244 MB | ~400 MB |
+| **MB per suite** | ~4.7 | ~0.52 | ~0.86 |
+| **Peak heapUsed** | ~2,345 MB | ~260 MB | ~400 MB |
+
+lazy-dom now uses **less memory than JSDOM** for the same test suite, representing an **89% reduction** in heap growth.
+
+## Why JSDOM doesn't need this fix
+
+JSDOM's `jest-environment-jsdom` teardown calls `global.close()`, which aggressively:
+1. Clears all event listeners: `_eventListeners = Object.create(null)`
+2. Empties the DOM: `this._document.body.innerHTML = ""`
+3. Stops all timers
+4. Deletes the document reference
+
+The JSDOM Window **IS** the vm context's global proxy. When `window.close()` neuters the Window from the inside, it neuters the vm context's global from the inside. This severs all reference chains, including any Symbol-keyed closures on prototypes, allowing V8 to release the entire context.
+
+In lazy-dom, the vm context global is a separate object from the Window, so explicit prototype cleanup is required.
 
 ## Tools
 

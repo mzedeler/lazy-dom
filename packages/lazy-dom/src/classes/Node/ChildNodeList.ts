@@ -1,6 +1,6 @@
 import { NodeList } from "../NodeList";
 import { Node } from "./Node";
-import { NodeStore } from "./NodeStore";
+import { NodeStore, disposedNodeStore } from "./NodeStore";
 
 export class ChildNodeList extends NodeList {
   [index: number]: Node | undefined;
@@ -64,3 +64,7 @@ export class ChildNodeList extends NodeList {
     return this.nodeStore.getChildNodesArray().values();
   }
 }
+
+/** Shared singleton for disposed nodes — one Proxy/ChildNodeList instead of one per node.
+ *  Uses disposedNodeStore (wasmId=0) which safely returns empty results after WASM reset. */
+export const disposedChildNodeList = new ChildNodeList(disposedNodeStore);

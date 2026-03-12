@@ -15,8 +15,8 @@ import path from "node:path"
 
 const proDir = path.resolve(__dirname, "../../../pro")
 const benchDir = path.resolve(__dirname, "..")
-const setupPath = path.resolve(__dirname, "memory-bench-setup.js")
-const teardownPath = path.resolve(__dirname, "memory-bench-teardown.js")
+const setupPath = path.resolve(__dirname, "memory-bench-setup-lite.js")
+const teardownPath = path.resolve(__dirname, "memory-bench-teardown-lite.js")
 const jestBin = path.resolve(proDir, "node_modules/jest/bin/jest.js")
 
 interface MemoryUsage {
@@ -74,7 +74,7 @@ function runJest(
   testEnvironment: string,
   extraEnv: Record<string, string> = {}
 ): RunResult {
-  const testPathPattern = process.argv[2] || ""
+  const testPathPattern = ""
 
   const args = [
     "--expose-gc",
@@ -105,6 +105,7 @@ function runJest(
         HEAP_SNAPSHOT_LABEL: label,
         HEAP_SNAPSHOT_DIR: benchDir,
       },
+      stdio: ["pipe", "pipe", "inherit"],
       maxBuffer: 100 * 1024 * 1024,
       timeout: 30 * 60 * 1000,
     })
@@ -211,13 +212,13 @@ for (const r of results) {
   )
 }
 
-// --- Snapshot listing ---
+// --- Memory files ---
 
-console.log("\n=== Heap Snapshots ===\n")
+console.log("\n=== Memory Files ===\n")
 for (const r of results) {
-  const beforeSnap = path.join(benchDir, `${r.label}-before.heapsnapshot`)
-  const afterSnap = path.join(benchDir, `${r.label}-after.heapsnapshot`)
+  const beforeFile = path.join(benchDir, `${r.label}-before-memory.json`)
+  const afterFile = path.join(benchDir, `${r.label}-after-memory.json`)
   console.log(`  ${r.label}:`)
-  console.log(`    before: ${beforeSnap}`)
-  console.log(`    after:  ${afterSnap}`)
+  console.log(`    before: ${beforeFile}`)
+  console.log(`    after:  ${afterFile}`)
 }

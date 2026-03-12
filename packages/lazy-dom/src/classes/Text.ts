@@ -11,6 +11,10 @@ class TextStore  {
   }
 }
 
+/** Shared singleton for disposed text nodes. */
+const disposedTextStore = new TextStore()
+disposedTextStore.data = () => ''
+
 export class Text extends CharacterData {
   textStore = new TextStore()
 
@@ -18,6 +22,11 @@ export class Text extends CharacterData {
 
   constructor() {
     super(NodeTypes.TEXT_NODE)
+  }
+
+  override _dispose(): void {
+    super._dispose()
+    this.textStore = disposedTextStore
   }
 
   get textContent() {

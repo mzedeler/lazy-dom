@@ -32,5 +32,8 @@ export function has(wasmId: number): boolean {
 }
 
 export function clear(): void {
+  for (const node of idToNode.values()) {
+    node._dispose();
+  }
   idToNode.clear();
 }

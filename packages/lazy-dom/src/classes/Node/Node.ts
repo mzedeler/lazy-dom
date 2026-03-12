@@ -2,8 +2,8 @@ import { NodeTypes } from "../../types/NodeTypes"
 
 import { Document } from "../Document"
 import { Element } from "../Element"
-import { NodeStore } from "./NodeStore"
-import { ChildNodeList } from "./ChildNodeList"
+import { NodeStore, disposedNodeStore } from "./NodeStore"
+import { ChildNodeList, disposedChildNodeList } from "./ChildNodeList"
 import * as nodeOps from "../../wasm/nodeOps"
 import * as NodeRegistry from "../../wasm/NodeRegistry"
 
@@ -25,11 +25,27 @@ function getDocumentFragment() {
 export abstract class Node {
   wasmId: number
   nodeStore: NodeStore
-  readonly _childNodes: ChildNodeList
+  _childNodes: ChildNodeList
   /** Set by Document when this node is a direct child of the document. */
   _parentDocument: Document | null = null
   /** Strong references to child nodes — prevents GC while parent is alive. */
   _children: Set<Node> | undefined
+
+  /** Break closure chains so retained nodes don't pin large Future graphs.
+   *  Called by NodeRegistry.clear() during reset(). Replaces per-node stores
+   *  with shared singletons so all disposed nodes share one set of objects
+   *  instead of each keeping its own store with individual closure fields.
+   *  Subclasses should override to also clear their own stores and call
+   *  super._dispose(). */
+  _dispose(): void {
+    this.nodeStore = disposedNodeStore
+    this._childNodes = disposedChildNodeList
+    if (this._children) {
+      this._children.clear()
+      this._children = undefined
+    }
+    this._parentDocument = null
+  }
 
   // Static constants (accessed as Node.TEXT_NODE, etc.)
   static readonly ELEMENT_NODE = NodeTypes.ELEMENT_NODE

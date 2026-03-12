@@ -10,7 +10,7 @@ declare global {
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 globalThis.__LAZY_DOM__ = true
 
-const { window, document } = lazyDom()
-// Classes are already assigned to global by lazyDom().
-// Only add window/document instances for the Mocha register path.
-Object.assign(global, { window, document })
+const { window, document, classes } = lazyDom()
+// Put class constructors and instances on the process global
+// for the Mocha register path.
+Object.assign(global, classes, { window, document })

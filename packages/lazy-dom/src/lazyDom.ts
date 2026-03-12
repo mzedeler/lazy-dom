@@ -87,7 +87,8 @@ import * as NodeRegistry from "./wasm/NodeRegistry"
 import * as nodeOps from "./wasm/nodeOps"
 import { clearLiveRanges } from "./classes/Range"
 import { clearActiveObservers } from "./classes/mutationNotify"
-import { setCurrentDocument } from "./utils/currentDocument"
+import { getCurrentDocument, setCurrentDocument } from "./utils/currentDocument"
+import { disposedEventTargetStore } from "./classes/EventTargetImpl"
 
 export { JSDOM } from "./jsdom"
 
@@ -95,9 +96,28 @@ export { JSDOM } from "./jsdom"
  *  Call between test files to prevent memory accumulation.
  *  WASM functions have null guards so stale async callbacks are safe. */
 export function reset(): void {
+  // Clear the Document's stores before nulling the reference.
+  // Document is not in NodeRegistry (it's not a Node subclass), so
+  // we must break its closure chains explicitly.
+  const doc = getCurrentDocument()
+  if (doc) {
+    // Dispose the Window (clears eventTargetStore, selection)
+    doc.defaultView?._dispose()
+
+    doc.documentStore.documentElement = () => { throw new Error('disposed') }
+    doc.documentStore.body = () => { throw new Error('disposed') }
+    doc.documentStore.head = () => { throw new Error('disposed') }
+    doc.documentStore.cookie = () => ''
+    doc.documentStore.activeElement = () => null
+    doc.documentStore.eventTargetStore = disposedEventTargetStore
+
+    // Dispose the Document itself (_docChildren, on* handlers, implementation)
+    doc._dispose()
+  }
   setCurrentDocument(null)
   clearLiveRanges()
   clearActiveObservers()
+  // clear() calls _dispose() on each node to break Future closure chains
   NodeRegistry.clear()
   nodeOps.resetAll()
 }
@@ -208,12 +228,6 @@ const lazyDom = () => {
     ShadowRoot,
   }
   Object.assign(window, instances, classes)
-
-  // Put class constructors on the process global so that lazy-dom's own
-  // instanceof checks (e.g. `event instanceof MouseEvent` in Element.ts)
-  // work correctly. Only classes — NOT window/document instances, which
-  // would leak per-environment DOM state onto the process global.
-  Object.assign(global, classes)
 
   // Set the module-level current document so Range and DocumentFragment
   // can find it without relying on globalThis.document.

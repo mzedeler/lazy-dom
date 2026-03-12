@@ -39,3 +39,10 @@ export class NodeStore {
     throw valueNotSetError('nodeValue');
   };
 }
+
+/** Shared singleton for disposed nodes — all disposed nodes share this one
+ *  instance instead of keeping their own stores with individual closure fields.
+ *  wasmId 0 is safe: after nodeOps.resetAll(), WASM returns empty/0 for id 0. */
+export const disposedNodeStore = new NodeStore(0);
+disposedNodeStore.ownerDocument = () => { throw new Error('Node disposed') };
+disposedNodeStore.nodeValue = () => null;

@@ -9,6 +9,7 @@ import { Comment } from "./Comment"
 import { Node } from "./Node/Node"
 import { Event } from "./Event"
 import { EventTarget } from "../types/EventTarget"
+import { MouseEvent } from "./MouseEvent"
 import { PointerEvent } from "./PointerEvent"
 import { Attr } from "./Attr"
 import { NamedNodeMap } from "./NamedNodeMap"
@@ -59,6 +60,14 @@ class ElementStore {
   attributes: Future<NamedNodeMap> = () => new NamedNodeMap()
   namespaceURI: Future<string | null> = () => null
 }
+
+/** Shared singleton for disposed elements — avoids per-element store objects. */
+const disposedElementStore = new ElementStore()
+disposedElementStore.tagName = () => ''
+disposedElementStore.style = () => { throw new Error('disposed') }
+disposedElementStore.attributes = () => { throw new Error('disposed') }
+disposedElementStore.namespaceURI = () => null
+disposedElementStore.eventTargetStore.eventListeners = () => ({})
 
 class StyleAwareNamedNodeMap extends NamedNodeMap {
   private _elementStore: ElementStore
@@ -155,6 +164,32 @@ export class Element extends Node implements EventTarget {
 
   constructor() {
     super(NodeTypes.ELEMENT_NODE)
+  }
+
+  override _dispose(): void {
+    super._dispose()
+    this.elementStore = disposedElementStore
+    this._shadowRoot = null
+    // Null IDL event handlers to break references to test code closures
+    this.onclick = null
+    this.ondblclick = null
+    this.onmousedown = null
+    this.onmouseup = null
+    this.onmousemove = null
+    this.onmouseover = null
+    this.onmouseout = null
+    this.onkeydown = null
+    this.onkeyup = null
+    this.onkeypress = null
+    this.onfocus = null
+    this.onblur = null
+    this.oninput = null
+    this.onchange = null
+    this.onsubmit = null
+    this.onreset = null
+    this.onscroll = null
+    this.onload = null
+    this.onerror = null
   }
 
   get [Symbol.toStringTag]() {

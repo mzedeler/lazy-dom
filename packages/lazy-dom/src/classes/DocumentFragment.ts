@@ -7,6 +7,7 @@ import { AddEventListenerOptions } from "../types/Listeners"
 import { Event } from "./Event"
 import {
   EventTargetStore,
+  disposedEventTargetStore,
   addEventListenerImpl,
   removeEventListenerImpl,
   fireListenersAtTarget,
@@ -26,6 +27,11 @@ export class DocumentFragment extends Node {
     if (globalDoc) {
       this.nodeStore.ownerDocument = () => globalDoc
     }
+  }
+
+  override _dispose(): void {
+    super._dispose()
+    this._eventTargetStore = disposedEventTargetStore
   }
 
   get nodeValue(): null {

@@ -1,5 +1,6 @@
 import type { Node } from "./Node/Node"
 import type { Range } from "./Range"
+import { DOMException } from "./DOMException"
 
 const DOCUMENT_POSITION_FOLLOWING = 0x04
 const DOCUMENT_POSITION_CONTAINED_BY = 0x10

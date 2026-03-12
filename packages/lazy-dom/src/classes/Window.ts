@@ -3,6 +3,7 @@ import type { Listener } from "../types/Listener"
 import type { Event } from "./Event"
 import {
   EventTargetStore,
+  disposedEventTargetStore,
   addEventListenerImpl,
   removeEventListenerImpl,
   fireListenersImpl,
@@ -275,5 +276,26 @@ export class Window {
         return
       }
     }
+  }
+
+  /** Break internal references so the Window can be GC'd.
+   *  Called during reset() between test suites. Safe to call multiple times. */
+  _dispose(): void {
+    this._eventTargetStore = disposedEventTargetStore
+    if (this._selection) {
+      this._selection.removeAllRanges()
+      this._selection = null as unknown as Selection
+    }
+    this._location = undefined
+    this._locationData = null as unknown as typeof this._locationData
+    this._history = null as unknown as typeof this._history
+    // console may have been redefined with a getter by the jest environment,
+    // so use defineProperty to safely override it
+    try {
+      Object.defineProperty(this, 'console', { value: null, configurable: true, writable: true })
+    } catch {
+      // ignore if not configurable
+    }
+    this.event = undefined
   }
 }
